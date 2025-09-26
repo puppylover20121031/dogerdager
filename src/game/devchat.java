@@ -1,11 +1,11 @@
 package game;
 
 public class devchat {
-    String jayden = "jayden";
+    String jayden = "puppydoug";
     String kitty_havens = "kitty havens";
     String jackmann = "jack mann";
     public devchat() {
         // use System.out.println("message" + ": from " + uservar); and replace the message with your message and uservar with your name/username as a var
-        System.out.println("welcome to the chat log: " + jayden);
+        System.out.println(jayden + "welcome to the chat log: ");
     }
 }
