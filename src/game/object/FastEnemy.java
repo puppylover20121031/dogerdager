@@ -27,7 +27,7 @@ public class FastEnemy
       this.velY *= -1.0F; 
     if (this.x <= 0.0F || this.x >= 608.0F)
       this.velX *= -1.0F; 
-    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.DARK_GRAY, 24, 24, 0.015F, this.handler));
+    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.DARK_GRAY, 24, 24, 0.05F, this.handler));
   }
 
 

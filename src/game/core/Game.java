@@ -1,5 +1,5 @@
 package game.core;
-// imports
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -8,7 +8,7 @@ import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.newdawn.slick.*;
+import org.newdawn.slick.Music;
 import org.newdawn.slick.Sound;
 
 import game.enums.STATE;
@@ -20,8 +20,9 @@ import game.gui.Window;
 
 public class Game extends Canvas implements Runnable {
 
-    static final int WIDTH = 640; // set window width
-    static final int HEIGHT = 477; // set window height
+    static final int WIDTH = 640;
+    static final int HEIGHT = 477;
+    private final SaveManager savemanager;
 
     private Thread thread;
     private boolean running = false;
@@ -40,58 +41,46 @@ public class Game extends Canvas implements Runnable {
     public static Map<String, Music> musicMap = new HashMap<>();
 
     private int frames = 0;
-    private int count = 0;
 
-    public static STATE gameState = STATE.MENU2; // gamestate can be MENU, MENU2, or GAME. check STATE enum in files for more
-    public static STATE2 gameState2 = STATE2.NOPE; // can be NOPE, EASY, or HARD.
-    boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean(). getInputArguments().toString().contains("-agentlib:jdwp");
+    public static STATE gameState = STATE.MENU2;
+    public static STATE2 gameState2 = STATE2.NOPE;
+
+
+
+    boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean()
+            .getInputArguments().toString().contains("-agentlib:jdwp");
 
     @Serial
     private static final long serialVersionUID = -3462486173394796704L;
+
 
     public Game() {
         this.handler = new Handler();
         this.hud = new HUD();
         this.spawner = new Spawn(this.handler, this.hud);
+
         new game.devchat();
         this.menu = new Menu(this, this.handler);
         this.menu2 = new Menu2(this, this.handler);
 
-        // Load background music
-        try {
-        } catch (Exception e) {
-            System.err.println("Failed to load background music: " + e.getMessage());
-            e.printStackTrace();
-        }
+        this.savemanager = new SaveManager();
 
+        AudioPlayer.loadSound("bgm", "res/song.wav");
+        AudioPlayer.playSound("bgm");
 
-     // In Game.java constructor, replace sound loading:
-     AudioPlayer.loadSound("tap", "res/mixkit-game-ball-tap-2073.wav");
-     AudioPlayer.loadSound("treasure", "res/mixkit-video-game-treasure-2066.wav");
-     AudioPlayer.loadSound("fail", "res/mixkit-player-losing-or-failing-2042.wav");
-
-     // In keyPressed:
-
-
-     // For background music (looping):
-     AudioPlayer.loadSound("bgm", "res/song.wav");
-     AudioPlayer.playSound("bgm");
-
-        // Key and mouse inputs
-        addKeyListener(new KeyInput(this.handler) {
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                super.keyPressed(e);
-                // Play tap sound whenever any key is pressed
-                if (soundMap.containsKey("tap")) {
-                    AudioPlayer.playSound("tap");
-                }
-            }
-        });
-
+        addKeyListener(new KeyInput(this.handler, this.hud));
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
-        new Window(WIDTH, HEIGHT, "the doger dager", this); // call windows
+
+        if (gameState2 != STATE2.NOPE) {
+            removeMouseListener(this.menu2);
+        }
+        if (gameState != STATE.GAME) {
+            removeMouseListener(this.menu);
+        }
+        hud.setScore(this.savemanager.getHighScore());
+
+        new Window(WIDTH, HEIGHT, "the doger dager", this);
     }
 
     public synchronized void start() {
@@ -104,10 +93,10 @@ public class Game extends Canvas implements Runnable {
         try {
             thread.join();
             running = false;
-        } catch (Exception ignored) {
-            // ignore thread shutdown errors
-        }
+        } catch (Exception ignored) {}
     }
+
+    // RUN LOOP ----------------------------------------------------------------
 
     @Override
     public void run() {
@@ -118,7 +107,7 @@ public class Game extends Canvas implements Runnable {
         double delta = 0;
         long timer = System.currentTimeMillis();
 
-        while (running) { // run tick clock
+        while (running) {
             long now = System.nanoTime();
             delta += (now - lastTime) / ns;
             lastTime = now;
@@ -143,14 +132,15 @@ public class Game extends Canvas implements Runnable {
         stop();
     }
 
-    private void tick() throws Exception {// run these every tick.
+    private void tick() throws Exception {
         handler.tick();
         hud.tick();
-        // Example: simulate treasure event
+        if (hud.getLevel() >= 115 && Game.gameState2 == STATE2.EASY) {
+            Spawn.ending(hud);
+        }
+
         if (hud.getScore() > 0 && hud.getScore() % 100 == 0) {
-            if (soundMap.containsKey("treasure")) {
-                AudioPlayer.playSound("treasure");
-            }
+            AudioPlayer.playSound("treasure");
         }
 
         if (gameState == STATE.GAME) {
@@ -162,34 +152,45 @@ public class Game extends Canvas implements Runnable {
             menu2.tick();
         }
 
-        // After ~5600 ticks (~93 seconds), switch background music once
-
-        // Example: simulate fail state
-        if (hud.getHealth() <= 0 && soundMap.containsKey("fail")) {
+        if (hud.getHealth() <= 0) {
             AudioPlayer.playSound("fail");
         }
 
-        count++;
-        if (this.isDebug) {
+        if (isDebug) {
             KeyInput.debug = true;
         }
+        this.savemanager.setHighScore(hud.getScore());
+        if (this.savemanager.getHighScore() < hud.getScore()) {
+            this.savemanager.save();
+        }
+
     }
 
-    private void render() {// what to put on screen
+    // RENDER ------------------------------------------------------------------
+
+    private void render() {
         BufferStrategy bs = getBufferStrategy();
         if (bs == null) {
             createBufferStrategy(3);
             return;
+        }if (HUD.showEnding) {
+            hud.drawEndingAnimation(g);
         }
+
 
         g = bs.getDrawGraphics();
         g2 = g;
 
-        // Clear screen
         g.setColor(Color.black);
         g.fillRect(0, 0, WIDTH, HEIGHT);
 
-        // Render game elements
+        // ENDING ANIMATION OVERRIDE
+        if (hud.won == 1) {
+            g.dispose();
+            bs.show();
+            return;
+        }
+
         if (gameState == STATE.GAME) {
             handler.render(g);
             hud.render(g, gameState);
@@ -203,13 +204,20 @@ public class Game extends Canvas implements Runnable {
         bs.show();
     }
 
-    public static float clamp(float value, int min, int max) {// keep value between min and max
-        if (value >= max) return max;
-        if (value <= min) return min;
-        return value;
+    // ASCII ENDING -------------------------------------------------------------
+
+    private void drawASCII(Graphics g, String[] arr, int x, int y) {
+        for (int i = 0; i < arr.length; i++) {
+            g.drawString(arr[i], x, y + i * 18);
+        }
     }
 
-    public static void main(String[] args) {// when run
+
+    public static float clamp(float value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    public static void main(String[] args) {
         new Game();
     }
 }
