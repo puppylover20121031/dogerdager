@@ -59,7 +59,7 @@ public class Menu2
     } else if (mouseOver(mx, my, 200, 250, 200, 64)) {
         try {
         	if (!play) {
-			game.gameState2 = STATE2.HARD;
+			Game.gameState2 = STATE2.NORMAL;
         	}
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
@@ -81,16 +81,21 @@ public class Menu2
           e1.printStackTrace();
         }
         play = true;
-    } }
-  }
+    } else if (mouseOver(mx, my, 200, 350, 200, 64)) {
+        	if (!play) {
+                Game.gameState2 = STATE2.HARD;
 
-  
-  public void mouseReleased(MouseEvent e) {
-	  
-  }
+                this.game.gameState = STATE.GAME;
+                this.handler.addObject(new Player(640 / 2 - 32, 477 / 2 - 32, ID.Player, this.handler));
+                this.handler.addObject(new Enemy(this.r.nextInt(640 - 50), this.r.nextInt(477 - 50), ID.Enemy, this.handler));
 
-  
-  private boolean mouseOver(int mx, int my, int x, int y, int width, int height) {
+            }
+    }
+  }}
+
+
+
+    boolean mouseOver(int mx, int my, int x, int y, int width, int height) {
     if (mx > x && mx < x + width) {
       if (my > y && my < y + height) {
         return true;
@@ -115,14 +120,21 @@ public class Menu2
     
     g.setFont(fnt2);
     g.setColor(Color.gray);
-    g.drawString("Easy", 270, 200);
+    g.drawString("EASY", 270, 200);
 
-    g.setFont(fnt2);
-    g.setColor(Color.gray);
-    g.drawString("HARD MODE", 205, 290);
-    
-    g.setColor(Color.white);
-    g.drawRect(200, 150, 200, 64);
+      g.setFont(fnt2);
+      g.setColor(Color.gray);
+      g.drawString("Normal MODE", 205, 290);
+
+      g.setFont(fnt2);
+      g.setColor(Color.gray);
+      g.drawString("HARD MODE", 205, 400);
+
+      g.setColor(Color.white);
+      g.drawRect(200, 150, 200, 64);
+
+      g.setColor(Color.white);
+      g.drawRect(200, 350, 200, 64);
     
     g.drawRect(200, 250, 200, 64);
   }
