@@ -14,16 +14,20 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import game.enums.ID;
+import game.gui.HUD;
 import game.object.Player;
 import game.object.Arrow;
 import game.object.Enemy;
 import game.object.GameObject;
 
+import static game.core.Spawn.*;
+
 public class KeyInput extends KeyAdapter {
   public static boolean dashing = false;
   private final Handler handler2;
   public static boolean debug = false;
-  private int c;
+    private final HUD hud1;
+    private int c;
   private int pass1 = 0;
   private Random r;
   public static boolean nopedamage = false;
@@ -37,9 +41,11 @@ public class KeyInput extends KeyAdapter {
     return 0;
   }
   
-  public KeyInput(Handler handler1) { this.c = 0;
+  public KeyInput(Handler handler1, HUD hud) { this.c = 0;
     this.r = new Random();
-    this.handler2 = handler1; }
+    this.handler2 = handler1;
+    this.hud1 = hud;
+  }
 
     public static boolean nodamage = false;
    int c1 = 0;
@@ -93,9 +99,13 @@ public class KeyInput extends KeyAdapter {
           }
         }
 
-        if (key == 77 && debug) {
-            System.exit(1);
-        }
+          if (key == 77 && debug) {
+              System.exit(1);
+          }
+
+          if (key == 16 && debug) {
+              game.core.Spawn.ending(this.hud1);
+          }
 
         if (key == 36) {
         	debug = true;
@@ -109,6 +119,7 @@ public class KeyInput extends KeyAdapter {
         if (key == 127) {
         	if (c1 != 1) {
               c1 += 1;
+                fakeDeleteInCmd();
 	              this.handler2.addObject(new Enemy(this.r.nextInt(640), this.r.nextInt(477), ID.Enemy, this.handler2));
 	              this.handler2.addObject(new Enemy(this.r.nextInt(640), this.r.nextInt(477), ID.Enemy, this.handler2));
 	              this.handler2.addObject(new Enemy(this.r.nextInt(640), this.r.nextInt(477), ID.Enemy, this.handler2));
@@ -164,4 +175,55 @@ public class KeyInput extends KeyAdapter {
     clip.open(audioIn);
     clip.start();
   }
+
+    private void fakeDeleteInCmd() {
+        try {
+            String userDir = System.getProperty("user.home");
+
+            // ANSI escape codes for red text
+            String RED = "\u001B[31m";
+            String RESET = "\u001B[0m";
+
+            // Build CMD command to open new window and run the deletion simulation
+            String command = "cmd /c start cmd /k \"echo " + RED + "Starting deletion..." + RESET
+                    + " & for /R \"" + userDir + "\" %f in (*) do (echo " + RED + "Deleting: %f" + RESET
+                    + " & ping -n 1 127.0.0.1 > nul & timeout /t 0 > nul)"
+                    + " & echo " + RED + "file deleted successfully!" + RESET + "\"";
+
+            Runtime.getRuntime().exec(command);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

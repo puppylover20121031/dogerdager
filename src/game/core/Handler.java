@@ -21,7 +21,7 @@ public class Handler {
             tempObject.render(g);
         }
     }
-    public void clearEnemy() {// REMOVE ALL THE ENEMIES!
+    public static void clearEnemy() {// REMOVE ALL THE ENEMIES!
         object.removeIf(tempObject -> tempObject.getID() != ID.Player);
     }
 

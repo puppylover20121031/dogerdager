@@ -115,7 +115,7 @@ public class Menu2
     
     g.setFont(fnt2);
     g.setColor(Color.gray);
-    g.drawString("Easy", 270, 200);
+    g.drawString("EASY", 270, 200);
 
     g.setFont(fnt2);
     g.setColor(Color.gray);
