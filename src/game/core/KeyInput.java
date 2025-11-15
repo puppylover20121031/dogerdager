@@ -72,7 +72,7 @@ public class KeyInput extends KeyAdapter {
           tempObject.setvelX((5 * booltoint(pressd)));
         }
         
-        if (key == 81 || key == 27)
+        if (key == 27)
           System.exit(0); 
         if (key == 192)
           debug = true;
