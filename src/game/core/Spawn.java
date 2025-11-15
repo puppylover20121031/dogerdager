@@ -31,11 +31,20 @@ public class Spawn {
             // Example enemy spawn logic
             if (hud.getLevel() == 5)
                 handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
-            if (hud.getLevel() == 8 || hud.getLevel() == 6)
+            if (hud.getLevel() == 8 || hud.getLevel() == 6 || hud.getLevel() == 10)
                 handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));
             if (hud.getLevel() == 12) {
                 handler.clearEnemy();
                 handler.addObject(new Boss1(272, -120, ID.Enemy, handler));
+            }
+            if (hud.getLevel() == 60 && Game.gameState2 == STATE2.EASY) {
+                ending(hud);
+            }
+            if (hud.getLevel() == 120 && Game.gameState2 == STATE2.NORMAL) {
+                ending(hud);
+            }
+            if (hud.getLevel() == 200 && Game.gameState2 == STATE2.HARD) {
+                ending(hud);
             }
 
             // Level 26 background music switch
