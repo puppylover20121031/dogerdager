@@ -9,104 +9,128 @@ import game.core.Game;
 import game.core.Handler;
 import game.enums.STATE;
 
-public class HUD
-{
-  /* this has the health and stanima bars
-    and also the level score and win and debug text
-    and has logic for almost all of it.
-  */
-  public static int HEALTH = 300;
-  public int c1 = 0;
-  private int greenvalue = 255;
-  private int lastLevelChecked = 1;
-  private boolean staminaReduced = false;
-  private Font fnt3;
-  private Handler handler;
-  private int score = 0;
-  public int won = 0;
-  private String won2 = "nope";
-  public static String customt;
-  private int level = 1;
-  private boolean soundplayed = false;
-  public static double stanima = 1200;
-  public void render(Graphics g, STATE gameState) {
-	    this.greenvalue = (int) Game.clamp(this.greenvalue, 0, 255);
-    g.setColor(Color.gray);
-    g.fillRect(15, 15, 600, 32);
-    g.setColor(new Color(0, 255, 0));
-    g.fillRect(15, 15, HEALTH * 2, 32);
-    g.setColor(Color.gray);
-    g.fillRect(15, 15*5, 600, 32);
-    g.setColor(new Color(75, this.greenvalue, 0));
-    g.fillRect(15, 15*5, (int)stanima /2, 32);
-    g.setColor(Color.white);
-    g.drawRect(15, 15, 600, 32);
-    g.drawString("Score: " + this.score, 10, 68);
-    g.drawString("Level: " + this.level, 10, 80);
-    g.drawString("DID YOU WIN?: " + this.won2, 10, 102);
-    if (KeyInput.debug) {
-        g.drawString("debug mode", 10, 132);
-    } if (KeyInput.LORE)
-	{
-        fnt3 = new Font("arial", Font.BOLD, 30);
-        g.setFont(fnt3);
-		g.drawString("the white sqaure is the kid", 10, 170);
-		g.drawString("the red sqaures are the bullies", 10, 190);
-		g.drawString("the bullies are trying to hurt the kid.", 10, 215);
-		g.drawString("RUN FROM THE BULLIES", 10, 245);
-	}
+public class HUD {
 
-    if (won >= 1) {
-    	won2 ="YES YOU WON!";
-        fnt3 = new Font("arial", Font.BOLD, 65);
-        g.setFont(fnt3);
-        g.setColor(Color.green);
-        g.drawString("YOU WON THE GAME", 2, 200);
-    	if (c1 >= 4) {
-    	}
-    	c1++;
-    }
-  }
-  
+    public static int HEALTH = 300;
+    public static double STAMINA = 1200;
+    public int endingTimer;
 
-public void tick() throws Exception {
-    HEALTH = (int) Game.clamp(HEALTH, 0, 300);
-    stanima = (int) Game.clamp((int)stanima, 0, 1200);
+    private int greenValue = 255;
+    private int score = 0;
+    private int level = 1;
+    public int won = 0;
 
-    this.greenvalue = HEALTH * 2;
-    this.score++;
+    public int endingStep = 0;       // tracks animation steps
+    public static boolean showEnding = false; // true when ending animation should show
 
-    if (KeyInput.isCapsLockOn) {
-    stanima = Math.max(0, stanima - 5);
-    }
-    if (stanima < 1200 && !KeyInput.dashing) {
-    	KeyInput.isCapsLockOn2 = false;
-	}
-	if (stanima >= 1200) {
-		KeyInput.isCapsLockOn2 = true;
-	} if (stanima < 1200 && !KeyInput.isCapsLockOn) {
-		stanima = Math.min(1200, stanima + 1);
-	}
-    if (HEALTH < 5 && !this.soundplayed) {
-        Thread.currentThread().interrupt();
-        try {
-            Thread.sleep(1000L);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+    private Font font;
+
+    public void render(Graphics g, STATE gameState) {
+        // Draw health bar
+        greenValue = (int) Game.clamp(greenValue, 0, 255);
+        g.setColor(Color.gray);
+        g.fillRect(15, 15, 600, 32);
+        g.setColor(new Color(0, 255, 0));
+        g.fillRect(15, 15, HEALTH * 2, 32);
+        g.setColor(Color.white);
+        g.drawRect(15, 15, 600, 32);
+
+        // Draw stamina bar
+        g.setColor(Color.gray);
+        g.fillRect(15, 75, 600, 32);
+        g.setColor(new Color(75, greenValue, 0));
+        g.fillRect(15, 75, (int) STAMINA / 2, 32);
+        g.setColor(Color.white);
+        g.drawRect(15, 75, 600, 32);
+
+        // Draw score and level
+        g.drawString("Score: " + score, 10, 120);
+        g.drawString("Level: " + level, 10, 140);
+        g.drawString("Did you win?: " + (won > 0 ? "YES" : "NO"), 10, 160);
+
+        // Debug info
+        if (KeyInput.debug) {
+            g.drawString("DEBUG MODE", 10, 190);
         }
-        System.exit(0);
-    }
-  }
 
-  public void score(int score) {//set score
-    this.score = score;
-  } public int getScore() {//get score
-    return this.score;
-  } public int getLevel() {//get level
-    return this.level;
-  } public void setLevel(int level) {// set level
-    this.level = level;
-  } public int getHealth() {//get score
-	    return this.HEALTH;
-	  }
+        // Ending animation
+        if (showEnding) {
+            drawEndingAnimation(g);
+        }
+    }
+
+    public void tick() {
+        HEALTH = (int) Game.clamp(HEALTH, 0, 300);
+        STAMINA = Game.clamp((float) STAMINA, 0, 1200);
+
+        greenValue = HEALTH * 2;
+        score++;
+
+        // Example stamina depletion
+        if (KeyInput.isCapsLockOn) {
+            STAMINA = Math.max(0, STAMINA - 5);
+        } else if (STAMINA < 1200) {
+            STAMINA++;
+        }
+
+        // Player death
+        if (HEALTH <= 0) {
+            System.exit(0);
+        }
+    }
+
+    public void setScore(int s) { score = s; }
+    public int getScore() { return score; }
+    public int getLevel() { return level; }
+    public void setLevel(int l) { level = l; }
+    public int getHealth() { return HEALTH; }
+
+    public void drawEndingAnimation(Graphics g) {
+        g.setFont(new Font("Monospaced", Font.PLAIN, 18));
+        g.setColor(Color.white);
+
+        int step = endingStep;
+
+        switch (step) {
+            case 0 -> g.drawString("The war between Bob the puppy and Bob the builder...", 40, 240);
+            case 1 -> {
+                drawASCII(g, ASCII_BOB, 60, 100);
+                g.drawString("There was a puppy named Bob.", 200, 360);
+                g.drawString("Bob loved tacos!", 200, 385);
+            }
+            case 2 -> g.drawString("Bob loved his friend Jayden even more!", 100, 240);
+            case 3 -> {
+                drawASCII(g, ASCII_BOBBUILDER, 50, 100);
+                g.drawString("One day Bob saw 'Bob the Builder' on TV...", 100, 360);
+            }
+            case 4 -> g.drawString("Bob hated that show because it was named after him.", 80, 240);
+            case 5 -> g.drawString("Bob went to Keith Chapman's house to ask why.", 80, 240);
+            case 6 -> {
+                g.drawString("Keith: 'None of your business.'", 100, 240);
+                g.drawString("Bob thought: 'Why did he say that?'", 100, 270);
+            }
+            case 7 -> g.drawString("Bob went on a journey to destroy 'Bob the Builder'!", 50, 240);
+            case 8 -> g.drawString("To be continued...", 200, 240);
+            default -> g.drawString("The End", 250, 240);
+        }
+    }
+
+    private void drawASCII(Graphics g, String[] ascii, int x, int y) {
+        for (int i = 0; i < ascii.length; i++) {
+            g.drawString(ascii[i], x, y + i * 18);
+        }
+    }
+
+    private final String[] ASCII_BOB = {
+            "  /\\_/\\",
+            " ( o.o )",
+            "  > ^ <"
+    };
+
+    private final String[] ASCII_BOBBUILDER = {
+            "   ____",
+            "  |____|",
+            "  | || |",
+            "   ||||"
+    };
 }
