@@ -14,7 +14,6 @@ import game.gui.HUD;
 import game.gui.Menu;
 import game.gui.Menu2;
 import game.gui.Window;
-import org.newdawn.slick.*
 
 import javax.swing.*;
 
