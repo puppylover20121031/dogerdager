@@ -17,5 +17,17 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/jinput.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jinput" level="project" />
+    <orderEntry type="library" name="jorbis-0.0.15" level="project" />
+    <orderEntry type="library" name="jogg-0.0.7" level="project" />
   </component>
 </module>

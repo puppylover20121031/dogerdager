@@ -1,8 +1,6 @@
 package game.core;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.io.Serial;
 import java.util.HashMap;
@@ -10,13 +8,15 @@ import java.util.Map;
 
 import org.newdawn.slick.Music;
 import org.newdawn.slick.Sound;
-
 import game.enums.STATE;
 import game.enums.STATE2;
 import game.gui.HUD;
 import game.gui.Menu;
 import game.gui.Menu2;
 import game.gui.Window;
+import org.newdawn.slick.*
+
+import javax.swing.*;
 
 public class Game extends Canvas implements Runnable {
 
@@ -33,7 +33,6 @@ public class Game extends Canvas implements Runnable {
 
     private final Menu menu;
     private final Menu2 menu2;
-
     public static Graphics g2;
     private Graphics g;
 
@@ -58,11 +57,9 @@ public class Game extends Canvas implements Runnable {
         this.handler = new Handler();
         this.hud = new HUD();
         this.spawner = new Spawn(this.handler, this.hud);
-
         new game.devchat();
         this.menu = new Menu(this, this.handler);
         this.menu2 = new Menu2(this, this.handler);
-
         this.savemanager = new SaveManager();
 
         AudioPlayer.loadSound("bgm", "res/song.wav");
@@ -71,6 +68,7 @@ public class Game extends Canvas implements Runnable {
         addKeyListener(new KeyInput(this.handler, this.hud));
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
+        AudioPlayer.loadSound("fail", "res/losing.wav");
 
         if (gameState2 != STATE2.NOPE) {
             removeMouseListener(this.menu2);
@@ -137,10 +135,6 @@ public class Game extends Canvas implements Runnable {
         hud.tick();
         if (hud.getLevel() >= 115 && Game.gameState2 == STATE2.EASY) {
             Spawn.ending(hud);
-        }
-
-        if (hud.getScore() > 0 && hud.getScore() % 100 == 0) {
-            AudioPlayer.playSound("treasure");
         }
 
         if (gameState == STATE.GAME) {
@@ -218,6 +212,7 @@ public class Game extends Canvas implements Runnable {
     }
 
     public static void main(String[] args) {
+
         new Game();
     }
 }
