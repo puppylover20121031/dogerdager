@@ -2,7 +2,6 @@ package game.core;
 
 import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.io.Serial;
@@ -23,6 +22,7 @@ public class Game extends Canvas implements Runnable {
 
     static final int WIDTH = 640;
     static final int HEIGHT = 477;
+    private final SaveManager savemanager;
 
     private Thread thread;
     private boolean running = false;
@@ -45,71 +45,14 @@ public class Game extends Canvas implements Runnable {
     public static STATE gameState = STATE.MENU2;
     public static STATE2 gameState2 = STATE2.NOPE;
 
+
+
     boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean()
             .getInputArguments().toString().contains("-agentlib:jdwp");
 
     @Serial
     private static final long serialVersionUID = -3462486173394796704L;
 
-    // ASCII ART ARRAYS ---------------------------------------------------------
-
-    private final String[] ASCII_BOB = {
-            "        /^-----^\\",
-            "       V  o o  V",
-            "        |  Y  |",
-            "         \\ Q /",
-            "         / - \\",
-            "         |    \\",
-            "         |     \\     )",
-            "         || (___\\===="
-    };
-
-    private final String[] ASCII_BUILDER = {
-            "     _____",
-            "   _|[_]|_",
-            "  (  °  ° )",
-            "   |  ^  |",
-            "  /| --- |\\",
-            " /_|_____|_\\",
-            "    | | |"
-    };
-
-    private final String[] ASCII_BANNED = {
-            "  ###########",
-            "  #  BANNED #",
-            "  ###########"
-    };
-
-    private final String[] ASCII_PORTAL = {
-            "     @@@@@@@@",
-            "   @@////////@@",
-            "  @//  @@    //@",
-            " @//   @@     //@",
-            " @//@       //@@",
-            "  @//@@   ////@",
-            "   @@////////@@",
-            "     @@@@@@@@"
-    };
-
-    private final String[] ASCII_WATER = {
-            "     ~ ~ ~ ~ ~ ~ ~ ~",
-            "   ~~~~~~~~~~~~~~~~~~~",
-            " ~~~~~~~~   ~~~~~~~~~~~",
-            "   ~~~~~  SPLASH ~~~~~",
-            " ~~~~~~~~~~~~~~~~~~~~~~"
-    };
-
-    private final String[] ASCII_SLEEP = {
-            "     |\\__/|",
-            "     (- ω -)",
-            "     (\")_(\")",
-            "",
-            "       Z",
-            "        Z",
-            "         Z"
-    };
-
-    // -------------------------------------------------------------------------
 
     public Game() {
         this.handler = new Handler();
@@ -120,12 +63,22 @@ public class Game extends Canvas implements Runnable {
         this.menu = new Menu(this, this.handler);
         this.menu2 = new Menu2(this, this.handler);
 
+        this.savemanager = new SaveManager();
+
         AudioPlayer.loadSound("bgm", "res/song.wav");
         AudioPlayer.playSound("bgm");
 
         addKeyListener(new KeyInput(this.handler, this.hud));
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
+
+        if (gameState2 != STATE2.NOPE) {
+            removeMouseListener(this.menu2);
+        }
+        if (gameState != STATE.GAME) {
+            removeMouseListener(this.menu);
+        }
+        hud.setScore(this.savemanager.getHighScore());
 
         new Window(WIDTH, HEIGHT, "the doger dager", this);
     }
@@ -206,6 +159,11 @@ public class Game extends Canvas implements Runnable {
         if (isDebug) {
             KeyInput.debug = true;
         }
+        this.savemanager.setHighScore(hud.getScore());
+        if (this.savemanager.getHighScore() < hud.getScore()) {
+            this.savemanager.save();
+        }
+
     }
 
     // RENDER ------------------------------------------------------------------
@@ -228,7 +186,6 @@ public class Game extends Canvas implements Runnable {
 
         // ENDING ANIMATION OVERRIDE
         if (hud.won == 1) {
-            drawEndingAnimation(g);
             g.dispose();
             bs.show();
             return;
@@ -255,50 +212,6 @@ public class Game extends Canvas implements Runnable {
         }
     }
 
-    private void drawEndingAnimation(Graphics g) {
-        int t = hud.endingTimer;
-        g.setFont(new Font("Monospaced", Font.PLAIN, 18));
-        g.setColor(Color.white);
-
-        // 0–60 : text intro
-        if (t < 60) {
-            g.drawString("The war between Bob the puppy and Bob the builder...", 40, 240);
-        }
-        // Bob appears
-        else if (t < 180) {
-            drawASCII(g, ASCII_BOB, 60, 100);
-            g.drawString("There was a puppy named Bob.", 200, 360);
-            g.drawString("Bob loved tacos!", 200, 385);
-        }
-        // Builder appears
-        else if (t < 300) {
-            drawASCII(g, ASCII_BUILDER, 350, 100);
-            g.drawString("But Bob hated Bob the builder!", 80, 360);
-        }
-        // BANNED stamp
-        else if (t < 360) {
-            drawASCII(g, ASCII_BUILDER, 350, 100);
-            drawASCII(g, ASCII_BANNED, 330, 230);
-        }
-        // Portal
-        else if (t < 480) {
-            drawASCII(g, ASCII_PORTAL, 200, 120);
-            g.drawString("Bob entered the portal to Bobsville...", 120, 360);
-        }        // Slip
-        else if (t < 600) {
-            drawASCII(g, ASCII_BUILDER, 350, 120);
-            drawASCII(g, ASCII_WATER, 40, 300);
-            g.drawString("Splash! Bob the builder slipped!", 120, 360);
-        }
-        // Final sleep scene
-        else {
-            drawASCII(g, ASCII_SLEEP, 260, 150);
-            g.drawString("Bob woke up... it was all just a dream.", 140, 360);
-            g.drawString("THE END", 260, 420);
-        }
-    }
-
-    // UTILITY -----------------------------------------------------------------
 
     public static float clamp(float value, int min, int max) {
         return Math.max(min, Math.min(max, value));

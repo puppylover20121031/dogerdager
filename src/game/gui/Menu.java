@@ -25,10 +25,17 @@ public class Menu
   public void mousePressed(MouseEvent e) {
     int mx = e.getX();
     int my = e.getY();
-    
 
 
-      this.game.gameState = STATE.MENU2;
+      if (mouseOver(mx, my, 200, 150, 200, 64)) {
+          try {
+              Thread.sleep(1000);
+          } catch (InterruptedException ex) {
+              throw new RuntimeException(ex);
+          }
+          Game.gameState = STATE.MENU2;
+
+      }
       //this.game.gameState = STATE.GAME;
       try {
         //this.handler.addObject(new Player(640 / 2 - 32, 477 / 2 - 32, ID.Player, this.handler));
