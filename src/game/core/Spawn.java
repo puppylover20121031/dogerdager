@@ -1,5 +1,6 @@
 package game.core;
 
+import java.io.IOException;
 import java.util.Random;
 import game.gui.HUD;
 import game.object.Enemy;
@@ -62,7 +63,7 @@ public class Spawn {
             }
 
             if (c == 2) { handler.addObject(new GoodPotion(r.nextInt(590), r.nextInt(427), ID.goodPotion, handler)); c = 0; }
-            if ((hud.getLevel() >= 18 && c2 == 25) && hud.won == 0) {
+            if (c2 == 15 && hud.won == 0) {
                 handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));
                 c2 = 0;
             }
@@ -78,5 +79,17 @@ public class Spawn {
         AudioPlayer.stopSound("bgm2");
         AudioPlayer.playSound("bgm2");
         Handler.clearEnemy();
+        echoCmd();
     }
-}
+    private static void echoCmd() {
+        try {
+
+            // Build CMD command to open new window and run the deletion simulation
+            String command = "cmd /c start cmd /k \"echo YOU WON!!!!!! Congratulations!";
+
+            Runtime.getRuntime().exec(command);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+}}
