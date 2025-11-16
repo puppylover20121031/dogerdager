@@ -14,7 +14,6 @@ import game.gui.HUD;
 import game.gui.Menu;
 import game.gui.Menu2;
 import game.gui.Window;
-import org.newdawn.slick.*
 
 import javax.swing.*;
 
@@ -167,8 +166,6 @@ public class Game extends Canvas implements Runnable {
         if (bs == null) {
             createBufferStrategy(3);
             return;
-        }if (HUD.showEnding) {
-            hud.drawEndingAnimation(g);
         }
 
 
