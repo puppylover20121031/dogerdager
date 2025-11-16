@@ -7,16 +7,19 @@ import java.awt.Graphics;
 import game.core.KeyInput;
 import game.core.Game;
 import game.core.Handler;
+import game.core.SaveManager;
 import game.enums.STATE;
 
 public class HUD {
 
     public static int HEALTH = 300;
     public static double STAMINA = 1200;
+    private final SaveManager savemanager;
     public int endingTimer;
 
     private int greenValue = 255;
     private int score = 0;
+    private int score2;
     private int level = 1;
     public int won = 0;
 
@@ -24,6 +27,11 @@ public class HUD {
     public static boolean showEnding = false; // true when ending animation should show
 
     private Font font;
+
+    public HUD() {
+        this.savemanager = new SaveManager();
+        score = this.savemanager.getHighScore();
+    }
 
     public void render(Graphics g, STATE gameState) {
         // Draw health bar
@@ -44,7 +52,7 @@ public class HUD {
         g.drawRect(15, 75, 600, 32);
 
         // Draw score and level
-        g.drawString("Score: " + score, 10, 120);
+        g.drawString("Score: " + score2, 10, 120);
         g.drawString("Level: " + level, 10, 140);
         g.drawString("Did you win?: " + (won > 0 ? "YES" : "NO"), 10, 160);
 
@@ -65,7 +73,6 @@ public class HUD {
 
         greenValue = HEALTH * 2;
         score++;
-
         // Example stamina depletion
         if (KeyInput.isCapsLockOn) {
             STAMINA = Math.max(0, STAMINA - 5);
@@ -84,6 +91,8 @@ public class HUD {
     public int getLevel() { return level; }
     public void setLevel(int l) { level = l; }
     public int getHealth() { return HEALTH; }
+    public void setScoreH(int s) { score2 = s; }
+    public int getScoreH() { return score2; }
 
     public void drawEndingAnimation(Graphics g) {
         g.setFont(new Font("Monospaced", Font.PLAIN, 18));
