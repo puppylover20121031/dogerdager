@@ -57,8 +57,8 @@ public class KeyInput extends KeyAdapter {
       if (tempObject.getID() == ID.Player) {
         boolean pressw = (key == 87 || key == 38);
         boolean presss = (key == 83 || key == 40);
-        boolean pressa = (key == 65 || key == 38);
-        boolean pressd = (key == 68 || key == 38);
+        boolean pressa = (key == 65 || key == 37);
+        boolean pressd = (key == 68 || key == 39);
         if (debug) {
         System.out.println(key);
         }
