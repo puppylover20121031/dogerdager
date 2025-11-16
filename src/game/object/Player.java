@@ -41,7 +41,6 @@ public class Player extends GameObject {// you the player.(or coder)
 			this.handler2.addObject(new Trail(this.x, this.y, ID.Trail, Color.WHITE, 16, 16, 0.04F, this.handler2));
 		}
 	} catch (Exception e) {
-		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}}
   
