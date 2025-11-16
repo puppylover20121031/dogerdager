@@ -40,13 +40,11 @@ public class Menu2
         try {
 			game.gameState2 = STATE2.EASY;
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
         try {
 				game.gameState = STATE.GAME;
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
         try {
@@ -62,7 +60,6 @@ public class Menu2
 			Game.gameState2 = STATE2.NORMAL;
         	}
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
         try {
@@ -70,7 +67,6 @@ public class Menu2
 			this.game.gameState = STATE.GAME;
         	}
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
         try {

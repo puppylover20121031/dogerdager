@@ -62,8 +62,8 @@ public class Spawn {
             }
 
             if (c == 2) { handler.addObject(new GoodPotion(r.nextInt(590), r.nextInt(427), ID.goodPotion, handler)); c = 0; }
-            if ((hud.getLevel() >= 20 && c2 == 25) && hud.won == 0) {
-                handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.enemy, handler));
+            if ((hud.getLevel() >= 18 && c2 == 25) && hud.won == 0) {
+                handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));
                 c2 = 0;
             }
         }

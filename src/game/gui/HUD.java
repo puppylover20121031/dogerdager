@@ -82,6 +82,11 @@ public class HUD {
 
         // Player death
         if (HEALTH <= 0) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             System.exit(0);
         }
     }

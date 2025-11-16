@@ -147,7 +147,6 @@ public class KeyInput extends KeyAdapter {
 	            	    	pass1 = 0;
 					}
 				catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
               }
