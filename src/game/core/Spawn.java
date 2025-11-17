@@ -38,7 +38,7 @@ public class Spawn {
                 handler.clearEnemy();
                 handler.addObject(new Boss1(272, -120, ID.Enemy, handler));
             }
-            if (hud.getLevel() == 60 && Game.gameState2 == STATE2.EASY) {
+            if (hud.getLevel() == 80 && Game.gameState2 == STATE2.EASY) {
                 ending(hud);
             }
             if (hud.getLevel() == 120 && Game.gameState2 == STATE2.NORMAL) {
