@@ -62,7 +62,7 @@ public class Spawn {
                 }
             if (hud.getLevel() == 12) {
                 Handler.clearEnemy();
-                handler.addObject(new Boss1(272, -120, ID.Enemy, handler));
+                handler.addObject(new Boss1(272, -120, ID.boss1, handler));
             }
             if (hud.getLevel() == 25) {
                 Handler.clearEnemy();
