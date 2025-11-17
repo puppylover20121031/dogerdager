@@ -9,5 +9,5 @@ public enum ID {//game object ID's
   goodPotion,
   boss1,
   Enemy,
-  EnemyParent;
+  EnemyParent
 }

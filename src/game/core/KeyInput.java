@@ -15,10 +15,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import game.enums.ID;
 import game.gui.HUD;
-import game.object.Player;
-import game.object.Arrow;
-import game.object.Enemy;
-import game.object.GameObject;
+import game.object.*;
 
 import static game.core.Spawn.*;
 
@@ -29,7 +26,7 @@ public class KeyInput extends KeyAdapter {
     private final HUD hud1;
     private int c;
   private int pass1 = 0;
-  private Random r;
+  private final Random r;
   public static boolean nopedamage = false;
   public static boolean LORE = false;
   public static boolean isCapsLockOn = false;
@@ -153,6 +150,8 @@ public class KeyInput extends KeyAdapter {
           } this.c++;
           if (key == 32) {
               this.handler2.addObject(new Arrow(tempObject.getX(), tempObject.getY(), ID.ARROW, this.handler2));
+          } if (key == 101) {
+              this.handler2.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, this.handler2));
           }
       }
     }
