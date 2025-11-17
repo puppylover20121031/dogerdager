@@ -2,6 +2,7 @@ package game.core;
 
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.io.IOException;
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class Game extends Canvas implements Runnable {
         this.menu2 = new Menu2(this, this.handler);
         this.savemanager = new SaveManager();
 
-        AudioPlayer.loadSound("bgm", "res/song.wav");
+        AudioPlayer.loadSound("bgm", "res/3songs.wav");
         AudioPlayer.playSound("bgm");
 
         addKeyListener(new KeyInput(this.handler, this.hud));
@@ -118,7 +119,13 @@ public class Game extends Canvas implements Runnable {
                 delta--;
             }
 
-            if (running) render();
+            if (running) {
+                try {
+                    render();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             frames++;
 
             if (System.currentTimeMillis() - timer > 1000) {
@@ -158,7 +165,7 @@ public class Game extends Canvas implements Runnable {
 
     // RENDER ------------------------------------------------------------------
 
-    private void render() {
+    private void render() throws IOException {
         BufferStrategy bs = getBufferStrategy();
         if (bs == null) {
             createBufferStrategy(3);
@@ -172,12 +179,6 @@ public class Game extends Canvas implements Runnable {
         g.setColor(Color.black);
         g.fillRect(0, 0, WIDTH, HEIGHT);
 
-        // ENDING ANIMATION OVERRIDE
-        if (hud.won == 1) {
-            g.dispose();
-            bs.show();
-            return;
-        }
 
         if (gameState == STATE.GAME) {
             handler.render(g);
