@@ -1,14 +1,16 @@
 package game.gui;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 
 import game.core.KeyInput;
 import game.core.Game;
 import game.core.Handler;
 import game.core.SaveManager;
 import game.enums.STATE;
+
+import javax.imageio.ImageIO;
 
 public class HUD {
 
@@ -22,7 +24,7 @@ public class HUD {
     private int score2;
     private int level = 1;
     public int won = 0;
-
+    Image img;
     public int endingStep = 0;       // tracks animation steps
     public static boolean showEnding = false; // true when ending animation should show
 
@@ -33,7 +35,7 @@ public class HUD {
         score = this.savemanager.getHighScore();
     }
 
-    public void render(Graphics g, STATE gameState) {
+    public void render(Graphics g, STATE gameState) throws IOException {
         // Draw health bar
         greenValue = (int) Game.clamp(greenValue, 0, 255);
         g.setColor(Color.gray);
@@ -60,7 +62,11 @@ public class HUD {
         if (KeyInput.debug) {
             g.drawString("DEBUG MODE", 10, 190);
         }
-
+        try {
+            img = ImageIO.read(new File("res/win.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
