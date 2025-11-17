@@ -9,7 +9,7 @@ import game.core.Handler;
 import game.enums.ID;
 import game.enums.STATE2;
 import game.gui.HUD;
-import game.logic.Trail;
+import game.trail.Trail;
 
 public class Enemy
   extends GameObject {
