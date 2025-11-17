@@ -6,7 +6,7 @@ import java.awt.Rectangle;
 
 import game.core.Handler;
 import game.enums.ID;
-import game.logic.Trail;
+import game.trail.Trail;
 
 public class SmartEnemy
   extends GameObject

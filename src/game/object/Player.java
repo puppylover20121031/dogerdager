@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -13,7 +12,7 @@ import game.core.Game;
 import game.core.Handler;
 import game.enums.ID;
 import game.gui.HUD;
-import game.logic.Trail;
+import game.trail.Trail;
 
 public class Player extends GameObject {// you the player.(or coder)
   Handler handler2;
