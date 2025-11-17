@@ -110,6 +110,11 @@ public class KeyInput extends KeyAdapter {
 		if (key == 76) {
             LORE = !LORE;
 		}
+        if (HUD.STAMINA <= 3) {
+            isCapsLockOn2 = false;
+        } else {
+            isCapsLockOn2 = true;
+        }
 			
         isCapsLockOn = java.awt.Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_CAPS_LOCK);
         nodamage = (isCapsLockOn && isCapsLockOn2);

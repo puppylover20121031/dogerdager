@@ -92,7 +92,7 @@ public class Spawn {
                 handler.addObject(new GoodPotion(r.nextInt(590), r.nextInt(427), ID.goodPotion, handler));
                 c = 0;
             }
-            if (c2 == 15 && hud.won == 0) {
+            if (c2 >= 10 && hud.won == 0 && (hud.getLevel() > 25)) {
                 if (Game.gameState2 == STATE2.HARD) {
                     handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
                 } else {
