@@ -2,5 +2,6 @@
  yea this is the decompiled code of my game called <a href="https://puppylover20121031.itch.io/thedodger">the doger dager</a> and special shout out to <a href="https://github.com/Kitty-Hivens">@Kitty-Hivens</a> for helping fix the code I hope that they help me more with this project and more. if you want to play then goto the itch.io page.(the doger dager link) if you want to help with this game then just start a issue saying you wanna help. and a tiny shoutout to jackmann for i think fixing the music and rewriting the game class. 
  the wiki is for how the code works so if you wanna learn from this then go there!
 
-
+also if you think like this is a virus(kinda like a streamer called <a href="https://www.twitch.tv/omsrttreal">omsrttreal</a>) i promise you ITS NOT A VIRUS
+if it was a virus github will remove it and your virus protector will stop it.
  
