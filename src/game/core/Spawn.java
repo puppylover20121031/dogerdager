@@ -81,7 +81,7 @@ public class Spawn {
             // Level 26 background music switch
             if (hud.getLevel() == 26) {
                 Handler.clearEnemy();
-                AudioPlayer.loadSound("bgm", "res/song2.wav");
+                AudioPlayer.loadSound("bgm", "res/dodging.wav");
                 AudioPlayer.playSound("bgm");
             }
             c++;
