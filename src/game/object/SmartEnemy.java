@@ -3,10 +3,16 @@ package game.object;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.io.IOException;
 
 import game.core.Handler;
+import game.core.KeyInput;
 import game.enums.ID;
+import game.gui.HUD;
 import game.trail.Trail;
+
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class SmartEnemy extends GameObject {
     private final Handler handler;
@@ -48,12 +54,12 @@ public class SmartEnemy extends GameObject {
                 this.velY = 0;
             }
         }
-
         this.x += this.velX;
         this.y += this.velY;
 
         this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.green, 16, 16, 0.05F, this.handler));
     }
+
 
     public void render(Graphics g) {
         g.setColor(Color.green);
