@@ -61,10 +61,7 @@ public class HUD {
             g.drawString("DEBUG MODE", 10, 190);
         }
 
-        // Ending animation
-        if (showEnding) {
-            drawEndingAnimation(g);
-        }
+
     }
 
     public void tick() {
@@ -99,52 +96,5 @@ public class HUD {
     public void setScoreH(int s) { score2 = s; }
     public int getScoreH() { return score2; }
 
-    public void drawEndingAnimation(Graphics g) {
-        g.setFont(new Font("Monospaced", Font.PLAIN, 18));
-        g.setColor(Color.white);
 
-        int step = endingStep;
-
-        switch (step) {
-            case 0 -> g.drawString("The war between Bob the puppy and Bob the builder...", 40, 240);
-            case 1 -> {
-                drawASCII(g, ASCII_BOB, 60, 100);
-                g.drawString("There was a puppy named Bob.", 200, 360);
-                g.drawString("Bob loved tacos!", 200, 385);
-            }
-            case 2 -> g.drawString("Bob loved his friend Jayden even more!", 100, 240);
-            case 3 -> {
-                drawASCII(g, ASCII_BOBBUILDER, 50, 100);
-                g.drawString("One day Bob saw 'Bob the Builder' on TV...", 100, 360);
-            }
-            case 4 -> g.drawString("Bob hated that show because it was named after him.", 80, 240);
-            case 5 -> g.drawString("Bob went to Keith Chapman's house to ask why.", 80, 240);
-            case 6 -> {
-                g.drawString("Keith: 'None of your business.'", 100, 240);
-                g.drawString("Bob thought: 'Why did he say that?'", 100, 270);
-            }
-            case 7 -> g.drawString("Bob went on a journey to destroy 'Bob the Builder'!", 50, 240);
-            case 8 -> g.drawString("To be continued...", 200, 240);
-            default -> g.drawString("The End", 250, 240);
-        }
-    }
-
-    private void drawASCII(Graphics g, String[] ascii, int x, int y) {
-        for (int i = 0; i < ascii.length; i++) {
-            g.drawString(ascii[i], x, y + i * 18);
-        }
-    }
-
-    private final String[] ASCII_BOB = {
-            "  /\\_/\\",
-            " ( o.o )",
-            "  > ^ <"
-    };
-
-    private final String[] ASCII_BOBBUILDER = {
-            "   ____",
-            "  |____|",
-            "  | || |",
-            "   ||||"
-    };
 }

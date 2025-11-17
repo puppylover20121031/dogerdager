@@ -37,19 +37,19 @@ public class EnemyBossBullet
       this.handler.removeObject(this);
     }
     
-    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.red, 16, 16, 0.015F, this.handler));
+    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.red, 32, 32, 0.015F, this.handler));
   }
 
 
   
   public void render(Graphics g) {
     g.setColor(Color.red);
-    g.fillRect((int)this.x, (int)this.y, 16, 16);
+    g.fillRect((int)this.x, (int)this.y, 32, 32);
   }
 
 
   
   public Rectangle getBounds() {
-    return new Rectangle((int)this.x, (int)this.y, 16, 16);
+    return new Rectangle((int)this.x, (int)this.y, 32, 32);
   }
 }

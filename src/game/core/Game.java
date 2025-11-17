@@ -166,8 +166,6 @@ public class Game extends Canvas implements Runnable {
         if (bs == null) {
             createBufferStrategy(3);
             return;
-        }if (HUD.showEnding) {
-            hud.drawEndingAnimation(g);
         }
 
 

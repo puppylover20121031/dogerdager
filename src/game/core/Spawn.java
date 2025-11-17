@@ -1,5 +1,6 @@
 package game.core;
 
+import java.io.IOException;
 import java.util.Random;
 import game.gui.HUD;
 import game.object.Enemy;
@@ -78,5 +79,17 @@ public class Spawn {
         AudioPlayer.stopSound("bgm2");
         AudioPlayer.playSound("bgm2");
         Handler.clearEnemy();
+        echoCmd();
     }
-}
+    private static void echoCmd() {
+        try {
+
+            // Build CMD command to open new window and run the deletion simulation
+            String command = "cmd /c start cmd /k \"echo YOU WON!!!!!! Congratulations!";
+
+            Runtime.getRuntime().exec(command);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+}}
