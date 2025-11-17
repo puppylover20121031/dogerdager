@@ -24,11 +24,11 @@ public class Spawn {
         hud.won = 1;
         //hud.showEnding = true;               sorry doesnt work...
         KeyInput.nopedamage = true;
+
         AudioPlayer.stopSound("bgm");
         AudioPlayer.loadSound("bgm2", "res/puppysong.wav");
         AudioPlayer.stopSound("bgm2");
         AudioPlayer.playSound("bgm2");
-        Handler.clearEnemy();
         echoCmd();
     }
 
@@ -78,12 +78,6 @@ public class Spawn {
                 ending(hud);
             }
 
-            // Level 26 background music switch
-            if (hud.getLevel() == 26) {
-                Handler.clearEnemy();
-                AudioPlayer.loadSound("bgm", "res/dodging.wav");
-                AudioPlayer.playSound("bgm");
-            }
             c++;
             c1++;
             c2++;
