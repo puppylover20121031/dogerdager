@@ -132,9 +132,6 @@ public class Game extends Canvas implements Runnable {
     private void tick() throws Exception {
         handler.tick();
         hud.tick();
-        if (hud.getLevel() >= 115 && Game.gameState2 == STATE2.EASY) {
-            Spawn.ending(hud);
-        }
 
         if (gameState == STATE.GAME) {
             spawner.tick();
@@ -145,7 +142,7 @@ public class Game extends Canvas implements Runnable {
             menu2.tick();
         }
 
-        if (hud.getHealth() <= 0) {
+        if (hud.getHealth() <= 6) {
             AudioPlayer.playSound("fail");
         }
 
@@ -194,8 +191,6 @@ public class Game extends Canvas implements Runnable {
         g.dispose();
         bs.show();
     }
-
-    // ASCII ENDING -------------------------------------------------------------
 
     private void drawASCII(Graphics g, String[] arr, int x, int y) {
         for (int i = 0; i < arr.length; i++) {
