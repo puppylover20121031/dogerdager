@@ -7,7 +7,7 @@ import java.util.Random;
 
 import game.core.Handler;
 import game.enums.ID;
-import game.logic.Trail;
+import game.trail.Trail;
 
 public class EnemyBossBullet
   extends GameObject {

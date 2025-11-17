@@ -1,4 +1,4 @@
-package game.logic;
+package game.trail;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
