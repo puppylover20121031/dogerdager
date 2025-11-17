@@ -8,60 +8,59 @@ import game.core.Handler;
 import game.enums.ID;
 import game.trail.Trail;
 
-public class SmartEnemy
-  extends GameObject
-{
-  private final Handler handler;
-  private GameObject player;
-  
-  public SmartEnemy(int x, int y, ID id, Handler handler1) { // the dumb smart enemy. (unused)
-    super(x, y, id);
-    
-    this.handler = handler1;
-    
-    for (int i = 0; i < Handler.object.size(); i++) {
-      if (Handler.object.get(i).getID() == ID.Player) {
-        this.player = Handler.object.get(i);
-      }
-    } 
+public class SmartEnemy extends GameObject {
+    private final Handler handler;
+    private GameObject player;
+    private final float speed = 2.5f; // adjust to change follow speed
 
-    
-    this.velX = 5.0F;
-    this.velY = 5.0F;
-  }
+    public SmartEnemy(int x, int y, ID id, Handler handler) {
+        super(x, y, id);
+        this.handler = handler;
+        findPlayer();
+    }
 
+    private void findPlayer() {
+        for (int i = 0; i < Handler.object.size(); i++) {
+            if (Handler.object.get(i).getID() == ID.Player) {
+                this.player = Handler.object.get(i);
+                break;
+            }
+        }
+    }
 
-  
-  public void tick() {
-    this.x += this.velX;
-    this.y += this.velY;
-    
-    float diffX = this.x - this.player.getX() - 8.0F;
-    float diffY = this.y - this.player.getY() - 8.0F;
-    
-    float distance = (float)Math.sqrt(((this.x - this.player.getX()) * (this.x - this.player.getX()) + (this.y - this.player.getY()) * (this.y - this.player.getY())));
-    
-    this.velX = (int)(-1.0D / distance * diffX);
-    this.velY = (int)(-1.0D / distance * diffY);
+    public void tick() {
+        if (this.player == null) {
+            findPlayer();
+        }
 
-    
-    if (this.y <= 0.0F || this.y >= 445.0F)
-      this.velY *= -1.0F; 
-    if (this.x <= 0.0F || this.x >= 608.0F)
-      this.velX *= -1.0F; 
-    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.green, 16, 16, 0.05F, this.handler));
-  }
+        if (this.player != null) {
+            // direction from enemy to player
+            float diffX = this.player.getX() - this.x;
+            float diffY = this.player.getY() - this.y;
+            float distance = (float) Math.sqrt(diffX * diffX + diffY * diffY);
 
+            if (distance != 0) {
+                // normalized direction times speed
+                this.velX = (diffX / distance) * speed;
+                this.velY = (diffY / distance) * speed;
+            } else {
+                this.velX = 0;
+                this.velY = 0;
+            }
+        }
 
-  
-  public void render(Graphics g) {
-    g.setColor(Color.green);
-    g.fillRect((int)this.x, (int)this.y, 16, 16);
-  }
+        this.x += this.velX;
+        this.y += this.velY;
 
+        this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.green, 16, 16, 0.05F, this.handler));
+    }
 
-  
-  public Rectangle getBounds() {
-    return new Rectangle((int)this.x, (int)this.y, 16, 16);
-  }
+    public void render(Graphics g) {
+        g.setColor(Color.green);
+        g.fillRect((int) this.x, (int) this.y, 16, 16);
+    }
+
+    public Rectangle getBounds() {
+        return new Rectangle((int) this.x, (int) this.y, 16, 16);
+    }
 }

@@ -15,13 +15,14 @@ import game.enums.STATE;
 import game.enums.STATE2;
 import game.object.Player;
 import game.object.Enemy;
+import game.object.SmartEnemy;
 
 public class Menu2
   extends MouseAdapter {// this is to select the diffilculty(aka gamestate2)
 	Game game;
-  private Handler handler;
-  private Random r = new Random();
-  private Spawn spawner;
+  private final Handler handler;
+  private final Random r = new Random();
+  private final Spawn spawner;
   private HUD hud;
   private static boolean play = false;
   
@@ -33,17 +34,17 @@ public class Menu2
   public void mousePressed(MouseEvent e) {
     int mx = e.getX();
     int my = e.getY();
-    if (game.gameState != STATE.GAME) {
+    if (Game.gameState != STATE.GAME) {
 
     if (mouseOver(mx, my, 200, 150, 200, 64)) {
     	if (!play) {
         try {
-			game.gameState2 = STATE2.EASY;
+			Game.gameState2 = STATE2.EASY;
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
         try {
-				game.gameState = STATE.GAME;
+				Game.gameState = STATE.GAME;
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
@@ -64,7 +65,7 @@ public class Menu2
 		}
         try {
         	if (!play) {
-			this.game.gameState = STATE.GAME;
+			Game.gameState = STATE.GAME;
         	}
 		} catch (Exception e1) {
 			e1.printStackTrace();
@@ -81,9 +82,9 @@ public class Menu2
         	if (!play) {
                 Game.gameState2 = STATE2.HARD;
 
-                this.game.gameState = STATE.GAME;
+                Game.gameState = STATE.GAME;
                 this.handler.addObject(new Player(640 / 2 - 32, 477 / 2 - 32, ID.Player, this.handler));
-                this.handler.addObject(new Enemy(this.r.nextInt(640 - 50), this.r.nextInt(477 - 50), ID.Enemy, this.handler));
+                handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
 
             }
     }
@@ -93,10 +94,7 @@ public class Menu2
 
     boolean mouseOver(int mx, int my, int x, int y, int width, int height) {
     if (mx > x && mx < x + width) {
-      if (my > y && my < y + height) {
-        return true;
-      }
-      return false;
+        return my > y && my < y + height;
     } 
     
     return false;

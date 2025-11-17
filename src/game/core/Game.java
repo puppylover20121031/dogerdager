@@ -185,7 +185,7 @@ public class Game extends Canvas implements Runnable {
         } else if (gameState == STATE.MENU) {
             menu.render(g);
         } else if (gameState == STATE.MENU2) {
-            menu2.render(g);
+            Menu2.render(g);
         }
 
         g.dispose();

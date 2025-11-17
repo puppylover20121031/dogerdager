@@ -14,7 +14,7 @@ public class Menu
   extends MouseAdapter
 {// this is a unused class that has play and quit buttons
   Game game;
-  private Handler handler;
+  private final Handler handler;
   private HUD hud;
   
   public Menu(Game game1, Handler handler1) {
@@ -52,10 +52,7 @@ public class Menu
   
   private boolean mouseOver(int mx, int my, int x, int y, int width, int height) {
     if (mx > x && mx < x + width) {
-      if (my > y && my < y + height) {
-        return true;
-      }
-      return false;
+        return my > y && my < y + height;
     } 
     
     return false;
