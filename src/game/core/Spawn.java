@@ -71,10 +71,10 @@ public class Spawn {
             if (hud.getLevel() == 80 && Game.gameState2 == STATE2.EASY) {
                 ending(hud);
             }
-            if (hud.getLevel() == 120 && Game.gameState2 == STATE2.NORMAL) {
+            if (hud.getLevel() == 200 && Game.gameState2 == STATE2.NORMAL) {
                 ending(hud);
             }
-            if (hud.getLevel() == 200 && Game.gameState2 == STATE2.HARD) {
+            if (hud.getLevel() == 300 && Game.gameState2 == STATE2.HARD) {
                 ending(hud);
             }
 
@@ -100,6 +100,30 @@ public class Spawn {
                 }
                 c2 = 0;
             }
+
+
+
+            switch (hud.getLevel()) {
+                case 35, 80, 100 -> {
+                    Handler.clearEnemy();
+                    handler.addObject(new Boss2 (272, -120, ID.boss2, handler));
+                } case 47, 92, 112 -> {
+                    Handler.clearEnemy();
+                    handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
+                } case 52, 120 -> handler.addObject(new SmartEnemy(r.nextInt(620), r.nextInt(457), ID.smartenemy, handler));
+            }
+
+
+
+
+
+
+
+
+
+
+
+
         }
     }
 }
