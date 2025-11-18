@@ -46,4 +46,8 @@ public class AudioPlayer {
             clip.stop();
         }
     }
+    public static boolean isPlaying(String key) {
+        Clip clip = soundMap.get(key);
+        return clip != null && clip.isRunning();
+    }
 }
