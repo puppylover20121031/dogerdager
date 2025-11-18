@@ -153,9 +153,9 @@ public class KeyInput extends KeyAdapter {
 				}
               }
           } this.c++;
-          if (key == 32) {
+          if (key == 32 && hud1.getLevel() >= 68) {
               this.handler2.addObject(new Arrow(tempObject.getX(), tempObject.getY(), ID.ARROW, this.handler2));
-          } if (key == 101) {
+          } if (key == 101 & debug) {
               this.handler2.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, this.handler2));
           }
       }
