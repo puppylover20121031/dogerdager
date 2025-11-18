@@ -77,7 +77,10 @@ public class KeyInput extends KeyAdapter {
           debug) {
           tempObject.setX(0.0F);
           tempObject.setY(0.0F);
-        } 
+        }
+        if (key == 17) {
+            AudioPlayer.stopSound("bgm");
+        }
         if (key == 50 && 
                 debug) {
           tempObject.setX(500.0F);
@@ -155,7 +158,7 @@ public class KeyInput extends KeyAdapter {
           } this.c++;
           if (key == 32 && hud1.getLevel() >= 68) {
               this.handler2.addObject(new Arrow(tempObject.getX(), tempObject.getY(), ID.ARROW, this.handler2));
-          } if (key == 101 & debug) {
+          } if (key == 12 && debug) {
               this.handler2.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, this.handler2));
           }
       }
