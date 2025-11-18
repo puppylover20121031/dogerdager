@@ -27,21 +27,9 @@ public class Menu
     int my = e.getY();
 
 
-      if (mouseOver(mx, my, 200, 150, 200, 64)) {
-          try {
-              Thread.sleep(1000);
-          } catch (InterruptedException ex) {
-              throw new RuntimeException(ex);
-          }
+      if (mouseOver(mx, my, 200, 250, 200, 64)) {
           Game.gameState = STATE.MENU2;
 
-      }
-      //this.game.gameState = STATE.GAME;
-      try {
-        //this.handler.addObject(new Player(640 / 2 - 32, 477 / 2 - 32, ID.Player, this.handler));
-        //this.handler.addObject(new enemy(this.r.nextInt(640 - 50), this.r.nextInt(477 - 50), ID.Enemy, this.handler));
-      } catch (Exception e1) {
-        //e1.printStackTrace();
       }
     } 
  
@@ -49,14 +37,14 @@ public class Menu
   
   public void mouseReleased(MouseEvent e) {}
 
-  
-  private boolean mouseOver(int mx, int my, int x, int y, int width, int height) {
-    if (mx > x && mx < x + width) {
-        return my > y && my < y + height;
-    } 
-    
-    return false;
-  }
+
+    boolean mouseOver(int mx, int my, int x, int y, int width, int height) {
+        if (mx > x && mx < x + width) {
+            return my > y && my < y + height;
+        }
+
+        return false;
+    }
 
 
   
@@ -66,9 +54,6 @@ public class Menu
   public void render(Graphics g) {
     Font fnt = new Font("arial", Font.BOLD, 50);
     Font fnt2 = new Font("arial", Font.BOLD, 30);
-    g.setFont(fnt);
-    g.setColor(Color.gray);
-    g.drawString("Menu", 230, 60);
     
     g.setFont(fnt2);
     g.setColor(Color.gray);
