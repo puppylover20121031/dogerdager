@@ -37,7 +37,7 @@ public class EnemyBossBullet
       this.handler.removeObject(this);
     }
     
-    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.red, 32, 32, 0.015F, this.handler));
+    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.red, 32, 32, 0.020F, this.handler));
   }
 
 
