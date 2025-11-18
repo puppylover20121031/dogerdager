@@ -41,7 +41,7 @@ public class Game extends Canvas implements Runnable {
 
     private int frames = 0;
 
-    public static STATE gameState = STATE.MENU2;
+    public static STATE gameState = STATE.MENU;
     public static STATE2 gameState2 = STATE2.NOPE;
 
 
@@ -73,7 +73,10 @@ public class Game extends Canvas implements Runnable {
         if (gameState2 != STATE2.NOPE) {
             removeMouseListener(this.menu2);
         }
-        if (gameState != STATE.GAME) {
+        if (gameState != STATE.MENU2) {
+            removeMouseListener(this.menu2);
+        }
+        if (gameState != STATE.MENU) {
             removeMouseListener(this.menu);
         }
         hud.setScore(this.savemanager.getHighScore());
@@ -146,6 +149,7 @@ public class Game extends Canvas implements Runnable {
         } else if (gameState == STATE.MENU) {
             menu.tick();
         } else if (gameState == STATE.MENU2) {
+            addMouseListener(this.menu2);
             menu2.tick();
         }
 
