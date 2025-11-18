@@ -163,6 +163,9 @@ public class Game extends Canvas implements Runnable {
         this.savemanager.setHighScore(hud.getScore());
         if (this.savemanager.getHighScore() < hud.getScore()) {
             this.savemanager.save();
+        } if (AudioPlayer.isPlaying("bgm") == false) {
+            AudioPlayer.loadSound("bgm2", "res/song.wav");
+            AudioPlayer.playSound("bgm2");
         }
 
     }
@@ -197,11 +200,6 @@ public class Game extends Canvas implements Runnable {
         bs.show();
     }
 
-    private void drawASCII(Graphics g, String[] arr, int x, int y) {
-        for (int i = 0; i < arr.length; i++) {
-            g.drawString(arr[i], x, y + i * 18);
-        }
-    }
 
 
     public static float clamp(float value, int min, int max) {
