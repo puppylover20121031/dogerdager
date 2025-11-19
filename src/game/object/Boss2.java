@@ -50,8 +50,7 @@ public class Boss2
         int spawn = this.r.nextInt(120);
         int spawn2 = this.r.nextInt(300);
       if (spawn == 0) {
-          this.handler.addObject(new EnemyBossBullet((int)this.x + 48, (int)this.y + 48, ID.Enemy, this.handler));
-          this.handler.addObject(new EnemyBossBullet((int)this.x - 48, (int)this.y - 48, ID.Enemy, this.handler));
+          this.handler.addObject(new BossArrow((int)this.x + 48, (int)this.y + 48, ID.BossArrow, this.handler));
       }
         if (spawn2 == 0) {
             this.handler.addObject(new SmartEnemy((int)this.x + 48, (int)this.y + 48, ID.smartenemy, this.handler));

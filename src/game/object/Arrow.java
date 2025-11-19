@@ -91,7 +91,7 @@ public class Arrow extends GameObject {// unused arrows that pops up when you pr
             if (getBounds().intersects(tempObject.getBounds())) {
                 tempObject.health -= 100;
             }
-        } if (tempObject.getID() == ID.Player) {
+        } if (tempObject.getID() == ID.Player && Game.gameState2 == STATE2.HARD) {
             Handler.object.remove(tempObject);
             try {
                 Thread.sleep(1000);

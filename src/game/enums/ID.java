@@ -13,5 +13,6 @@ public enum ID {//game object ID's
     boss2,
     boss3,
     boss3Left,
-    boss3Right
+    boss3Right,
+    BossArrow
 }
