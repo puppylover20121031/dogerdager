@@ -9,6 +9,7 @@ public abstract class GameObject {// the core of all game objects
   protected float x;
   protected float y;
     protected boolean ready;
+    protected int health;
 
     public GameObject(float x, float y, ID id) {
     this.x = x;

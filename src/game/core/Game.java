@@ -41,7 +41,7 @@ public class Game extends Canvas implements Runnable {
 
     private int frames = 0;
 
-    public static STATE gameState = STATE.MENU;
+    public static STATE gameState = STATE.MENU2;
     public static STATE2 gameState2 = STATE2.NOPE;
 
 
@@ -231,9 +231,6 @@ public class Game extends Canvas implements Runnable {
         this.savemanager.setHighScore(hud.getScore());
         if (this.savemanager.getHighScore() < hud.getScore()) {
             this.savemanager.save();
-        } if (AudioPlayer.isPlaying("bgm") == false) {
-            AudioPlayer.loadSound("bgm2", "res/song.wav");
-            AudioPlayer.playSound("bgm2");
         }
 
     }
