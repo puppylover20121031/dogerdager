@@ -106,6 +106,10 @@ public class KeyInput extends KeyAdapter {
           if (key == 16 && debug) {
               game.core.Spawn.ending(this.hud1);
           }
+          if (key == 98 && debug) {
+              Handler.clearEnemy();
+              this.handler2.addObject(new Boss3(272, -120, ID.boss3, handler2));
+          }
 
         if (key == 36) {
         	debug = true;

@@ -103,14 +103,21 @@ public class Spawn {
 
 
 
+
+
             switch (hud.getLevel()) {
-                case 35, 80, 100 -> {
+                case 35, 80 -> {
                     Handler.clearEnemy();
                     handler.addObject(new Boss2 (272, -120, ID.boss2, handler));
-                } case 47, 92, 112 -> {
+                } case 47, 92, 132 -> {
                     Handler.clearEnemy();
                     handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
-                } case 52, 120 -> handler.addObject(new SmartEnemy(r.nextInt(620), r.nextInt(457), ID.smartenemy, handler));
+                } case 52, 120, 200 -> handler.addObject(new SmartEnemy(r.nextInt(620), r.nextInt(457), ID.smartenemy, handler));
+                case 100 -> {
+
+                    Handler.clearEnemy();
+                    handler.addObject(new Boss3(272, -120, ID.boss3, handler));
+                }
             }
 
 

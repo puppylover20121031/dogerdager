@@ -8,8 +8,9 @@ import game.enums.ID;
 public abstract class GameObject {// the core of all game objects
   protected float x;
   protected float y;
-  
-  public GameObject(float x, float y, ID id) {
+    protected boolean ready;
+
+    public GameObject(float x, float y, ID id) {
     this.x = x;
     this.y = y;
     this.id = id;
