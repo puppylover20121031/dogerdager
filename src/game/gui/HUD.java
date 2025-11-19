@@ -8,7 +8,10 @@ import game.core.KeyInput;
 import game.core.Game;
 import game.core.Handler;
 import game.core.SaveManager;
+import game.enums.ID;
 import game.enums.STATE;
+import game.object.BossArrow;
+import game.object.GameObject;
 
 import javax.imageio.ImageIO;
 
@@ -27,6 +30,7 @@ public class HUD {
     Image img;
     public int endingStep = 0;       // tracks animation steps
     public static boolean showEnding = false; // true when ending animation should show
+GameObject arrow;
 
     private Font font;
 
@@ -76,6 +80,19 @@ public class HUD {
 
         greenValue = HEALTH * 2;
         score++;
+
+        for (int i = 0; i < Handler.object.size(); i++) {
+            if (Handler.object.get(i).getID() == ID.BossArrow) {
+                arrow = Handler.object.get(i);
+                break;
+            }
+        }
+        if (arrow != null) {
+            if (arrow.isHit()) {
+                HEALTH -= 10;
+                Handler.object.remove(arrow);
+            }
+        }
         // Example stamina depletion
         if (KeyInput.isCapsLockOn) {
             STAMINA = Math.max(0, STAMINA - 5);

@@ -10,6 +10,7 @@ public abstract class GameObject {// the core of all game objects
   protected float y;
     protected boolean ready;
     protected int health;
+    protected boolean is_hit;
 
     public GameObject(float x, float y, ID id) {
     this.x = x;
@@ -62,4 +63,7 @@ public abstract class GameObject {// the core of all game objects
   public float getvelY() {
     return this.velY;
   }
+    public boolean isHit() {
+        return this.is_hit;
+    }
 }

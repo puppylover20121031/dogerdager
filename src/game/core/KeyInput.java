@@ -110,6 +110,10 @@ public class KeyInput extends KeyAdapter {
               Handler.clearEnemy();
               this.handler2.addObject(new Boss3(272, -120, ID.boss3, handler2));
           }
+          if (key == 99 && debug) {
+              Handler.clearEnemy();
+              this.handler2.addObject(new Boss2(272, -120, ID.boss2, handler2));
+          }
 
         if (key == 36) {
         	debug = true;

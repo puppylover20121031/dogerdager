@@ -46,7 +46,7 @@ public class Player extends GameObject {// you the player.(or coder)
   private void collision() throws UnsupportedAudioFileException, IOException, LineUnavailableException {
     for (int i = 0; i < Handler.object.size(); i++) {
       GameObject tempObject = Handler.object.get(i);
-      if ((tempObject.getID() == ID.Enemy || tempObject.getID() == ID.fastenemy || tempObject.getID() == ID.smartenemy || tempObject.getID() == ID.boss1 || tempObject.getID() == ID.boss2) &&
+      if ((tempObject.getID() == ID.Enemy || tempObject.getID() == ID.fastenemy || tempObject.getID() == ID.smartenemy || tempObject.getID() == ID.boss1 || tempObject.getID() == ID.boss2 || tempObject.getID() == ID.boss3 || tempObject.getID() == ID.boss3Right || tempObject.getID() == ID.boss3Left) &&
         getBounds().intersects(tempObject.getBounds()) && 
         !KeyInput.nodamage && !KeyInput.nopedamage) {
         damage(5);
