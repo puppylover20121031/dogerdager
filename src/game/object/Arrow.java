@@ -87,6 +87,19 @@ public class Arrow extends GameObject {// unused arrows that pops up when you pr
                 removeself();
             }
         }
+        if (tempObject.getID() == ID.boss3) {
+            if (getBounds().intersects(tempObject.getBounds())) {
+                tempObject.health -= 100;
+            }
+        } if (tempObject.getID() == ID.Player) {
+            Handler.object.remove(tempObject);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            System.exit(0);
+        }
     }
   }
 }

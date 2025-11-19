@@ -14,7 +14,6 @@ public class Boss3 extends GameObject {
     private final Random r = new Random();
 
     // New: health, phases and attack timers
-    private int health = 1200;
     private int phase = 1;
     private int attackTimer = 0;
     private int burstTimer = 0;
@@ -31,6 +30,7 @@ public class Boss3 extends GameObject {
         super(x, y, id);
         this.handler = handler1;
         this.velX = 0.0F;
+        this.health = 12000;
         this.velY = 3.5F;
     }
 
@@ -145,6 +145,8 @@ public class Boss3 extends GameObject {
         // Remove if health depleted (drop a potion)
         if (health <= 0) {
             handler.addObject(new GoodPotion((int)this.x + 30, (int)this.y + 100, ID.goodPotion, handler));
+            handler.removeObject(boss3Right);
+            handler.removeObject(boss3Left);
             handler.removeObject(this);
         }
     }
@@ -177,7 +179,7 @@ public class Boss3 extends GameObject {
 
         // draw HP bar above boss
         int barW = 96;
-        int hpBar = (int) ((health / 1200.0) * barW);
+        int hpBar = (int) ((health / 12000.0) * barW);
         g.setColor(Color.black);
         g.fillRect((int)this.x, (int)this.y - 8, barW, 6);
         g.setColor(Color.green);
