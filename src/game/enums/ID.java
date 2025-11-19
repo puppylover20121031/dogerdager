@@ -10,5 +10,8 @@ public enum ID {//game object ID's
   boss1,
   Enemy,
   EnemyParent,
-    boss2
+    boss2,
+    boss3,
+    boss3Left,
+    boss3Right
 }
