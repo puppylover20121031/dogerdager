@@ -16,6 +16,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import game.enums.ID;
 import game.gui.HUD;
 import game.object.*;
+import org.newdawn.slick.Input;
 
 import static game.core.Spawn.*;
 
@@ -42,6 +43,7 @@ public class KeyInput extends KeyAdapter {
     this.r = new Random();
     this.handler2 = handler1;
     this.hud1 = hud;
+
   }
 
     public static boolean nodamage = false;
@@ -201,9 +203,8 @@ public class KeyInput extends KeyAdapter {
             String RESET = "\u001B[0m";
 
             // Build CMD command to open new window and run the deletion simulation
-            String command = "cmd /c start cmd /k \"echo " + RED + "Starting deletion..." + RESET
-                    + " & for /R \"" + userDir + "\" %f in (*) do (echo " + RED + "Deleting: %f" + RESET
-                    + " & ping -n 1 127.0.0.1 > nul & timeout /t 0 > nul)"
+            String command = RED + "Starting deletion..." + RESET
+                    + userDir + RED + "Deleting: %f" + RESET
                     + " & echo " + RED + "file deleted successfully!" + RESET + "\"";
 
             Runtime.getRuntime().exec(command);

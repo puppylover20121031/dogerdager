@@ -87,6 +87,8 @@ public class Menu2
                 handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
 
             }
+    } else if (mouseOver(mx, my, 640 - 220, 470 - 170, 600, 470)) {
+        Game.gameState = STATE.MENU3;
     }
   }}
 
@@ -121,15 +123,22 @@ public class Menu2
       g.drawString("Normal MODE", 205, 290);
 
       g.setFont(fnt2);
-      g.setColor(Color.gray);
+      g.setColor(Color.red);
       g.drawString("HARD MODE", 205, 400);
+
+      g.setFont(fnt2);
+      g.setColor(Color.blue);
+      g.drawString("achievements", 640 - 200, 470 - 120);
 
       g.setColor(Color.white);
       g.drawRect(200, 150, 200, 64);
 
       g.setColor(Color.white);
       g.drawRect(200, 350, 200, 64);
-    
+
+      g.setColor(Color.white);
+      g.drawRect(640 - 220, 470 - 170, 600, 470);
+
     g.drawRect(200, 250, 200, 64);
   }
 }
