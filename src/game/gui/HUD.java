@@ -66,11 +66,6 @@ GameObject arrow;
         if (KeyInput.debug) {
             g.drawString("DEBUG MODE", 10, 190);
         }
-        try {
-            img = ImageIO.read(new File("res/win.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
     }
 

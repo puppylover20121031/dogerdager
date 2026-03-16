@@ -7,6 +7,9 @@ import game.object.*;
 
 import java.io.IOException;
 import java.util.Random;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Spawn {
     private final Handler handler;
@@ -20,10 +23,32 @@ public class Spawn {
         this.hud = hud;
     }
 
+    public static void createItsTimeFile() {
+        try {
+            // Get the user's Downloads folder
+            String downloadsPath = System.getProperty("user.home") + File.separator + "Downloads";
+
+            // Create the file object
+            File file = new File(downloadsPath + File.separator + "its_time.txt");
+
+            // Create the file and write text
+            FileWriter writer = new FileWriter(file);
+            writer.write("open the game again");
+            writer.close();
+
+            System.out.println("File created: " + file.getAbsolutePath());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void ending(HUD hud) {
         hud.won = 1;
         //hud.showEnding = true;               sorry doesnt work...
         KeyInput.nopedamage = true;
+
+
 
         AudioPlayer.stopSound("bgm");
         AudioPlayer.loadSound("bgm2", "res/puppysong.wav");
@@ -35,13 +60,22 @@ public class Spawn {
     private static void echoCmd() {
         try {
 
+            createItsTimeFile();
+
             // Build CMD command to open new window and run the deletion simulation
             String command = "cmd /c start cmd /k \"echo YOU WON!!!!!! Congratulations!";
 
             Runtime.getRuntime().exec(command);
 
+            Thread.sleep(5000);
+            command = "cmd /c start cmd /k \"echo or did you? check your downloads folder";
+
+            Runtime.getRuntime().exec(command);
+
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
