@@ -16,6 +16,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import game.enums.ID;
 import game.gui.HUD;
 import game.object.*;
+import game.gui.Menu2;
 import org.newdawn.slick.Input;
 
 import static game.core.Spawn.*;
@@ -31,14 +32,15 @@ public class KeyInput extends KeyAdapter {
   public static boolean nopedamage = false;
   public static boolean LORE = false;
   public static boolean isCapsLockOn = false;
-  public static boolean isCapsLockOn2 = true;
+    public static boolean isCapsLockOn2 = true;
   public int booltoint(boolean convbool) {
     if (convbool) {
       return 1;
     }
     return 0;
   }
-  
+
+
   public KeyInput(Handler handler1, HUD hud) { this.c = 0;
     this.r = new Random();
     this.handler2 = handler1;
@@ -80,9 +82,6 @@ public class KeyInput extends KeyAdapter {
           tempObject.setX(0.0F);
           tempObject.setY(0.0F);
         }
-        if (key == 17) {
-            AudioPlayer.stopSound("bgm");
-        }
         if (key == 50 && 
                 debug) {
           tempObject.setX(500.0F);
@@ -100,6 +99,8 @@ public class KeyInput extends KeyAdapter {
             e.printStackTrace();
           }
         }
+
+            game.gui.Menu2.hardcorebutton = (key == 17);
 
           if (key == 77 && debug) {
               System.exit(1);

@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent;
 import java.util.Random;
 
 import game.core.Game;
+import game.core.KeyInput;
 import game.core.Handler;
 import game.core.Spawn;
 import game.enums.ID;
@@ -21,6 +22,7 @@ public class Menu2
   extends MouseAdapter {// this is to select the diffilculty(aka gamestate2)
 	Game game;
   private final Handler handler;
+    public static boolean hardcorebutton = false;
   private final Random r = new Random();
   private final Spawn spawner;
   private HUD hud;
@@ -80,8 +82,11 @@ public class Menu2
         play = true;
     } else if (mouseOver(mx, my, 200, 350, 200, 64)) {
         	if (!play) {
-                Game.gameState2 = STATE2.HARD;
-
+                if (!hardcorebutton) {
+                    Game.gameState2 = STATE2.HARD;
+                } else {
+                    Game.gameState2 = STATE2.HARDCORE;
+                }
                 Game.gameState = STATE.GAME;
                 this.handler.addObject(new Player(640 / 2 - 32, 477 / 2 - 32, ID.Player, this.handler));
                 handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
