@@ -14,6 +14,7 @@ import game.enums.STATE2;
 import game.gui.HUD;
 import game.gui.Menu;
 import game.gui.Menu2;
+import game.gui.Menu3;
 import game.gui.Window;
 
 import javax.swing.*;
@@ -33,6 +34,7 @@ public class Game extends Canvas implements Runnable {
 
     private final Menu menu;
     private final Menu2 menu2;
+    private final Menu3 menu3;
     public static Graphics g2;
     private Graphics g;
 
@@ -128,9 +130,10 @@ public class Game extends Canvas implements Runnable {
         new game.devchat();
         this.menu = new Menu(this, this.handler);
         this.menu2 = new Menu2(this, this.handler);
+        this.menu3 = new Menu3(this, this.handler);
         this.savemanager = new SaveManager();
 
-        AudioPlayer.loadSound("bgm", "res/3songs.wav");
+        AudioPlayer.loadSound("bgm", "res/song.wav");
         AudioPlayer.playSound("bgm");
 
         addKeyListener(new KeyInput(this.handler, this.hud));
@@ -214,11 +217,17 @@ public class Game extends Canvas implements Runnable {
         if (gameState == STATE.GAME) {
             spawner.tick();
             removeMouseListener(menu2);
+            removeMouseListener(menu3);
         } else if (gameState == STATE.MENU) {
             menu.tick();
         } else if (gameState == STATE.MENU2) {
+            removeMouseListener(menu3);
             addMouseListener(this.menu2);
             menu2.tick();
+        } else if (gameState == STATE.MENU3) {
+            addMouseListener(this.menu3);
+            removeMouseListener(menu2);
+            menu3.tick();
         }
 
         if (hud.getHealth() <= 6) {
@@ -259,6 +268,8 @@ public class Game extends Canvas implements Runnable {
             menu.render(g);
         } else if (gameState == STATE.MENU2) {
             Menu2.render(g);
+        } else if (gameState == STATE.MENU3) {
+            Menu3.render(g);
         }
 
         g.dispose();
