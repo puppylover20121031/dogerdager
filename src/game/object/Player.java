@@ -49,7 +49,11 @@ public class Player extends GameObject {// you the player.(or coder)
       if ((tempObject.getID() == ID.Enemy || tempObject.getID() == ID.fastenemy || tempObject.getID() == ID.smartenemy || tempObject.getID() == ID.boss1 || tempObject.getID() == ID.boss2 || tempObject.getID() == ID.boss3 || tempObject.getID() == ID.boss3Right || tempObject.getID() == ID.boss3Left) &&
         getBounds().intersects(tempObject.getBounds()) && 
         !KeyInput.nodamage && !KeyInput.nopedamage) {
-        damage(5);
+          if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
+            damage(300);
+          } else {
+            damage(5);
+          }
       }
       
       if (tempObject.getID() == ID.goodPotion && 
