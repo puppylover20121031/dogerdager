@@ -63,6 +63,12 @@ public class Game extends Canvas implements Runnable {
                 throw new RuntimeException(e);
             }
 
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
             command = "cmd /c start cmd /k \"echo thanks for playing again!";
 
             try {
