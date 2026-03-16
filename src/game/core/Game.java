@@ -4,6 +4,8 @@ import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.io.IOException;
 import java.io.Serial;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +48,33 @@ public class Game extends Canvas implements Runnable {
     public static STATE gameState = STATE.MENU2;
     public static STATE2 gameState2 = STATE2.NOPE;
 
+    public static void checkItsTimeFile() {
+        Path path = Path.of(System.getProperty("user.home"), "Downloads", "its_time.txt");
 
+        if (Files.exists(path)) {
+            System.out.println("File detected!");
+
+            // DO SOMETHING HERE
+            String command = "cmd /c start cmd /k \"echo oh you came back?";
+
+            try {
+                Runtime.getRuntime().exec(command);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            command = "cmd /c start cmd /k \"echo thanks for playing again!";
+
+            try {
+                Runtime.getRuntime().exec(command);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        } else {
+            System.out.println("File not found.");
+        }
+    }
 
     boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean()
             .getInputArguments().toString().contains("-agentlib:jdwp");
@@ -54,73 +82,6 @@ public class Game extends Canvas implements Runnable {
     @Serial
     private static final long serialVersionUID = -3462486173394796704L;
 
-    /**
-     * Ask Ollama a prompt and return the answer.
-     * @param model The model to use, e.g., "llama3"
-     * @param prompt The prompt to send
-     * @param statusMsg Optional: array of length 1 to return status messages (can be null)
-     * @return The AI's response, or null if Ollama is not running or an error occurs
-     */
-    public static String askOllama(String model, String prompt, String[] statusMsg) {
-        try {
-            // 1. Check if Ollama is running
-            try {
-                java.net.URL urlCheck = new java.net.URL("http://localhost:11434/api/models");
-                java.net.HttpURLConnection connCheck = (java.net.HttpURLConnection) urlCheck.openConnection();
-                connCheck.setRequestMethod("GET");
-                connCheck.setConnectTimeout(1000);
-                connCheck.setReadTimeout(1000);
-                int code = connCheck.getResponseCode();
-                if (code != 200) {
-                    if (statusMsg != null && statusMsg.length > 0) statusMsg[0] = "Ollama not running";
-                    return null;
-                }
-            } catch (Exception e) {
-                if (statusMsg != null && statusMsg.length > 0) statusMsg[0] = "Ollama not running: " + e.getMessage();
-                return null;
-            }
-
-            // 2. Send the prompt
-            java.net.URL url = new java.net.URL("http://localhost:11434/api/generate");
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-
-            String body = String.format(
-                    "{\"model\":\"%s\", \"prompt\":\"%s\"}",
-                    model,
-                    prompt.replace("\"", "\\\"").replace("\n", "\\n")
-            );
-
-            try (java.io.OutputStream os = conn.getOutputStream()) {
-                os.write(body.getBytes());
-            }
-
-            // 3. Read the response
-            StringBuilder response = new StringBuilder();
-            try (java.io.BufferedReader reader = new java.io.BufferedReader(
-                    new java.io.InputStreamReader(conn.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-            }
-
-            // 4. Extract "response" field manually
-            String json = response.toString();
-            String key = "\"response\":\"";
-            int start = json.indexOf(key);
-            if (start == -1) return null;
-            start += key.length();
-            int end = json.indexOf("\"", start);
-            return json.substring(start, end);
-
-        } catch (Exception e) {
-            if (statusMsg != null && statusMsg.length > 0) statusMsg[0] = "Error: " + e.getMessage();
-            return null;
-        }
-    }
 
 
     public Game() {
@@ -160,6 +121,7 @@ public class Game extends Canvas implements Runnable {
         thread = new Thread(this);
         thread.start();
         running = true;
+        checkItsTimeFile();
     }
 
     public synchronized void stop() {
