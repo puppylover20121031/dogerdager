@@ -52,7 +52,7 @@ public class BossArrow extends GameObject {// unused arrows that pops up when yo
               this.velY = 0;
           }
       }
-      this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.blue, 32, 32, 0.05F, this.handler));
+      this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.blue, 16, 16, 0.05F, this.handler));
       this.x += this.velX;
       this.y += this.velY;
 
@@ -64,7 +64,7 @@ public class BossArrow extends GameObject {// unused arrows that pops up when yo
 
   public void render(Graphics g) {
     g.setColor(Color.BLUE);
-    g.fillRect((int)this.x, (int)this.y, 32, 32);
+    g.fillRect((int)this.x, (int)this.y, 16, 16);
   }
 
   public Rectangle getBounds() {
