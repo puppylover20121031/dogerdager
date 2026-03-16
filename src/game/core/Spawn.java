@@ -55,7 +55,7 @@ public class Spawn {
             if (hud.getLevel() == 5)
                 handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
             if (hud.getLevel() == 8 || hud.getLevel() == 6 || hud.getLevel() == 10)
-                if (Game.gameState2 == STATE2.HARD) {
+                if (Game.gameState2 == STATE2.HARD || Game.gameState2 == STATE2.HARDCORE) {
                     handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
                 } else {
                     handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));
@@ -74,7 +74,7 @@ public class Spawn {
             if (hud.getLevel() == 200 && Game.gameState2 == STATE2.NORMAL) {
                 ending(hud);
             }
-            if (hud.getLevel() == 300 && Game.gameState2 == STATE2.HARD) {
+            if (hud.getLevel() == 300 && Game.gameState2 == STATE2.HARD || Game.gameState2 == STATE2.HARDCORE) {
                 ending(hud);
             }
 
@@ -93,7 +93,7 @@ public class Spawn {
                 c = 0;
             }
             if (c2 >= 10 && hud.won == 0 && (hud.getLevel() > 25)) {
-                if (Game.gameState2 == STATE2.HARD) {
+                if (Game.gameState2 == STATE2.HARD || Game.gameState2 == STATE2.HARDCORE) {
                     handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
                 } else {
                     handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));

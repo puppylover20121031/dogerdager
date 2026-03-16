@@ -75,8 +75,13 @@ GameObject arrow;
     }
 
     public void tick() {
-        HEALTH = (int) Game.clamp(HEALTH, 0, 300);
         STAMINA = Game.clamp((float) STAMINA, 0, 1200);
+
+        if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
+            HEALTH = (int) Game.clamp(HEALTH, 0, 1);
+        } else {
+            HEALTH = (int) Game.clamp(HEALTH, 0, 300);
+        }
 
         greenValue = HEALTH * 2;
         score++;
