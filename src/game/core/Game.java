@@ -134,6 +134,7 @@ public class Game extends Canvas implements Runnable {
         this.savemanager = new SaveManager();
 
         AudioPlayer.loadSound("bgm", "res/song.wav");
+        AudioPlayer.loopSound("bgm");
         AudioPlayer.playSound("bgm");
 
         addKeyListener(new KeyInput(this.handler, this.hud));

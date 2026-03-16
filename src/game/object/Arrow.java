@@ -38,30 +38,7 @@ public class Arrow extends GameObject {// unused arrows that pops up when you pr
     this.x += this.velX;
     this.y += this.velY;
      collision();
-     if (Game.gameState2 == STATE2.HARD) {
-         if (this.player == null) {
-             findPlayer();
-         }
 
-         if (this.player != null) {
-             // direction from enemy to player
-             float diffX = this.player.getX() - this.x;
-             float diffY = this.player.getY() - this.y;
-             float distance = (float) Math.sqrt(diffX * diffX + diffY * diffY);
-
-             if (distance != 0) {
-                 // normalized direction times speed
-                 this.velX = (diffX / distance) * speed;
-                 this.velY = (diffY / distance) * speed;
-             } else {
-                 this.velX = 0;
-                 this.velY = 0;
-             }
-         } else {
-             this.x += this.velX;
-             this.y += this.velY;
-         }
-     }
   }
 
   public void render(Graphics g) {
@@ -91,14 +68,6 @@ public class Arrow extends GameObject {// unused arrows that pops up when you pr
             if (getBounds().intersects(tempObject.getBounds())) {
                 tempObject.health -= 100;
             }
-        } if (tempObject.getID() == ID.Player && Game.gameState2 == STATE2.HARD) {
-            Handler.object.remove(tempObject);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            System.exit(0);
         }
     }
   }
