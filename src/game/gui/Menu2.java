@@ -3,6 +3,8 @@ package game.gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Random;
@@ -29,9 +31,12 @@ public class Menu2
   private static boolean play = false;
   
   public Menu2(Game game2, Handler handler1) {
+      new keyinput2(handler1, hud);
     this.handler = handler1;
     this.spawner = new Spawn(handler, hud);
   }
+
+
   
   public void mousePressed(MouseEvent e) {
     int mx = e.getX();
