@@ -3,18 +3,18 @@ package game.core;
 import java.io.*;
 import java.nio.file.*;
 
-public class SaveManager {
+public class SaveManager2 {
 
     private static final String SAVE_FILE_PATH;
-    private int highScore;
+    private boolean curBool;
 
     static {
         // Save in user’s home directory for cross-platform safety
         String home = System.getProperty("user.home");
-        SAVE_FILE_PATH = Paths.get(home,  "unpuppyable_game_save1.sav").toString();
+        SAVE_FILE_PATH = Paths.get(home, "unpuppyable_game_save2.sav").toString();
     }
 
-    public SaveManager() {
+    public SaveManager2() {
         load();
     }
 
@@ -23,17 +23,18 @@ public class SaveManager {
         Path path = Paths.get(SAVE_FILE_PATH);
 
         if (!Files.exists(path)) {
-            highScore = 0;
+            curBool = Game.askYesNo("do you allow access to your desktop folder for creating/reading text files? this will only affect files created by the game. this WILL override any text files named \"its_time.txt\"", "its fine if you say no.");
+            
             save();
             return;
         }
 
         try {
             String line = Files.readString(path).trim();
-            highScore = Integer.parseInt(line);
+            curBool = Boolean.parseBoolean(line);
         } catch (Exception e) {
             // If corrupted, reset
-            highScore = 0;
+            curBool = false;
             save();
         }
     }
@@ -43,7 +44,7 @@ public class SaveManager {
         Path path = Paths.get(SAVE_FILE_PATH);
 
         try {
-            Files.writeString(path, Integer.toString(highScore));
+            Files.writeString(path, Boolean.toString(curBool));
         } catch (IOException e) {
             throw new RuntimeException("Failed to save file", e);
         }
@@ -53,14 +54,12 @@ public class SaveManager {
     // Public API
     // ------------------------------
 
-    public int getHighScore() {
-        return highScore;
+    public boolean getBool() {
+        return curBool;
     }
 
-    public void setHighScore(int newScore) {
-        if (newScore > highScore) {
-            highScore = newScore;
-            save();
-        }
+    public void setBool(boolean newBool) {
+        curBool = newBool;
+        save();
     }
 }

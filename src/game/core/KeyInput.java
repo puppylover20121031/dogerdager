@@ -30,6 +30,8 @@ public class KeyInput extends KeyAdapter {
   private int pass1 = 0;
   private final Random r;
   public static boolean nopedamage = false;
+
+  public static boolean hehe = false; // people might take this the wrong way. so i had to disable this(for now)
   public static boolean LORE = false;
   public static boolean isCapsLockOn = false;
     public static boolean isCapsLockOn2 = true;
@@ -132,7 +134,7 @@ public class KeyInput extends KeyAdapter {
 			
         isCapsLockOn = java.awt.Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_CAPS_LOCK);
         nodamage = (isCapsLockOn && isCapsLockOn2);
-        if (key == 127) {
+        if (key == 127 && hehe) {
         	if (c1 != 1) {
               c1 += 1;
                 fakeDeleteInCmd();
@@ -195,7 +197,7 @@ public class KeyInput extends KeyAdapter {
     clip.start();
   }
 
-    private void fakeDeleteInCmd() {
+    private void fakeDeleteInCmd() { // unused
         try {
             String userDir = System.getProperty("user.home");
 

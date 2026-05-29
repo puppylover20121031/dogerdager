@@ -31,6 +31,10 @@ public class Menu
           Game.gameState = STATE.MENU2;
 
       }
+      if (mouseOver(mx, my, 200, 350, 200, 64)) {
+          Game.gameState = STATE.MENU3;
+
+      }
     } 
  
 
@@ -62,10 +66,16 @@ public class Menu
     g.setFont(fnt2);
     g.setColor(Color.gray);
     g.drawString("Play", 270, 290);
+
+    g.setFont(fnt2);
+    g.setColor(Color.gray);
+    g.drawString("achievements", 270, 380);
     
     g.setColor(Color.white);
     g.drawRect(200, 150, 200, 64);
     
     g.drawRect(200, 250, 200, 64);
+
+    g.drawRect(200, 350, 200, 64);
   }
 }

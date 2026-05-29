@@ -2,6 +2,8 @@ package game.core;
 
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serial;
 import java.nio.file.Files;
@@ -40,6 +42,8 @@ public class Game extends Canvas implements Runnable {
     public static Graphics g2;
     private Graphics g;
 
+    private static boolean PlayMusic = true;
+
     public static Map<String, Sound> soundMap = new HashMap<>();
     public static Map<String, Music> musicMap = new HashMap<>();
 
@@ -48,13 +52,27 @@ public class Game extends Canvas implements Runnable {
     public static STATE gameState = STATE.MENU2;
     public static STATE2 gameState2 = STATE2.NOPE;
 
-    public static void checkItsTimeFile() {
-        Path path = Path.of(System.getProperty("user.home"), "Downloads", "its_time.txt");
+public static boolean askYesNo(String message, String title) {
+        // A parent frame is optional; using null centers on screen
+        int result = JOptionPane.showConfirmDialog(
+                null,                  // parent component
+                message,               // message
+                title,                 // dialog title
+                JOptionPane.YES_NO_OPTION,      // option type [InlineCitation-1-Java JOptionPane - GeeksforGeeks](https://www.geeksforgeeks.org/java/java-joptionpane/) [InlineCitation-3-JOptionPane (Java SE 22 & JDK 22)](https://docs.oracle.com/en/java/javase/22/docs/api/java.desktop/javax/swing/JOptionPane.html)
+                JOptionPane.QUESTION_MESSAGE    // message type
+        );
 
-        if (Files.exists(path)) {
+        // Validate result: YES_OPTION = 0, NO_OPTION = 1 [InlineCitation-2-How to Create Pop Window in Java | Delft Stack](https://www.delftstack.com/howto/java/java-pop-up-window/)
+        return result == JOptionPane.YES_OPTION;
+    }
+
+    public static void checkItsTimeFile() {
+        Path path = Path.of(System.getProperty("user.home"), "Desktop", "its_time.txt");
+        Path path2 = Path.of(System.getProperty("user.home"), "OneDrive", "Desktop", "its_time.txt");
+
+        if (Files.exists(path) | Files.exists(path2)) {
             System.out.println("File detected!");
 
-            // DO SOMETHING HERE
             String command = "cmd /c start cmd /k \"echo oh you came back?";
 
             try {
@@ -77,6 +95,8 @@ public class Game extends Canvas implements Runnable {
                 throw new RuntimeException(e);
             }
 
+
+
         } else {
             System.out.println("File not found.");
         }
@@ -84,6 +104,7 @@ public class Game extends Canvas implements Runnable {
 
     boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean()
             .getInputArguments().toString().contains("-agentlib:jdwp");
+    public SaveManager2 savemanager2;
 
     @Serial
     private static final long serialVersionUID = -3462486173394796704L;
@@ -91,33 +112,31 @@ public class Game extends Canvas implements Runnable {
 
 
     public Game() {
+        this.savemanager = new SaveManager();
+        this.savemanager2 = new SaveManager2();
         this.handler = new Handler();
         this.hud = new HUD();
-        this.spawner = new Spawn(this.handler, this.hud);
+        this.spawner = new Spawn(this.handler, this.hud, savemanager2);
         new game.devchat();
         this.menu = new Menu(this, this.handler);
-        this.menu2 = new Menu2(this, this.handler);
-        this.menu3 = new Menu3(this, this.handler);
-        this.savemanager = new SaveManager();
+        this.menu2 = new Menu2(this, this.handler, savemanager2);
+        this.menu3 = new Menu3(this, this.handler, savemanager2);
 
-        AudioPlayer.loadSound("bgm", "res/song.wav");
-        AudioPlayer.loopSound("bgm");
-        AudioPlayer.playSound("bgm");
+
+        if (PlayMusic) {
+
+            AudioPlayer.loadSound("bgm", "res/song.wav");
+            AudioPlayer.loopSound("bgm");
+            AudioPlayer.playSound("bgm");
+
+        }
 
         addKeyListener(new KeyInput(this.handler, this.hud));
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
+        addMouseListener(this.menu3);
         AudioPlayer.loadSound("fail", "res/losing.wav");
 
-        if (gameState2 != STATE2.NOPE) {
-            removeMouseListener(this.menu2);
-        }
-        if (gameState != STATE.MENU2) {
-            removeMouseListener(this.menu2);
-        }
-        if (gameState != STATE.MENU) {
-            removeMouseListener(this.menu);
-        }
         hud.setScore(this.savemanager.getHighScore());
 
         new Window(WIDTH, HEIGHT, "the doger dager", this);
@@ -127,7 +146,9 @@ public class Game extends Canvas implements Runnable {
         thread = new Thread(this);
         thread.start();
         running = true;
-        checkItsTimeFile();
+        if (savemanager2.getBool()) {
+            checkItsTimeFile();
+        }
     }
 
     public synchronized void stop() {
@@ -183,23 +204,28 @@ public class Game extends Canvas implements Runnable {
         handler.tick();
         hud.tick();
 
-        if (gameState == STATE.GAME) {
-            spawner.tick();
-            removeMouseListener(menu2);
-            removeMouseListener(menu3);
-        } else if (gameState == STATE.MENU) {
-            menu.tick();
-        } else if (gameState == STATE.MENU2) {
-            removeMouseListener(menu3);
+
+        if (gameState2 != STATE2.NOPE) {
+            removeMouseListener(this.menu2);
+        }
+        if (gameState != STATE.MENU2) {
+            removeMouseListener(this.menu2);
+        }else {
             addMouseListener(this.menu2);
-            menu2.tick();
-        } else if (gameState == STATE.MENU3) {
-            addMouseListener(this.menu3);
-            removeMouseListener(menu2);
-            menu3.tick();
+        }
+        if (gameState != STATE.MENU) {
+            removeMouseListener(this.menu);
+        } else {
+            addMouseListener(this.menu);
+        }
+        if (gameState != STATE.MENU2) {
+            removeMouseListener(this.menu2);
+        } else {
+            addMouseListener(this.menu2);
         }
 
-        if (hud.getHealth() <= 6) {
+
+        if (hud.getHealth() == 0) {
             AudioPlayer.playSound("fail");
         }
 

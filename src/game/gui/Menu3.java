@@ -2,6 +2,7 @@ package game.gui;
 
 import game.core.Game;
 import game.core.Handler;
+import game.core.SaveManager2;
 import game.core.Spawn;
 import game.enums.ID;
 import game.enums.STATE;
@@ -15,7 +16,7 @@ import java.awt.event.MouseEvent;
 import java.util.Random;
 
 public class Menu3
-  extends MouseAdapter {// this is to select the diffilculty(aka gamestate2)
+  extends MouseAdapter {
 	Game game;
   private final Handler handler;
   private final Random r = new Random();
@@ -23,9 +24,9 @@ public class Menu3
   private HUD hud;
   private static boolean play = false;
 
-  public Menu3(Game game2, Handler handler1) {
+  public Menu3(Game game2, Handler handler1, SaveManager2 manager2) {
     this.handler = handler1;
-    this.spawner = new Spawn(handler, hud);
+    this.spawner = new Spawn(handler, hud, manager2 );
   }
   
   public void mousePressed(MouseEvent e) {
@@ -36,21 +37,29 @@ public class Menu3
     if (mouseOver(mx, my, 200, 150, 200, 64)) {
         Game.gameState = STATE.MENU2;
         try {
-            Thread.sleep(1000);
+            Thread.sleep(200);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     } else if (mouseOver(mx, my, 200, 250, 200, 64)) {
         Game.gameState = STATE.MENU2;
         try {
-            Thread.sleep(1000);
+            Thread.sleep(200);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     } else if (mouseOver(mx, my, 200, 350, 200, 64)) {
         Game.gameState = STATE.MENU2;
         try {
-            Thread.sleep(1000);
+            Thread.sleep(200);
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+
+    } else if (mouseOver(mx, my, 50, 50, 100, 64)) {
+        Game.gameState = STATE.MENU2;
+        try {
+            Thread.sleep(200);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
@@ -91,13 +100,21 @@ public class Menu3
       g.setFont(fnt2);
       g.setColor(Color.red);
       g.drawString("3", 205, 400);
+      
+      g.setFont(fnt2);
+      g.setColor(Color.white);
+      g.drawString("back", 60, 100);
 
       g.setColor(Color.white);
       g.drawRect(200, 150, 200, 64);
 
       g.setColor(Color.white);
       g.drawRect(200, 350, 200, 64);
-    
-    g.drawRect(200, 250, 200, 64);
+
+      g.setColor(Color.white);
+      g.drawRect(200, 250, 200, 64);
+      
+      g.setColor(Color.white);
+      g.drawRect(50, 50, 100, 64);
   }
 }
