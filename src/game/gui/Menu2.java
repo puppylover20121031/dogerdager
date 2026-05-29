@@ -11,6 +11,7 @@ import java.util.Random;
 
 import game.core.Game;
 import game.core.KeyInput;
+import game.core.SaveManager2;
 import game.core.Handler;
 import game.core.Spawn;
 import game.enums.ID;
@@ -30,10 +31,10 @@ public class Menu2
   private HUD hud;
   private static boolean play = false;
   
-  public Menu2(Game game2, Handler handler1) {
-      new keyinput2(handler1, hud);
+  public Menu2(Game game2, Handler handler1, SaveManager2 manager2) {
+      new keyinput2(handler1, hud, manager2);
     this.handler = handler1;
-    this.spawner = new Spawn(handler, hud);
+    this.spawner = new Spawn(handler, hud, manager2);
   }
 
 

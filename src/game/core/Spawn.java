@@ -16,24 +16,34 @@ public class Spawn {
     private final HUD hud;
     private final Random r = new Random();
     private int scoreKeep = 0;
+    private static boolean create = false;
     private int c = 0, c1 = 0, c2 = 0;
+    private static String downloadsPath;
 
-    public Spawn(Handler handler, HUD hud) {
+    public Spawn(Handler handler, HUD hud, SaveManager2 manager2) {
         this.handler = handler;
         this.hud = hud;
+        if (manager2.getBool())  {
+            create = true;
+        }
     }
 
-    public static void createItsTimeFile() {
+    public static void createItsTimeFile(boolean onedrive) {
         try {
             // Get the user's Downloads folder
-            String downloadsPath = System.getProperty("user.home") + File.separator + "Downloads";
+            if (onedrive) {
+                downloadsPath = System.getProperty("user.home") + File.separator + "OneDrive" + File.separator + "Desktop";
+            } else {
+                
+            downloadsPath = System.getProperty("user.home") + File.separator + "Desktop";
 
+            }
             // Create the file object
             File file = new File(downloadsPath + File.separator + "its_time.txt");
 
             // Create the file and write text
             FileWriter writer = new FileWriter(file);
-            writer.write("open the game again");
+            writer.write("open the game again for a cool thing \nDO NOT DELETE! unless you dont wanna see the suprise again. ");
             writer.close();
 
             System.out.println("File created: " + file.getAbsolutePath());
@@ -45,7 +55,7 @@ public class Spawn {
 
     public static void ending(HUD hud) {
         hud.won = 1;
-        //hud.showEnding = true;               sorry doesnt work...
+        //hud.showEnding = true;   -- sorry doesnt work...
         KeyInput.nopedamage = true;
 
 
@@ -60,15 +70,18 @@ public class Spawn {
     private static void echoCmd() {
         try {
 
-            createItsTimeFile();
+            if (create) {
+                createItsTimeFile(false);
+                createItsTimeFile(true);
+             }
 
             // Build CMD command to open new window and run the deletion simulation
             String command = "cmd /c start cmd /k \"echo YOU WON!!!!!! Congratulations!";
 
             Runtime.getRuntime().exec(command);
 
-            Thread.sleep(5000);
-            command = "cmd /c start cmd /k \"echo or did you? check your downloads folder";
+            Thread.sleep(2000);
+            command = "cmd /c start cmd /k \"echo or did you? check your desktop folder";
 
             Runtime.getRuntime().exec(command);
 

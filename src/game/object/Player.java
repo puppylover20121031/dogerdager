@@ -50,7 +50,7 @@ public class Player extends GameObject {// you the player.(or coder)
         getBounds().intersects(tempObject.getBounds()) && 
         !KeyInput.nodamage && !KeyInput.nopedamage) {
           if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
-            damage(300);
+            HUD.HEALTH = 0;
           } else {
             damage(5);
           }
@@ -59,7 +59,9 @@ public class Player extends GameObject {// you the player.(or coder)
       if (tempObject.getID() == ID.goodPotion && 
         getBounds().intersects(tempObject.getBounds()) && 
         HUD.HEALTH != 100) {
-        HUD.HEALTH = 300;
+          if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
+            HUD.HEALTH = 300;
+          }
         this.handler2.removeObject(tempObject);
       } 
     } 

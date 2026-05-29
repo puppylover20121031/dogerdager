@@ -73,7 +73,7 @@ GameObject arrow;
         STAMINA = Game.clamp((float) STAMINA, 0, 1200);
 
         if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
-            HEALTH = (int) Game.clamp(HEALTH, 0, 1);
+            HEALTH = (int) Game.clamp(HEALTH, 0, 10);
         } else {
             HEALTH = (int) Game.clamp(HEALTH, 0, 300);
         }
@@ -107,7 +107,6 @@ GameObject arrow;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            System.exit(0);
         }
     }
 
