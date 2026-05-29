@@ -23,6 +23,29 @@ import javax.swing.*;
 
 public class Game extends Canvas implements Runnable {
 
+  static final int WIDTH = 640;
+  static final int HEIGHT = 477;
+  private Thread thread;
+  private boolean running = false;
+  private final HUD hud;
+  public Graphics g;
+  int frames = 0;
+  public static Graphics g2;
+  private final Spawn spawner;
+  private final Handler handler;
+
+  private final Menu menu;
+  public Menu2 menu2;
+
+  public static STATE gameState = STATE.MENU2;
+  public static STATE2 gameState2 = STATE2.NOPE;
+
+  
+  public Game() {
+    this.handler = new Handler();
+    this.menu = new Menu(this, this.handler); // this is the menu that needs to goto menu2.
+    if (gameState == STATE.MENU2) {
+        menu2 = new Menu2(this, this.handler);
     static final int WIDTH = 640;
     static final int HEIGHT = 477;
     private final SaveManager savemanager;
