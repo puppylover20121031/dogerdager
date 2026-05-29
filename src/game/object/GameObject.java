@@ -5,11 +5,14 @@ import java.awt.Rectangle;
 
 import game.enums.ID;
 
-public abstract class GameObject {
+public abstract class GameObject {// the core of all game objects
   protected float x;
   protected float y;
-  
-  public GameObject(float x, float y, ID id) {
+    protected boolean ready;
+    protected int health;
+    protected boolean is_hit;
+
+    public GameObject(float x, float y, ID id) {
     this.x = x;
     this.y = y;
     this.id = id;
@@ -60,4 +63,7 @@ public abstract class GameObject {
   public float getvelY() {
     return this.velY;
   }
+    public boolean isHit() {
+        return this.is_hit;
+    }
 }

@@ -4,17 +4,19 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
+import game.core.Game;
 import game.core.Handler;
 import game.enums.ID;
+import game.enums.STATE2;
 import game.gui.HUD;
-import game.logic.Trail;
+import game.trail.Trail;
 
 public class Enemy
   extends GameObject {
   private final Handler handler;
 
   private final HUD hud;
-  public Enemy(int x, int y, ID id, Handler handler1) {
+  public Enemy(int x, int y, ID id, Handler handler1) {//the red enemys
     super(x, y, id);
     
     this.handler = handler1;
@@ -22,6 +24,10 @@ public class Enemy
     
     this.velX = 5.0F;
     this.velY = 5.0F;
+    if (Game.gameState2 == STATE2.HARD) {
+    	this.velX = 10.0F;
+    	this.velY = 10.0F;
+    }
     this.hud = new HUD();
   }
 
@@ -38,7 +44,7 @@ public class Enemy
     	if (!(this.hud.getLevel() >= 100)) {
       this.velX *= -1.0F; 
     	}
-    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.red, 24, 24, 0.015F, this.handler));
+    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.red, 24, 24, 0.05F, this.handler));
     if (this.hud.getLevel() >= 100) {
 		this.velX = 0;
 		this.velY = 0;
