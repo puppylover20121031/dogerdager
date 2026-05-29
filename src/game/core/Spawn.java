@@ -1,84 +1,170 @@
 package game.core;
 
-import java.util.Random;
-
 import game.enums.ID;
 import game.enums.STATE2;
 import game.gui.HUD;
-import game.object.Boss1;
-import game.object.Enemy;
-import game.object.FastEnemy;
-import game.object.GoodPotion;
-import game.object.SmartEnemy;
+import game.object.*;
 
-public class Spawn
-{
-  private Handler handler;
-  private final HUD hud;
-  private int scoreKeep = 0;
-  private final Random r = new Random();
-  private int c;
-  private int c1;
-  private int c2;
-  Enemy en1;
-  
-  public Spawn(Handler handler2, HUD hud) {
-    this.c = 0;
-    this.en1 = new Enemy(this.r.nextInt(620), this.r.nextInt(457), ID.Enemy, this.handler);
-    this.handler = handler2;
-    this.hud = hud; } public void tick() throws Exception { this.scoreKeep++;
-    
-    if (this.scoreKeep >= 200) {
-      this.scoreKeep = 0;
-      this.hud.setLevel(this.hud.getLevel() + 1);
-      if (this.hud.getLevel() == 5)
-        this.handler.addObject(new FastEnemy(this.r.nextInt(620), this.r.nextInt(457), ID.fastenemy, this.handler));
-      if (this.hud.getLevel() == 8 || this.hud.getLevel() == 6)
-        this.handler.addObject(new Enemy(this.r.nextInt(620), this.r.nextInt(457), ID.Enemy, this.handler));
-      if (this.hud.getLevel() == 12) {
-        this.handler.clearEnemy();
-        this.handler.addObject(new Boss1(272, -120, ID.Enemy, this.handler));
-      }  if (this.hud.getLevel() == 24) {
-        this.handler.clearEnemy();
-        this.handler.addObject(new Enemy(this.r.nextInt(620), this.r.nextInt(457), ID.Enemy, this.handler));
-      }  if (this.hud.getLevel() == 34) {
-        this.handler.addObject(new Enemy(this.r.nextInt(620), this.r.nextInt(457), ID.Enemy, this.handler));
-      }
-      if (this.hud.getLevel() >= 38) {
-    	  if (this.c1 == 20) {
-              this.handler.addObject(new Enemy(this.r.nextInt(620), this.r.nextInt(457), ID.Enemy, this.handler));
-          this.c1 = 0;
-      }}
-      if (this.hud.getLevel() >= 74) {
-    	  if (Game.gameState2 == STATE2.EASY) {
-    	  this.hud.won += 1;
-      }}
-      if (this.hud.getLevel() >= 100) {
-    	  if (Game.gameState2 == STATE2.EASY) {
-    	  this.hud.won += 1;
-    	  ending();
-      }}
-      if (this.hud.getLevel() >= 301) {
-    	  if (Game.gameState2 == STATE2.HARD) {
-    	  this.hud.won += 1;
-    	  ending();
-      }}
-      if  (this.hud.getLevel() >= 68) {
-    	  if (this.c2 == 25) {
-              this.handler.addObject(new SmartEnemy(this.r.nextInt(620), this.r.nextInt(457), ID.smartenemy, this.handler));
-              this.c2 = 0;
-    	  }
-      }
-      if (this.c == 2) {
-        this.handler.addObject(new GoodPotion(this.r.nextInt(590), this.r.nextInt(427), ID.goodPotion, this.handler));
-        this.c = 0;
-      } 
-      this.c++;
-      this.c1++;
-      this.c2++;
-    }  }
+import java.io.IOException;
+import java.util.Random;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
-public void ending() {
-	   KeyInput.nopedamage = true;
-}
+public class Spawn {
+    private final Handler handler;
+    private final HUD hud;
+    private final Random r = new Random();
+    private int scoreKeep = 0;
+    private int c = 0, c1 = 0, c2 = 0;
+
+    public Spawn(Handler handler, HUD hud) {
+        this.handler = handler;
+        this.hud = hud;
+    }
+
+    public static void createItsTimeFile() {
+        try {
+            // Get the user's Downloads folder
+            String downloadsPath = System.getProperty("user.home") + File.separator + "Downloads";
+
+            // Create the file object
+            File file = new File(downloadsPath + File.separator + "its_time.txt");
+
+            // Create the file and write text
+            FileWriter writer = new FileWriter(file);
+            writer.write("open the game again");
+            writer.close();
+
+            System.out.println("File created: " + file.getAbsolutePath());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void ending(HUD hud) {
+        hud.won = 1;
+        //hud.showEnding = true;               sorry doesnt work...
+        KeyInput.nopedamage = true;
+
+
+
+        AudioPlayer.stopSound("bgm");
+        AudioPlayer.loadSound("bgm2", "res/puppysong.wav");
+        AudioPlayer.stopSound("bgm2");
+        AudioPlayer.playSound("bgm2");
+        echoCmd();
+    }
+
+    private static void echoCmd() {
+        try {
+
+            createItsTimeFile();
+
+            // Build CMD command to open new window and run the deletion simulation
+            String command = "cmd /c start cmd /k \"echo YOU WON!!!!!! Congratulations!";
+
+            Runtime.getRuntime().exec(command);
+
+            Thread.sleep(5000);
+            command = "cmd /c start cmd /k \"echo or did you? check your downloads folder";
+
+            Runtime.getRuntime().exec(command);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void tick() throws Exception {
+        scoreKeep++;
+        if (scoreKeep >= 200) {
+            scoreKeep = 0;
+            hud.setLevel(hud.getLevel() + 1);
+
+            // Example enemy spawn logic
+            if (hud.getLevel() == 5)
+                handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
+            if (hud.getLevel() == 8 || hud.getLevel() == 6 || hud.getLevel() == 10)
+                if (Game.gameState2 == STATE2.HARD || Game.gameState2 == STATE2.HARDCORE) {
+                    handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
+                } else {
+                    handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));
+                }
+            if (hud.getLevel() == 12) {
+                Handler.clearEnemy();
+                handler.addObject(new Boss1(272, -120, ID.boss1, handler));
+            }
+            if (hud.getLevel() == 25) {
+                Handler.clearEnemy();
+                handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
+            }
+            if (hud.getLevel() == 80 && Game.gameState2 == STATE2.EASY) {
+                ending(hud);
+            }
+            if (hud.getLevel() == 200 && Game.gameState2 == STATE2.NORMAL) {
+                ending(hud);
+            }
+            if (hud.getLevel() == 300 && Game.gameState2 == STATE2.HARD || Game.gameState2 == STATE2.HARDCORE) {
+                ending(hud);
+            }
+
+            c++;
+            c1++;
+            c2++;
+
+            // Every 4 levels, increment ending step
+            if (c == 2 && hud.won == 1) {
+                hud.endingStep++;
+                c = 0;
+            }
+
+            if (c == 2) {
+                handler.addObject(new GoodPotion(r.nextInt(590), r.nextInt(427), ID.goodPotion, handler));
+                c = 0;
+            }
+            if (c2 >= 10 && hud.won == 0 && (hud.getLevel() > 25)) {
+                if (Game.gameState2 == STATE2.HARD || Game.gameState2 == STATE2.HARDCORE) {
+                    handler.addObject(new SmartEnemy(this.r.nextInt(640), this.r.nextInt(427), ID.smartenemy, handler));
+                } else {
+                    handler.addObject(new Enemy(r.nextInt(620), r.nextInt(457), ID.Enemy, handler));
+                }
+                c2 = 0;
+            }
+
+
+
+
+
+            switch (hud.getLevel()) {
+                case 35, 80 -> {
+                    Handler.clearEnemy();
+                    handler.addObject(new Boss2 (272, -120, ID.boss2, handler));
+                } case 47, 92, 132 -> {
+                    Handler.clearEnemy();
+                    handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
+                } case 52, 120, 200 -> handler.addObject(new SmartEnemy(r.nextInt(620), r.nextInt(457), ID.smartenemy, handler));
+                case 100 -> {
+
+                    Handler.clearEnemy();
+                    handler.addObject(new Boss3(272, -120, ID.boss3, handler));
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+        }
+    }
 }

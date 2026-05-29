@@ -6,13 +6,13 @@ import java.awt.Rectangle;
 
 import game.core.Handler;
 import game.enums.ID;
-import game.logic.Trail;
+import game.trail.Trail;
 
 public class FastEnemy
   extends GameObject {
   private final Handler handler;
   
-  public FastEnemy(int x, int y, ID id, Handler handler) {
+  public FastEnemy(int x, int y, ID id, Handler handler) {// the fast gray enemys.
     super(x, y, id);
     this.handler = handler;
     this.velX = 9.0F;
@@ -27,7 +27,7 @@ public class FastEnemy
       this.velY *= -1.0F; 
     if (this.x <= 0.0F || this.x >= 608.0F)
       this.velX *= -1.0F; 
-    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.DARK_GRAY, 24, 24, 0.015F, this.handler));
+    this.handler.addObject(new Trail(this.x, this.y, ID.Trail, Color.DARK_GRAY, 24, 24, 0.05F, this.handler));
   }
 
 

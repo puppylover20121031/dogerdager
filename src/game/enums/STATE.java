@@ -1,7 +1,8 @@
 package game.enums;
 
-public enum STATE {
+public enum STATE {// game state 1 ids
   MENU,
   MENU2,
+    MENU3,
   GAME
 }

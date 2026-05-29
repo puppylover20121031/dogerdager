@@ -1,6 +1,6 @@
 package game.enums;
 
-public enum ID {
+public enum ID {//game object ID's
   Player,
   Trail,
   fastenemy,
@@ -9,5 +9,10 @@ public enum ID {
   goodPotion,
   boss1,
   Enemy,
-  EnemyParent;
+  EnemyParent,
+    boss2,
+    boss3,
+    boss3Left,
+    boss3Right,
+    BossArrow
 }

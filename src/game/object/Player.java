@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -13,9 +12,9 @@ import game.core.Game;
 import game.core.Handler;
 import game.enums.ID;
 import game.gui.HUD;
-import game.logic.Trail;
+import game.trail.Trail;
 
-public class Player extends GameObject {
+public class Player extends GameObject {// you the player.(or coder)
   Handler handler2;
 
   public Player(int x, int y, ID id, Handler handler1) {
@@ -41,17 +40,20 @@ public class Player extends GameObject {
 			this.handler2.addObject(new Trail(this.x, this.y, ID.Trail, Color.WHITE, 16, 16, 0.04F, this.handler2));
 		}
 	} catch (Exception e) {
-		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}}
   
   private void collision() throws UnsupportedAudioFileException, IOException, LineUnavailableException {
     for (int i = 0; i < Handler.object.size(); i++) {
       GameObject tempObject = Handler.object.get(i);
-      if ((tempObject.getID() == ID.Enemy || tempObject.getID() == ID.fastenemy || tempObject.getID() == ID.smartenemy) && 
+      if ((tempObject.getID() == ID.Enemy || tempObject.getID() == ID.fastenemy || tempObject.getID() == ID.smartenemy || tempObject.getID() == ID.boss1 || tempObject.getID() == ID.boss2 || tempObject.getID() == ID.boss3 || tempObject.getID() == ID.boss3Right || tempObject.getID() == ID.boss3Left) &&
         getBounds().intersects(tempObject.getBounds()) && 
         !KeyInput.nodamage && !KeyInput.nopedamage) {
-        damage(5);
+          if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
+            damage(300);
+          } else {
+            damage(5);
+          }
       }
       
       if (tempObject.getID() == ID.goodPotion && 
