@@ -130,7 +130,7 @@ public class Game extends Canvas implements Runnable {
 
         if (PlayMusic) {
 
-            AudioPlayer.loadSound("bgm", "song.wav");
+            AudioPlayer.loadSound("bgm", "src/game/core/song.wav");
             AudioPlayer.loopSound("bgm");
             AudioPlayer.playSound("bgm");
 
@@ -140,7 +140,7 @@ public class Game extends Canvas implements Runnable {
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
         addMouseListener(this.menu3);
-        AudioPlayer.loadSound("fail", "losing.wav");
+        AudioPlayer.loadSound("fail", "src/game/core/losing.wav");
 
         hud.setScore(this.savemanager.getHighScore());
 
