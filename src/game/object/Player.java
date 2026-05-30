@@ -6,6 +6,7 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.text.html.HTMLDocument.HTMLReader.HiddenAction;
 
 import game.core.KeyInput;
 import game.core.Game;
@@ -60,6 +61,8 @@ public class Player extends GameObject {// you the player.(or coder)
         getBounds().intersects(tempObject.getBounds()) && 
         HUD.HEALTH != 100) {
           if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
+            HUD.HEALTH = 10;
+          } else {
             HUD.HEALTH = 300;
           }
         this.handler2.removeObject(tempObject);
@@ -68,7 +71,9 @@ public class Player extends GameObject {// you the player.(or coder)
   }
   
   public static void damage(int d) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+    if (!HUD.showEnding) {
     HUD.HEALTH -= d;
+    }
   }
 
 
