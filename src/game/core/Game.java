@@ -125,10 +125,6 @@ public class Game extends Canvas implements Runnable {
 
 
 
-        if (!EOS.loadLibraries()) {
-            throw new RuntimeException("Couldn't load EOS libraries");
-        }
-
         
 
 
