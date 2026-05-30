@@ -76,6 +76,8 @@ GameObject arrow;
 
         if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
             HEALTH = (int) Game.clamp(HEALTH, 0, 10);
+        } else if (game.core.Game.gameState2 == game.enums.STATE2.EASY) {
+            HEALTH = (int) Game.clamp(HEALTH, 0, 900);
         } else {
             HEALTH = (int) Game.clamp(HEALTH, 0, 300);
         }
@@ -91,7 +93,7 @@ GameObject arrow;
         }
         if (arrow != null) {
             if (arrow.isHit()) {
-                HEALTH -= 10;
+                HEALTH -= 5;
                 Handler.object.remove(arrow);
             }
         }

@@ -27,7 +27,7 @@ public class Player extends GameObject {// you the player.(or coder)
     this.x += this.velX;
     this.y += this.velY;
     this.x = Game.clamp(this.x, 0, 608);
-    this.y = Game.clamp(this.y, 40, 445);
+    this.y = Game.clamp(this.y, 40, 405);
     
     try {
       collision();
