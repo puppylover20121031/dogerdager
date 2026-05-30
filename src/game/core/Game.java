@@ -13,6 +13,10 @@ import java.util.Map;
 
 import org.newdawn.slick.Music;
 import org.newdawn.slick.Sound;
+
+import com.bearwaves.eos4j.EOS;
+import com.bearwaves.eos4j.EOSAuth;
+
 import game.enums.STATE;
 import game.enums.STATE2;
 import game.gui.HUD;
@@ -22,70 +26,46 @@ import game.gui.Menu3;
 import game.gui.Window;
 
 import javax.swing.*;
+import com.bearwaves.eos4j.EOS;
 
 public class Game extends Canvas implements Runnable {
 
-  static final int WIDTH = 640;
-  static final int HEIGHT = 477;
-  private Thread thread;
-  private boolean running = false;
-  private final HUD hud;
-  public Graphics g;
-  int frames = 0;
-  public static Graphics g2;
-  private final Spawn spawner;
-  private final Handler handler;
-
-  private final Menu menu;
-  public Menu2 menu2;
-
-  public static STATE gameState = STATE.MENU2;
-  public static STATE2 gameState2 = STATE2.NOPE;
-
-  
-  public Game() {
-    this.handler = new Handler();
-    this.menu = new Menu(this, this.handler); // this is the menu that needs to goto menu2.
-    if (gameState == STATE.MENU2) {
-        menu2 = new Menu2(this, this.handler);
     static final int WIDTH = 640;
     static final int HEIGHT = 477;
-    private final SaveManager savemanager;
-
     private Thread thread;
     private boolean running = false;
 
+    boolean PlayMusic = true;
+
     private final HUD hud;
+    public Graphics g;
+    int frames = 0;
+    public static Graphics g2;
     private final Spawn spawner;
     private final Handler handler;
 
     private final Menu menu;
-    private final Menu2 menu2;
-    private final Menu3 menu3;
-    public static Graphics g2;
-    private Graphics g;
-
-    private static boolean PlayMusic = true;
-
-    public static Map<String, Sound> soundMap = new HashMap<>();
-    public static Map<String, Music> musicMap = new HashMap<>();
-
-    private int frames = 0;
+    public Menu2 menu2;
 
     public static STATE gameState = STATE.MENU2;
     public static STATE2 gameState2 = STATE2.NOPE;
 
-public static boolean askYesNo(String message, String title) {
+    public static boolean askYesNo(String message, String title) {
         // A parent frame is optional; using null centers on screen
         int result = JOptionPane.showConfirmDialog(
-                null,                  // parent component
-                message,               // message
-                title,                 // dialog title
-                JOptionPane.YES_NO_OPTION,      // option type [InlineCitation-1-Java JOptionPane - GeeksforGeeks](https://www.geeksforgeeks.org/java/java-joptionpane/) [InlineCitation-3-JOptionPane (Java SE 22 & JDK 22)](https://docs.oracle.com/en/java/javase/22/docs/api/java.desktop/javax/swing/JOptionPane.html)
-                JOptionPane.QUESTION_MESSAGE    // message type
+                null, // parent component
+                message, // message
+                title, // dialog title
+                JOptionPane.YES_NO_OPTION, // option type [InlineCitation-1-Java JOptionPane -
+                                           // GeeksforGeeks](https://www.geeksforgeeks.org/java/java-joptionpane/)
+                                           // [InlineCitation-3-JOptionPane (Java SE 22 & JDK
+                                           // 22)](https://docs.oracle.com/en/java/javase/22/docs/api/java.desktop/javax/swing/JOptionPane.html)
+                JOptionPane.QUESTION_MESSAGE // message type
         );
 
-        // Validate result: YES_OPTION = 0, NO_OPTION = 1 [InlineCitation-2-How to Create Pop Window in Java | Delft Stack](https://www.delftstack.com/howto/java/java-pop-up-window/)
+        // Validate result: YES_OPTION = 0, NO_OPTION = 1 [InlineCitation-2-How to
+        // Create Pop Window in Java | Delft
+        // Stack](https://www.delftstack.com/howto/java/java-pop-up-window/)
         return result == JOptionPane.YES_OPTION;
     }
 
@@ -118,8 +98,6 @@ public static boolean askYesNo(String message, String title) {
                 throw new RuntimeException(e);
             }
 
-
-
         } else {
             System.out.println("File not found.");
         }
@@ -128,11 +106,11 @@ public static boolean askYesNo(String message, String title) {
     boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean()
             .getInputArguments().toString().contains("-agentlib:jdwp");
     public SaveManager2 savemanager2;
+    private SaveManager savemanager;
+    private Menu3 menu3;
 
     @Serial
     private static final long serialVersionUID = -3462486173394796704L;
-
-
 
     public Game() {
         this.savemanager = new SaveManager();
@@ -144,6 +122,14 @@ public static boolean askYesNo(String message, String title) {
         this.menu = new Menu(this, this.handler);
         this.menu2 = new Menu2(this, this.handler, savemanager2);
         this.menu3 = new Menu3(this, this.handler, savemanager2);
+
+
+
+        if (!EOS.loadLibraries()) {
+            throw new RuntimeException("Couldn't load EOS libraries");
+        }
+
+        
 
 
         if (PlayMusic) {
@@ -178,7 +164,8 @@ public static boolean askYesNo(String message, String title) {
         try {
             thread.join();
             running = false;
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     // RUN LOOP ----------------------------------------------------------------
@@ -227,13 +214,12 @@ public static boolean askYesNo(String message, String title) {
         handler.tick();
         hud.tick();
 
-
         if (gameState2 != STATE2.NOPE) {
             removeMouseListener(this.menu2);
         }
         if (gameState != STATE.MENU2) {
             removeMouseListener(this.menu2);
-        }else {
+        } else {
             addMouseListener(this.menu2);
         }
         if (gameState != STATE.MENU) {
@@ -246,7 +232,6 @@ public static boolean askYesNo(String message, String title) {
         } else {
             addMouseListener(this.menu2);
         }
-
 
         if (hud.getHealth() == 0) {
             AudioPlayer.playSound("fail");
@@ -271,13 +256,11 @@ public static boolean askYesNo(String message, String title) {
             return;
         }
 
-
         g = bs.getDrawGraphics();
         g2 = g;
 
         g.setColor(Color.black);
         g.fillRect(0, 0, WIDTH, HEIGHT);
-
 
         if (gameState == STATE.GAME) {
             handler.render(g);
@@ -293,8 +276,6 @@ public static boolean askYesNo(String message, String title) {
         g.dispose();
         bs.show();
     }
-
-
 
     public static float clamp(float value, int min, int max) {
         return Math.max(min, Math.min(max, value));

@@ -23,7 +23,7 @@ public class Spawn {
     public Spawn(Handler handler, HUD hud, SaveManager2 manager2) {
         this.handler = handler;
         this.hud = hud;
-        if (manager2.getBool())  {
+        if (manager2.getBool()) {
             create = true;
         }
     }
@@ -32,10 +32,11 @@ public class Spawn {
         try {
             // Get the user's Downloads folder
             if (onedrive) {
-                downloadsPath = System.getProperty("user.home") + File.separator + "OneDrive" + File.separator + "Desktop";
+                downloadsPath = System.getProperty("user.home") + File.separator + "OneDrive" + File.separator
+                        + "Desktop";
             } else {
-                
-            downloadsPath = System.getProperty("user.home") + File.separator + "Desktop";
+
+                downloadsPath = System.getProperty("user.home") + File.separator + "Desktop";
 
             }
             // Create the file object
@@ -43,7 +44,8 @@ public class Spawn {
 
             // Create the file and write text
             FileWriter writer = new FileWriter(file);
-            writer.write("open the game again for a cool thing \nDO NOT DELETE! unless you dont wanna see the suprise again. ");
+            writer.write(
+                    "open the game again for a cool thing \nDO NOT DELETE! unless you dont wanna see the suprise again. ");
             writer.close();
 
             System.out.println("File created: " + file.getAbsolutePath());
@@ -55,16 +57,16 @@ public class Spawn {
 
     public static void ending(HUD hud) {
         hud.won = 1;
-        //hud.showEnding = true;   -- sorry doesnt work...
+        // hud.showEnding = true; -- sorry doesnt work...
         KeyInput.nopedamage = true;
-
-
 
         AudioPlayer.stopSound("bgm");
         AudioPlayer.loadSound("bgm2", "res/puppysong.wav");
         AudioPlayer.stopSound("bgm2");
         AudioPlayer.playSound("bgm2");
-        echoCmd();
+        if (create) {
+            echoCmd();
+        }
     }
 
     private static void echoCmd() {
@@ -73,7 +75,7 @@ public class Spawn {
             if (create) {
                 createItsTimeFile(false);
                 createItsTimeFile(true);
-             }
+            }
 
             // Build CMD command to open new window and run the deletion simulation
             String command = "cmd /c start cmd /k \"echo YOU WON!!!!!! Congratulations!";
@@ -148,35 +150,23 @@ public class Spawn {
                 c2 = 0;
             }
 
-
-
-
-
             switch (hud.getLevel()) {
                 case 35, 80 -> {
                     Handler.clearEnemy();
-                    handler.addObject(new Boss2 (272, -120, ID.boss2, handler));
-                } case 47, 92, 132 -> {
+                    handler.addObject(new Boss2(272, -120, ID.boss2, handler));
+                }
+                case 47, 92, 132 -> {
                     Handler.clearEnemy();
                     handler.addObject(new FastEnemy(r.nextInt(620), r.nextInt(457), ID.fastenemy, handler));
-                } case 52, 120, 200 -> handler.addObject(new SmartEnemy(r.nextInt(620), r.nextInt(457), ID.smartenemy, handler));
+                }
+                case 52, 120, 200 ->
+                    handler.addObject(new SmartEnemy(r.nextInt(620), r.nextInt(457), ID.smartenemy, handler));
                 case 100 -> {
 
                     Handler.clearEnemy();
                     handler.addObject(new Boss3(272, -120, ID.boss3, handler));
                 }
             }
-
-
-
-
-
-
-
-
-
-
-
 
         }
     }
