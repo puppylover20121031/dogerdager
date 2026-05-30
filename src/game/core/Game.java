@@ -46,6 +46,7 @@ public class Game extends Canvas implements Runnable {
     private final Handler handler;
     private final ControllerInput controllerInput;
 
+    boolean songplayed = false;
     private final Menu menu;
     public Menu2 menu2;
 
@@ -129,7 +130,7 @@ public class Game extends Canvas implements Runnable {
         arrowcode = new ArrowCode(handler, hud);
         if (PlayMusic) {
 
-            AudioPlayer.loadSound("bgm", "src/game/core/song.wav");
+            AudioPlayer.loadSound("bgm", "res/opening.wav");
             AudioPlayer.loopSound("bgm");
             AudioPlayer.playSound("bgm");
 
@@ -139,7 +140,7 @@ public class Game extends Canvas implements Runnable {
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
         addMouseListener(this.menu3);
-        AudioPlayer.loadSound("fail", "src/game/core/losing.wav");
+        AudioPlayer.loadSound("fail", "res/losing.wav");
 
         hud.setScore(this.savemanager.getHighScore());
 
@@ -209,6 +210,13 @@ public class Game extends Canvas implements Runnable {
         if (gameState == STATE.GAME) {
             this.controllerInput.poll(this.handler);
             spawner.tick();
+            if (PlayMusic && !songplayed) {
+                AudioPlayer.stopSound("bgm");
+                AudioPlayer.loadSound("bgm", "res/song.wav");
+                AudioPlayer.loopSound("bgm");
+                AudioPlayer.playSound("bgm");
+                songplayed = true;
+            }
         }
         handler.tick();
         hud.tick();
