@@ -24,7 +24,6 @@ import game.gui.Menu;
 import game.gui.Menu2;
 import game.gui.Menu3;
 import game.gui.Window;
-import game.object.Arrow;
 
 import javax.swing.*;
 import com.bearwaves.eos4j.EOS;
@@ -44,9 +43,7 @@ public class Game extends Canvas implements Runnable {
     public static Graphics g2;
     private final Spawn spawner;
     private final Handler handler;
-    private final ControllerInput controllerInput;
 
-    boolean songplayed = false;
     private final Menu menu;
     public Menu2 menu2;
 
@@ -111,7 +108,7 @@ public class Game extends Canvas implements Runnable {
     public SaveManager2 savemanager2;
     private SaveManager savemanager;
     private Menu3 menu3;
-    private ArrowCode arrowcode;
+
     @Serial
     private static final long serialVersionUID = -3462486173394796704L;
 
@@ -121,22 +118,25 @@ public class Game extends Canvas implements Runnable {
         this.handler = new Handler();
         this.hud = new HUD();
         this.spawner = new Spawn(this.handler, this.hud, savemanager2);
-        this.controllerInput = new ControllerInput();
         new game.devchat();
         this.menu = new Menu(this, this.handler);
         this.menu2 = new Menu2(this, this.handler, savemanager2);
         this.menu3 = new Menu3(this, this.handler, savemanager2);
 
-        arrowcode = new ArrowCode(handler, hud);
+
+
+        
+
+
         if (PlayMusic) {
 
-            AudioPlayer.loadSound("bgm", "res/opening.wav");
+            AudioPlayer.loadSound("bgm", "res/song.wav");
             AudioPlayer.loopSound("bgm");
             AudioPlayer.playSound("bgm");
 
         }
 
-        addKeyListener(new KeyInput(this.handler, this.hud, arrowcode));
+        addKeyListener(new KeyInput(this.handler, this.hud));
         addMouseListener(this.menu);
         addMouseListener(this.menu2);
         addMouseListener(this.menu3);
@@ -207,17 +207,6 @@ public class Game extends Canvas implements Runnable {
     }
 
     private void tick() throws Exception {
-        if (gameState == STATE.GAME) {
-            this.controllerInput.poll(this.handler);
-            spawner.tick();
-            if (PlayMusic && !songplayed) {
-                AudioPlayer.stopSound("bgm");
-                AudioPlayer.loadSound("bgm", "res/song.wav");
-                AudioPlayer.loopSound("bgm");
-                AudioPlayer.playSound("bgm");
-                songplayed = true;
-            }
-        }
         handler.tick();
         hud.tick();
 
@@ -252,11 +241,6 @@ public class Game extends Canvas implements Runnable {
             this.savemanager.save();
         }
 
-        if (gameState == game.enums.STATE.GAME) {
-            arrowcode.tick();
-
-        }
-
     }
 
     // RENDER ------------------------------------------------------------------
@@ -276,7 +260,7 @@ public class Game extends Canvas implements Runnable {
 
         if (gameState == STATE.GAME) {
             handler.render(g);
-            hud.render(g, gameState, arrowcode);
+            hud.render(g, gameState);
         } else if (gameState == STATE.MENU) {
             menu.render(g);
         } else if (gameState == STATE.MENU2) {

@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 
 import game.core.KeyInput;
-import game.core.ArrowCode;
 import game.core.Game;
 import game.core.Handler;
 import game.core.SaveManager;
@@ -40,7 +39,7 @@ GameObject arrow;
         score = this.savemanager.getHighScore();
     }
 
-    public void render(Graphics g, STATE gameState, ArrowCode arrowcode) throws IOException {
+    public void render(Graphics g, STATE gameState) throws IOException {
         // Draw health bar
         greenValue = (int) Game.clamp(greenValue, 0, 255);
         g.setColor(Color.gray);
@@ -62,7 +61,6 @@ GameObject arrow;
         g.drawString("Score: " + score2, 10, 120);
         g.drawString("Level: " + level, 10, 140);
         g.drawString("Did you win?: " + (won > 0 ? "YES" : "NO"), 10, 160);
-        g.drawString("Cooldown: " + arrowcode.timer, 10, 240);
 
         // Debug info
         if (KeyInput.debug) {
@@ -76,8 +74,6 @@ GameObject arrow;
 
         if (game.core.Game.gameState2 == game.enums.STATE2.HARDCORE) {
             HEALTH = (int) Game.clamp(HEALTH, 0, 10);
-        } else if (game.core.Game.gameState2 == game.enums.STATE2.EASY) {
-            HEALTH = (int) Game.clamp(HEALTH, 0, 900);
         } else {
             HEALTH = (int) Game.clamp(HEALTH, 0, 300);
         }
@@ -93,7 +89,7 @@ GameObject arrow;
         }
         if (arrow != null) {
             if (arrow.isHit()) {
-                HEALTH -= 5;
+                HEALTH -= 10;
                 Handler.object.remove(arrow);
             }
         }
@@ -108,7 +104,6 @@ GameObject arrow;
         if (HEALTH <= 0) {
             try {
                 Thread.sleep(1500);
-                System.exit(0);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
