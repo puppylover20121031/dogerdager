@@ -32,6 +32,7 @@ public final class PlayScreen implements Screen {
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
     private static final int INSTANT_KILL = 100_000;
+    private static final float MAX_STEP = 0.05f;
 
     private enum State { PLAYING, GAME_OVER, WON }
 
@@ -135,7 +136,7 @@ public final class PlayScreen implements Screen {
             dispose();
             return;
         }
-        if (state == State.PLAYING) update(delta);
+        if (state == State.PLAYING) update(Math.min(delta, MAX_STEP));
         else if (Gdx.input.isKeyJustPressed(Keys.R)) reset();
         draw();
     }
