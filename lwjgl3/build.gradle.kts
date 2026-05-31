@@ -8,6 +8,14 @@ java {
     }
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.lwjgl") {
+            useVersion(libs.versions.lwjgl.get())
+        }
+    }
+}
+
 dependencies {
     implementation(project(":core"))
     implementation(libs.gdx.backend.lwjgl3)
@@ -16,6 +24,7 @@ dependencies {
 
 application {
     mainClass = "com.unpuppyable.dogerdager.lwjgl3.Lwjgl3Launcher"
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
 }
 
 tasks.named<JavaExec>("run") {
