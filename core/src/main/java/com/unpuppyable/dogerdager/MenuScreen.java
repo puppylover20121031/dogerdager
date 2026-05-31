@@ -39,9 +39,12 @@ public final class MenuScreen extends ScreenAdapter {
         title.setFontScale(2f);
         root.add(title).padBottom(28).row();
 
+        boolean hardcoreUnlocked = progress.hardcoreUnlocked();
         for (int i = 0; i < CHOICES.length; i++) {
             var choice = CHOICES[i];
-            var button = new VisTextButton(choice.name());
+            boolean locked = choice == Difficulty.HARDCORE && !hardcoreUnlocked;
+            var button = new VisTextButton(locked ? "HARDCORE  (clear HARD)" : choice.name());
+            button.setDisabled(locked);
             button.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
@@ -64,6 +67,10 @@ public final class MenuScreen extends ScreenAdapter {
 
     private void start(Difficulty difficulty) {
         if (switching) return;
+        if (difficulty == Difficulty.HARDCORE && !progress.hardcoreUnlocked()) {
+            game.menuMove();
+            return;
+        }
         switching = true;
         game.menuConfirm();
         Gdx.input.setInputProcessor(null);
@@ -131,6 +138,7 @@ public final class MenuScreen extends ScreenAdapter {
             return;
         }
         for (int i = 0; i < buttons.length; i++) {
+            if (buttons[i].isDisabled()) continue;
             buttons[i].setColor(i == index ? Color.YELLOW : Color.WHITE);
         }
     }
