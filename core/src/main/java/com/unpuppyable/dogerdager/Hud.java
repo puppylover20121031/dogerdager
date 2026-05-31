@@ -18,6 +18,7 @@ public final class Hud {
     private static final float BAND = 72;
 
     private final float worldH;
+    private final float worldW;
     private final int maxHealth;
     private final int winLevel;
     private final float scoreRate;
@@ -34,6 +35,7 @@ public final class Hud {
     private float invuln;
 
     public Hud(Difficulty difficulty, int highScore, float worldW, float worldH) {
+        this.worldW = 0;
         this.maxHealth = difficulty.maxHealth;
         this.winLevel = difficulty.winLevel;
         this.scoreRate = REGEN * difficulty.scoreMultiplier;
