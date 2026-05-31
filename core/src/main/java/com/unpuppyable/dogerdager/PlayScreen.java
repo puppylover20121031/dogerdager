@@ -6,6 +6,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -33,7 +34,7 @@ public final class PlayScreen implements Screen {
     private static final int INSTANT_KILL = 100_000;
     private static final float MAX_STEP = 0.05f;
 
-    private enum State { PLAYING, GAME_OVER, WON }
+    private enum State { PLAYING, PAUSED, GAME_OVER, WON }
 
     private final DogerDager game;
     private final Difficulty difficulty;
@@ -130,14 +131,34 @@ public final class PlayScreen implements Screen {
             bgm.setVolume(muted ? 0f : 0.5f);
         }
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
-            bgm.stop();
-            game.setScreen(new MenuScreen(game));
-            dispose();
-            return;
+            if (state == State.PLAYING) {
+                state = State.PAUSED;
+                bgm.pause();
+            } else if (state == State.PAUSED) {
+                state = State.PLAYING;
+                bgm.play();
+            } else {
+                toMenu();
+                return;
+            }
         }
-        if (state == State.PLAYING) update(Math.min(delta, MAX_STEP));
-        else if (Gdx.input.isKeyJustPressed(Keys.R)) reset();
+        if (state == State.PLAYING) {
+            update(Math.min(delta, MAX_STEP));
+        } else if (state == State.PAUSED) {
+            if (Gdx.input.isKeyJustPressed(Keys.Q)) {
+                toMenu();
+                return;
+            }
+        } else if (Gdx.input.isKeyJustPressed(Keys.R)) {
+            reset();
+        }
         draw();
+    }
+
+    private void toMenu() {
+        bgm.stop();
+        game.setScreen(new MenuScreen(game));
+        dispose();
     }
 
     private void update(float delta) {
@@ -210,10 +231,24 @@ public final class PlayScreen implements Screen {
         hud.drawRings(shapes, player);
         shapes.end();
 
+        if (state == State.PAUSED) {
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(0f, 0f, 0f, 0.6f);
+            shapes.rect(0, 0, WORLD_W, WORLD_H);
+            shapes.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
+
         batch.begin();
         hud.drawText(batch, font);
-        if (state != State.PLAYING) drawCentered(state == State.WON
-                ? "YOU WON  -  R retry   Esc menu" : "GAME OVER  -  R retry   Esc menu");
+        if (state == State.PAUSED) {
+            drawCentered("PAUSED   -   Esc resume   Q menu");
+        } else if (state == State.WON) {
+            drawCentered("YOU WON  -  R retry   Esc menu");
+        } else if (state == State.GAME_OVER) {
+            drawCentered("GAME OVER  -  R retry   Esc menu");
+        }
         batch.end();
     }
 
