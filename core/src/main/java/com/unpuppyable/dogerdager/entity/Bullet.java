@@ -106,15 +106,10 @@ public final class Bullet extends Entity {
             }
             float cx = bounds.x + bounds.width / 2f;
             float cy = bounds.y + bounds.height / 2f;
-            float a = MathUtils.atan2(vy, vx);
-            float cos = MathUtils.cos(a);
-            float sin = MathUtils.sin(a);
-            float nose = 13, back = 8, side = 6;
+            float ang = MathUtils.atan2(vy, vx) * MathUtils.radDeg - 90f;
+            float w = 6, h = 20;
             shapes.setColor(Color.GOLD);
-            shapes.triangle(
-                    cx + cos * nose, cy + sin * nose,
-                    cx - cos * back - sin * side, cy - sin * back + cos * side,
-                    cx - cos * back + sin * side, cy - sin * back - cos * side);
+            shapes.rect(cx - w / 2f, cy - h / 2f, w / 2f, h / 2f, w, h, 1f, 1f, ang);
             return;
         }
         shapes.setColor(kind == Kind.HOMING ? Color.ROYAL : Color.RED);
