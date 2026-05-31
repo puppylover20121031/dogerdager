@@ -8,6 +8,9 @@ public final class Bullet extends Entity {
 
     public enum Kind { FALLING, HOMING, ROCKET }
 
+    private static final float ROCKET_SPEED = 200f;
+    private static final float ROCKET_TURN = 2.2f;
+
     private final Kind kind;
     private final int damage;
     private final float worldW;
@@ -32,6 +35,13 @@ public final class Bullet extends Entity {
         } else {
             life = kind == Kind.ROCKET ? 8f : 6f;
         }
+        if (kind == Kind.ROCKET) {
+            float dx = target.bounds().x - x;
+            float dy = target.bounds().y - y;
+            float len = (float) Math.sqrt(dx * dx + dy * dy);
+            vx = len > 0.001f ? dx / len * ROCKET_SPEED : 0;
+            vy = len > 0.001f ? dy / len * ROCKET_SPEED : -ROCKET_SPEED;
+        }
     }
 
     public int damage() {
@@ -44,30 +54,52 @@ public final class Bullet extends Entity {
 
     @Override
     public void update(float delta) {
-        if (kind != Kind.FALLING) {
-            float speed = kind == Kind.ROCKET ? 200f : 120f;
+        if (kind == Kind.ROCKET) {
+            // Steer toward the player at a limited turn rate so it has momentum:
+            // a clean dodge makes it overshoot and fly off-screen.
+            float desired = MathUtils.atan2(target.bounds().y - bounds.y, target.bounds().x - bounds.x);
+            float cur = MathUtils.atan2(vy, vx);
+            float diff = desired - cur;
+            while (diff > MathUtils.PI) diff -= MathUtils.PI2;
+            while (diff < -MathUtils.PI) diff += MathUtils.PI2;
+            cur += MathUtils.clamp(diff, -ROCKET_TURN * delta, ROCKET_TURN * delta);
+            vx = MathUtils.cos(cur) * ROCKET_SPEED;
+            vy = MathUtils.sin(cur) * ROCKET_SPEED;
+            life -= delta;
+            if (life <= 0) dead = true;
+        } else if (kind == Kind.HOMING) {
             float dx = target.bounds().x - bounds.x;
             float dy = target.bounds().y - bounds.y;
             float len = (float) Math.sqrt(dx * dx + dy * dy);
             if (len > 0.001f) {
-                vx = dx / len * speed;
-                vy = dy / len * speed;
+                vx = dx / len * 120f;
+                vy = dy / len * 120f;
             }
             life -= delta;
             if (life <= 0) dead = true;
         }
         bounds.x += vx * delta;
         bounds.y += vy * delta;
-        if (bounds.y < -bounds.height || bounds.x < -bounds.height || bounds.x > worldW) dead = true;
+        if (bounds.x < -50 || bounds.x > worldW + 50 || bounds.y < -50 || bounds.y > worldW) dead = true;
     }
 
     @Override
     public void draw(ShapeRenderer shapes) {
-        shapes.setColor(switch (kind) {
-            case ROCKET -> Color.GOLD;
-            case HOMING -> Color.ROYAL;
-            case FALLING -> Color.RED;
-        });
+        if (kind == Kind.ROCKET) {
+            float cx = bounds.x + bounds.width / 2f;
+            float cy = bounds.y + bounds.height / 2f;
+            float a = MathUtils.atan2(vy, vx);
+            float cos = MathUtils.cos(a);
+            float sin = MathUtils.sin(a);
+            float nose = 13, back = 8, side = 6;
+            shapes.setColor(Color.GOLD);
+            shapes.triangle(
+                    cx + cos * nose, cy + sin * nose,
+                    cx - cos * back - sin * side, cy - sin * back + cos * side,
+                    cx - cos * back + sin * side, cy - sin * back - cos * side);
+            return;
+        }
+        shapes.setColor(kind == Kind.HOMING ? Color.ROYAL : Color.RED);
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 }
