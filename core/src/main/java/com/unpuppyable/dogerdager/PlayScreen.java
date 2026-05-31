@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.unpuppyable.dogerdager.entity.Boss;
 import com.unpuppyable.dogerdager.entity.Enemy;
 import com.unpuppyable.dogerdager.entity.Entity;
+import com.unpuppyable.dogerdager.entity.Laser;
 import com.unpuppyable.dogerdager.entity.Player;
 import com.unpuppyable.dogerdager.entity.Potion;
 
@@ -102,6 +103,19 @@ public final class PlayScreen implements Screen {
 
     public void spawnPotion() {
         add(new Potion(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
+    }
+
+    // Vertical laser walls with one guaranteed safe slot -- never an impossible config.
+    public void spawnLaserWall() {
+        int slots = 5;
+        float slotW = ARENA_W / slots;
+        float laserW = slotW * 0.78f;
+        int gap = MathUtils.random(slots - 1);
+        for (int i = 0; i < slots; i++) {
+            if (i == gap) continue;
+            float cx = (i + 0.5f) * slotW;
+            add(new Laser(cx - laserW / 2f, laserW, PLAY_TOP));
+        }
     }
 
     public boolean bossActive() {

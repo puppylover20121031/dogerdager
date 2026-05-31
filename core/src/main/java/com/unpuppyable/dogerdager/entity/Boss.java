@@ -28,6 +28,9 @@ public final class Boss extends Entity {
     private float fireTimer;
     private int rocketsInBurst;
     private boolean armsSpawned;
+    private float phaseTimer;
+    private int phase = 1;
+    private float laserTimer = 4f;
 
     public Boss(Kind kind, float x, float restY, float worldW, PlayScreen screen, Player target) {
         super(x, restY + 220, SIZE);
@@ -104,15 +107,27 @@ public final class Boss extends Entity {
             armsSpawned = true;
         }
 
+        phaseTimer += delta;
+        phase = Math.min(4, 1 + (int) (phaseTimer / 12f));
+
         fireTimer -= delta;
         if (fireTimer <= 0) {
             screen.add(new Bullet(Bullet.Kind.ROCKET, bounds.x + SIZE / 2, bounds.y, worldW, target));
             rocketsInBurst++;
-            if (rocketsInBurst >= 4) {
+            int burst = phase >= 3 ? 6 : 4;
+            if (rocketsInBurst >= burst) {
                 rocketsInBurst = 0;
-                fireTimer = 3f;
+                fireTimer = phase >= 3 ? 2f : 3f;
             } else {
-                fireTimer = 0.4f;
+                fireTimer = phase >= 3 ? 0.22f : 0.4f;
+            }
+        }
+
+        if (phase >= 2) {
+            laserTimer -= delta;
+            if (laserTimer <= 0) {
+                screen.spawnLaserWall();
+                laserTimer = phase >= 4 ? 3.5f : 5f;
             }
         }
     }
@@ -128,11 +143,12 @@ public final class Boss extends Entity {
             shapes.setColor(1f, 0.25f * intensity, 0.1f, 1f);
             shapes.rectLine(bounds.x + SIZE / 2f, bounds.y, target.bounds().x + 8f, target.bounds().y + 8f, 1.5f);
         }
-        shapes.setColor(switch (kind) {
+        Color body = switch (kind) {
             case ARM -> Color.MAROON;
-            case THREE -> Color.SCARLET;
+            case THREE -> phase <= 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : phase == 3 ? Color.SCARLET : Color.VIOLET;
             default -> Color.RED;
-        });
+        };
+        shapes.setColor(body);
         shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
     }
 }
