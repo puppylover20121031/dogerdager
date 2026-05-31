@@ -12,6 +12,7 @@ public class Lwjgl3Launcher {
         config.setWindowedMode(640, 477);
         config.useVsync(true);
         config.setForegroundFPS(60);
+        config.setIdleFPS(60);
         new Lwjgl3Application(new DogerDager(), config);
     }
 }

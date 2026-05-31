@@ -21,7 +21,11 @@ public final class Enemy extends Entity {
     public Enemy(Kind kind, float x, float y, float baseSpeed, float worldW, float playTop, Player target) {
         super(x, y, SIZE);
         this.kind = kind;
-        this.speed = kind == Kind.FAST ? baseSpeed * 1.6f : baseSpeed;
+        this.speed = switch (kind) {
+            case FAST -> baseSpeed * 1.6f;
+            case SMART -> baseSpeed * 0.6f;
+            case NORMAL -> baseSpeed;
+        };
         this.worldW = worldW;
         this.playTop = playTop;
         this.target = target;
