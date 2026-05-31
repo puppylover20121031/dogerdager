@@ -173,6 +173,8 @@ public final class PlayScreen implements Screen {
         bullets.removeIf(Bullet::dead);
         bosses.removeIf(Boss::dead);
 
+        player.setInvulnerable(hud.invulnerable());
+
         if (hud.dead()) {
             state = State.GAME_OVER;
             bgm.stop();

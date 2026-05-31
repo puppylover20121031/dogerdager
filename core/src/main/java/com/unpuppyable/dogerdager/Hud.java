@@ -11,6 +11,7 @@ public final class Hud {
     private static final float DRAIN = 300;
     private static final float REGEN = 60;
     private static final float BAR_W = 600;
+    private static final float HIT_GRACE = 0.8f;
 
     private final float worldW;
     private final float worldH;
@@ -23,6 +24,7 @@ public final class Hud {
     private int level = 1;
     private int highScore;
     private boolean shieldActive;
+    private float invuln;
 
     public Hud(Difficulty difficulty, int highScore, float worldW, float worldH) {
         this.maxHealth = difficulty.maxHealth;
@@ -33,6 +35,7 @@ public final class Hud {
     }
 
     public boolean update(float delta, boolean shieldHeld) {
+        if (invuln > 0) invuln -= delta;
         shieldActive = shieldHeld && stamina > 3;
         if (shieldActive) stamina = Math.max(0, stamina - DRAIN * delta);
         else if (stamina < MAX_STAMINA) stamina = Math.min(MAX_STAMINA, stamina + REGEN * delta);
@@ -47,7 +50,13 @@ public final class Hud {
     }
 
     public void damage(int amount) {
-        if (!shieldActive) health = Math.max(0, health - amount);
+        if (shieldActive || invuln > 0) return;
+        health = Math.max(0, health - amount);
+        invuln = HIT_GRACE;
+    }
+
+    public boolean invulnerable() {
+        return invuln > 0;
     }
 
     public void healFull() {

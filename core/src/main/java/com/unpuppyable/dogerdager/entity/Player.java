@@ -14,6 +14,8 @@ public final class Player extends Entity {
     private final float maxX;
     private final float maxY;
     private boolean shielded;
+    private boolean invulnerable;
+    private float anim;
 
     public Player(float worldW, float playTop) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
@@ -23,6 +25,7 @@ public final class Player extends Entity {
 
     @Override
     public void update(float delta) {
+        anim += delta;
         float vx = 0, vy = 0;
         if (Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT))  vx -= SPEED;
         if (Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)) vx += SPEED;
@@ -36,8 +39,13 @@ public final class Player extends Entity {
         this.shielded = shielded;
     }
 
+    public void setInvulnerable(boolean invulnerable) {
+        this.invulnerable = invulnerable;
+    }
+
     @Override
     public void draw(ShapeRenderer shapes) {
+        if (invulnerable && (int) (anim * 10) % 2 == 0) return;
         shapes.setColor(shielded ? Color.SKY : Color.WHITE);
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
