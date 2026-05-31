@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":core"))
     implementation(libs.gdx.backend.lwjgl3)
     runtimeOnly(variantOf(libs.gdx.platform) { classifier("natives-desktop") })
+    runtimeOnly(variantOf(libs.gdx.freetype.platform) { classifier("natives-desktop") })
 }
 
 application {
