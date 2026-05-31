@@ -60,6 +60,7 @@ public final class PlayScreen implements Screen {
     private State state;
     private boolean muted = true;
     private float shake;
+    private float camX = ARENA_W / 2f;
     private boolean cheats;
     private boolean god;
 
@@ -82,6 +83,7 @@ public final class PlayScreen implements Screen {
         spawner = new Spawner(difficulty, hud, this);
         state = State.PLAYING;
         shake = 0;
+        camX = ARENA_W / 2f;
         bgm.stop();
         bgm.play();
     }
@@ -186,11 +188,7 @@ public final class PlayScreen implements Screen {
         } else if (Gdx.input.isKeyJustPressed(Keys.R)) {
             reset();
         }
-        draw();
-
-
-
-
+        draw(delta);
 
     }
 
@@ -260,23 +258,26 @@ public final class PlayScreen implements Screen {
         }
     }
 
-    private void draw() {
+    private void draw(float delta) {
         ScreenUtils.clear(Color.BLACK);
         viewport.apply();
         var cam = viewport.getCamera();
 
-        // World pass: the camera follows the player horizontally, clamped to the arena.
-        float camX = MathUtils.clamp(player.bounds().x + Player.SIZE / 2f, WORLD_W / 2f, ARENA_W - WORLD_W / 2f);
-        float camY = WORLD_H / 2f;
+        // World pass: the camera eases toward the player horizontally, clamped to the arena.
+        float targetX = MathUtils.clamp(player.bounds().x + Player.SIZE / 2f, WORLD_W / 2f, ARENA_W - WORLD_W / 2f);
+        camX = MathUtils.lerp(camX, targetX, Math.min(1f, 9f * delta));
+        float drawX = camX;
+        float drawY = WORLD_H / 2f;
         if (shake > 0) {
             float mag = shake * 45;
-            camX += MathUtils.random(-mag, mag);
-            camY += MathUtils.random(-mag, mag);
+            drawX += MathUtils.random(-mag, mag);
+            drawY += MathUtils.random(-mag, mag);
         }
-        cam.position.set(camX, camY, 0);
+        cam.position.set(drawX, drawY, 0);
         cam.update();
         shapes.setProjectionMatrix(cam.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
+        drawBackground(shapes);
         player.draw(shapes);
         for (var e : entities) e.draw(shapes);
         shapes.end();
@@ -308,6 +309,20 @@ public final class PlayScreen implements Screen {
             drawCentered("GAME OVER  -  R retry   Esc menu");
         }
         batch.end();
+    }
+
+    // World-space backdrop -- gives the panning camera something to scroll over so motion reads.
+    private void drawBackground(ShapeRenderer shapes) {
+        shapes.setColor(0.05f, 0.05f, 0.08f, 1f);
+        shapes.rect(0, 0, ARENA_W, PLAY_TOP);
+        shapes.setColor(0.11f, 0.11f, 0.16f, 1f);
+        for (float x = 0; x <= ARENA_W; x += 32f) shapes.rect(x, 0, 1f, PLAY_TOP);
+        for (float y = 0; y <= PLAY_TOP; y += 32f) shapes.rect(0, y, ARENA_W, 1f);
+        shapes.setColor(0.28f, 0.30f, 0.42f, 1f);
+        shapes.rect(0, 0, ARENA_W, 2f);
+        shapes.rect(0, PLAY_TOP - 2f, ARENA_W, 2f);
+        shapes.rect(0, 0, 2f, PLAY_TOP);
+        shapes.rect(ARENA_W - 2f, 0, 2f, PLAY_TOP);
     }
 
     private void drawCentered(String text) {
