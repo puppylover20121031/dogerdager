@@ -65,7 +65,7 @@ public final class PlayScreen implements Screen {
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.bgm = Gdx.audio.newMusic(Gdx.files.internal("puppysong.mp3"));
         this.bgm.setLooping(true);
-        this.bgm.setVolume(0f);
+        this.bgm.setVolume(1f);
         this.failSound = Gdx.audio.newSound(Gdx.files.internal("losing.wav"));
         reset();
     }

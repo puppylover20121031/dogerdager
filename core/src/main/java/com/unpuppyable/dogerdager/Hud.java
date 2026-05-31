@@ -12,7 +12,6 @@ public final class Hud {
     private static final float REGEN = 60;
     private static final float BAR_W = 600;
 
-    private final float worldW;
     private final float worldH;
     private final int maxHealth;
 
@@ -28,7 +27,6 @@ public final class Hud {
         this.maxHealth = difficulty.maxHealth;
         this.health = maxHealth;
         this.highScore = highScore;
-        this.worldW = worldW;
         this.worldH = worldH;
     }
 
