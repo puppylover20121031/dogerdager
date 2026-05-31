@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.MathUtils;
 
 public final class Bullet extends Entity {
 
-    public enum Kind { FALLING, HOMING, ROCKET }
+    public enum Kind { FALLING, HOMING, ROCKET, SHARD }
 
     private static final float ROCKET_SPEED = 200f;
     private static final float ROCKET_TURN = 2.2f;
@@ -33,6 +33,7 @@ public final class Bullet extends Entity {
             case FALLING -> 1;
             case HOMING -> 1;
             case ROCKET -> 2;
+            case SHARD -> 1;
         };
         if (kind == Kind.FALLING) {
             vx = MathUtils.random(-180f, 180f);
@@ -47,6 +48,18 @@ public final class Bullet extends Entity {
             vx = len > 0.001f ? dx / len * ROCKET_SPEED : 0;
             vy = len > 0.001f ? dy / len * ROCKET_SPEED : -ROCKET_SPEED;
         }
+    }
+
+    // Directional shard for boss fans/rings -- straight line, no homing.
+    public Bullet(float x, float y, float vx, float vy, float worldW) {
+        super(x, y, 12);
+        this.kind = Kind.SHARD;
+        this.worldW = worldW;
+        this.target = null;
+        this.damage = 1;
+        this.vx = vx;
+        this.vy = vy;
+        this.life = 7f;
     }
 
     @Override
@@ -89,6 +102,9 @@ public final class Bullet extends Entity {
             }
             life -= delta;
             if (life <= 0) dead = true;
+        } else if (kind == Kind.SHARD) {
+            life -= delta;
+            if (life <= 0) dead = true;
         }
         bounds.x += vx * delta;
         bounds.y += vy * delta;
@@ -119,7 +135,7 @@ public final class Bullet extends Entity {
             shapes.rect(cx - w / 2f, cy - h / 2f, w / 2f, h / 2f, w, h, 1f, 1f, ang);
             return;
         }
-        shapes.setColor(kind == Kind.HOMING ? Color.ROYAL : Color.RED);
+        shapes.setColor(kind == Kind.HOMING ? Color.ROYAL : kind == Kind.SHARD ? Color.ORANGE : Color.RED);
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 }

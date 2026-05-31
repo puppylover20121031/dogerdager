@@ -14,6 +14,8 @@ public final class Boss extends Entity {
     public static final float SIZE = 96;
     private static final float DESCEND = 180;
     private static final float PATROL = 150;
+    private static final Color ONE_COL = new Color(1f, 0.48f, 0.2f, 1f);
+    private static final Color TWO_COL = new Color(0.78f, 0.24f, 1f, 1f);
 
     private final Kind kind;
     private final PlayScreen screen;
@@ -24,6 +26,7 @@ public final class Boss extends Entity {
     private float vx = PATROL;
     private boolean settled;
     private float atkTimer;
+    private boolean altAttack;
     private float minionTimer = 4f;
     private float fireTimer;
     private int rocketsInBurst;
@@ -75,28 +78,64 @@ public final class Boss extends Entity {
 
         if (kind == Kind.THREE) {
             updateBoss3(delta);
+        } else if (kind == Kind.ONE) {
+            updateBoss1(delta);
         } else {
-            atkTimer -= delta;
-            if (atkTimer <= 0) {
-                fireBasic();
-                atkTimer = kind == Kind.ONE ? 1.5f : 1.6f;
-            }
-            if (kind == Kind.TWO) {
-                minionTimer -= delta;
-                if (minionTimer <= 0) {
-                    screen.spawn(Enemy.Kind.SMART);
-                    minionTimer = 4f;
-                }
-            }
+            updateBoss2(delta);
         }
     }
 
-    private void fireBasic() {
-        if (kind == Kind.TWO) {
-            screen.add(new Bullet(Bullet.Kind.HOMING, bounds.x + SIZE / 2, bounds.y, worldW, target));
-        } else {
-            screen.add(new Bullet(Bullet.Kind.FALLING, bounds.x + 20, bounds.y, worldW, target));
-            screen.add(new Bullet(Bullet.Kind.FALLING, bounds.x + SIZE - 32, bounds.y, worldW, target));
+    // ONE: telegraphed fans aimed at the player; widens and speeds up when enraged.
+    private void updateBoss1(float delta) {
+        phaseTimer += delta;
+        boolean rage = phaseTimer > 10f;
+        atkTimer -= delta;
+        if (atkTimer <= 0) {
+            fireFan(rage ? 7 : 5, rage ? 0.7f : 0.5f, 150f);
+            atkTimer = rage ? 1.3f : 1.8f;
+        }
+    }
+
+    // TWO: alternates a homing volley and a rotating ring, trickles minions, escalates.
+    private void updateBoss2(float delta) {
+        phaseTimer += delta;
+        boolean rage = phaseTimer > 12f;
+        atkTimer -= delta;
+        if (atkTimer <= 0) {
+            if (altAttack) {
+                fireRing(rage ? 16 : 12, 110f);
+            } else {
+                for (int i = 0; i < 3; i++) {
+                    screen.add(new Bullet(Bullet.Kind.HOMING, bounds.x + SIZE / 2, bounds.y, worldW, target));
+                }
+            }
+            altAttack = !altAttack;
+            atkTimer = rage ? 1.4f : 1.9f;
+        }
+        minionTimer -= delta;
+        if (minionTimer <= 0) {
+            screen.spawn(Enemy.Kind.SMART);
+            minionTimer = 5f;
+        }
+    }
+
+    private void fireFan(int n, float spread, float speed) {
+        float cx = bounds.x + SIZE / 2f;
+        float cy = bounds.y;
+        float aim = MathUtils.atan2(target.bounds().y - cy, target.bounds().x - cx);
+        for (int i = 0; i < n; i++) {
+            float t = n == 1 ? 0.5f : i / (float) (n - 1);
+            float a = aim - spread / 2f + spread * t;
+            screen.add(new Bullet(cx, cy, MathUtils.cos(a) * speed, MathUtils.sin(a) * speed, worldW));
+        }
+    }
+
+    private void fireRing(int n, float speed) {
+        float cx = bounds.x + SIZE / 2f;
+        float cy = bounds.y + SIZE / 2f;
+        for (int i = 0; i < n; i++) {
+            float a = i * (MathUtils.PI2 / n) + phaseTimer;
+            screen.add(new Bullet(cx, cy, MathUtils.cos(a) * speed, MathUtils.sin(a) * speed, worldW));
         }
     }
 
@@ -145,9 +184,13 @@ public final class Boss extends Entity {
         }
         Color body = switch (kind) {
             case ARM -> Color.MAROON;
+            case ONE -> ONE_COL;
+            case TWO -> TWO_COL;
             case THREE -> phase <= 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : phase == 3 ? Color.SCARLET : Color.VIOLET;
-            default -> Color.RED;
         };
+        if ((kind == Kind.ONE || kind == Kind.TWO) && settled && atkTimer < 0.25f) {
+            body = body.cpy().lerp(Color.WHITE, 1f - atkTimer / 0.25f);
+        }
         shapes.setColor(body);
         shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
     }
