@@ -50,13 +50,15 @@ public final class PlayScreen implements Screen {
     private Hud hud;
     private Spawner spawner;
     private State state;
+    private boolean muted;
 
     public PlayScreen(DogerDager game, Difficulty difficulty) {
         this.game = game;
         this.difficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
-        this.bgm = Gdx.audio.newMusic(Gdx.files.internal("song.wav"));
+        this.bgm = Gdx.audio.newMusic(Gdx.files.internal("puppysong.mp3"));
         this.bgm.setLooping(true);
+        this.bgm.setVolume(0.5f);
         this.failSound = Gdx.audio.newSound(Gdx.files.internal("losing.wav"));
         reset();
     }
@@ -88,6 +90,10 @@ public final class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(Keys.M)) {
+            muted = !muted;
+            bgm.setVolume(muted ? 0f : 0.5f);
+        }
         if (state == State.PLAYING) update(delta);
         else if (Gdx.input.isKeyJustPressed(Keys.R)) reset();
         draw();
