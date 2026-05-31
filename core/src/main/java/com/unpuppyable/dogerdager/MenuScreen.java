@@ -71,6 +71,15 @@ public final class MenuScreen extends ScreenAdapter {
         dispose();
     }
 
+    private void openStats() {
+        if (switching) return;
+        switching = true;
+        game.menuMove();
+        Gdx.input.setInputProcessor(null);
+        game.setScreen(new StatsScreen(game));
+        dispose();
+    }
+
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
@@ -102,6 +111,10 @@ public final class MenuScreen extends ScreenAdapter {
         }
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             start(CHOICES[index]);
+            return;
+        }
+        if (Gdx.input.isKeyJustPressed(Keys.T)) {
+            openStats();
             return;
         }
         for (int i = 0; i < buttons.length; i++) {
