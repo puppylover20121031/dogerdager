@@ -1,7 +1,5 @@
 package com.unpuppyable.dogerdager;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Keys;
 import com.unpuppyable.dogerdager.entity.Boss;
 import com.unpuppyable.dogerdager.entity.Enemy;
 
@@ -11,7 +9,7 @@ public final class Spawner {
 
     private final Difficulty difficulty;
     private final Hud hud;
-    public final PlayScreen screen;
+    private final PlayScreen screen;
     private float timer;
 
     public Spawner(Difficulty difficulty, Hud hud, PlayScreen screen) {

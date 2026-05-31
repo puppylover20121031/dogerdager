@@ -34,7 +34,7 @@ public final class Hud {
     private float invuln;
 
     public Hud(Difficulty difficulty, int highScore, float worldW, float worldH) {
-        this.worldW = 0;
+        this.worldW = worldW;
         this.maxHealth = difficulty.maxHealth;
         this.winLevel = difficulty.winLevel;
         this.scoreRate = REGEN * difficulty.scoreMultiplier;
@@ -73,6 +73,11 @@ public final class Hud {
 
     public void healFull() {
         health = maxHealth;
+    }
+
+    public void refillStamina() {
+        stamina = MAX_STAMINA;
+        staminaLocked = false;
     }
 
     public int nextLevel() {
