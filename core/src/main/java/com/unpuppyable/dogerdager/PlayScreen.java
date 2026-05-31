@@ -2,11 +2,11 @@ package com.unpuppyable.dogerdager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -27,13 +27,14 @@ import java.util.List;
 public final class PlayScreen implements Screen {
 
     static final float WORLD_W = 640;
-    static final float WORLD_H = 477;
+    static final float WORLD_H = 360;
     static final float HUD_H = 72;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
     private static final int INSTANT_KILL = 100_000;
+    private static final float MAX_STEP = 0.05f;
 
-    private enum State { PLAYING, GAME_OVER, WON }
+    private enum State { PLAYING, PAUSED, GAME_OVER, WON }
 
     private final DogerDager game;
     private final Difficulty difficulty;
@@ -43,7 +44,7 @@ public final class PlayScreen implements Screen {
     private final SpriteBatch batch = new SpriteBatch();
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
-    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final Progress progress = new Progress();
 
     private final List<Enemy> enemies = new ArrayList<>();
     private final List<Boss> bosses = new ArrayList<>();
@@ -58,6 +59,7 @@ public final class PlayScreen implements Screen {
     private Potion potion;
     private State state;
     private boolean muted = true;
+    private float shake;
 
     public PlayScreen(DogerDager game, Difficulty difficulty) {
         this.game = game;
@@ -77,9 +79,10 @@ public final class PlayScreen implements Screen {
         bullets.clear();
         potion = null;
         player = new Player(WORLD_W, PLAY_TOP);
-        hud = new Hud(difficulty, prefs.getInteger("highScore", 0), WORLD_W, WORLD_H);
+        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         state = State.PLAYING;
+        shake = 0;
         bgm.stop();
         bgm.play();
     }
@@ -104,6 +107,10 @@ public final class PlayScreen implements Screen {
         bullets.add(bullet);
     }
 
+    public boolean bossActive() {
+        return !bosses.isEmpty();
+    }
+
     public void spawnPotion() {
         potion = new Potion(MathUtils.random(0f, WORLD_W - 16), MathUtils.random(0f, PLAY_TOP - 16));
     }
@@ -119,7 +126,7 @@ public final class PlayScreen implements Screen {
         if (state == State.PLAYING) {
             state = State.WON;
             bgm.stop();
-            saveScore();
+            progress.recordRun(difficulty, hud.highScore(), true);
         }
     }
 
@@ -130,17 +137,38 @@ public final class PlayScreen implements Screen {
             bgm.setVolume(muted ? 0f : 0.5f);
         }
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
-            bgm.stop();
-            game.setScreen(new MenuScreen(game));
-            dispose();
-            return;
+            if (state == State.PLAYING) {
+                state = State.PAUSED;
+                bgm.pause();
+            } else if (state == State.PAUSED) {
+                state = State.PLAYING;
+                bgm.play();
+            } else {
+                toMenu();
+                return;
+            }
         }
-        if (state == State.PLAYING) update(delta);
-        else if (Gdx.input.isKeyJustPressed(Keys.R)) reset();
+        if (state == State.PLAYING) {
+            update(Math.min(delta, MAX_STEP));
+        } else if (state == State.PAUSED) {
+            if (Gdx.input.isKeyJustPressed(Keys.Q)) {
+                toMenu();
+                return;
+            }
+        } else if (Gdx.input.isKeyJustPressed(Keys.R)) {
+            reset();
+        }
         draw();
     }
 
+    private void toMenu() {
+        bgm.stop();
+        game.setScreen(new MenuScreen(game));
+        dispose();
+    }
+
     private void update(float delta) {
+        if (shake > 0) shake -= delta;
         boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
         player.setShielded(shield);
         player.update(delta);
@@ -148,11 +176,11 @@ public final class PlayScreen implements Screen {
 
         for (var enemy : enemies) {
             enemy.update(delta);
-            if (enemy.bounds().overlaps(player.bounds())) hurt(5);
+            if (enemy.bounds().overlaps(player.bounds())) hurt(enemy.damage());
         }
         for (var boss : bosses) {
             boss.update(delta);
-            if (boss.bounds().overlaps(player.bounds())) hurt(5);
+            if (boss.bounds().overlaps(player.bounds())) hurt(25);
         }
         bosses.addAll(pendingBosses);
         pendingBosses.clear();
@@ -160,36 +188,55 @@ public final class PlayScreen implements Screen {
         for (var bullet : bullets) {
             bullet.update(delta);
             if (!bullet.dead() && bullet.bounds().overlaps(player.bounds())) {
+                if (bullet.rocket() && !player.strafing() && !hud.invulnerable()) {
+                    player.knockback(WORLD_W, PLAY_TOP);
+                }
                 hurt(bullet.damage());
                 bullet.kill();
             }
         }
-        if (potion != null && potion.bounds().overlaps(player.bounds())) {
-            hud.healFull();
-            potion = null;
+        if (potion != null) {
+            potion.update(delta);
+            if (potion.dead()) {
+                potion = null;
+            } else if (potion.bounds().overlaps(player.bounds())) {
+                hud.healFull();
+                potion = null;
+            }
         }
 
         enemies.removeIf(Enemy::dead);
         bullets.removeIf(Bullet::dead);
         bosses.removeIf(Boss::dead);
 
+        player.setInvulnerable(hud.invulnerable());
+
         if (hud.dead()) {
             state = State.GAME_OVER;
             bgm.stop();
             failSound.play();
-            saveScore();
+            progress.recordRun(difficulty, hud.highScore(), false);
         }
     }
 
     private void hurt(int amount) {
-        hud.damage(difficulty.instantKill() ? INSTANT_KILL : amount);
+        if (player.strafing()) return;
+        if (hud.damage(difficulty.instantKill() ? INSTANT_KILL : amount)) {
+            shake = 0.22f;
+        }
     }
 
     private void draw() {
         ScreenUtils.clear(Color.BLACK);
-        viewport.apply();
-        shapes.setProjectionMatrix(viewport.getCamera().combined);
-        batch.setProjectionMatrix(viewport.getCamera().combined);
+        viewport.apply(true);
+        var cam = viewport.getCamera();
+        if (shake > 0) {
+            float mag = shake * 45;
+            cam.translate(MathUtils.random(-mag, mag), MathUtils.random(-mag, mag), 0);
+            cam.update();
+        }
+        shapes.setProjectionMatrix(cam.combined);
+        batch.setProjectionMatrix(cam.combined);
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         player.draw(shapes);
@@ -200,10 +247,28 @@ public final class PlayScreen implements Screen {
         hud.drawBars(shapes);
         shapes.end();
 
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        hud.drawRings(shapes, player);
+        shapes.end();
+
+        if (state == State.PAUSED) {
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(0f, 0f, 0f, 0.6f);
+            shapes.rect(0, 0, WORLD_W, WORLD_H);
+            shapes.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
+
         batch.begin();
         hud.drawText(batch, font);
-        if (state != State.PLAYING) drawCentered(state == State.WON
-                ? "YOU WON  -  R retry   Esc menu" : "GAME OVER  -  R retry   Esc menu");
+        if (state == State.PAUSED) {
+            drawCentered("PAUSED   -   Esc resume   Q menu");
+        } else if (state == State.WON) {
+            drawCentered("YOU WON  -  R retry   Esc menu");
+        } else if (state == State.GAME_OVER) {
+            drawCentered("GAME OVER  -  R retry   Esc menu");
+        }
         batch.end();
     }
 
@@ -211,11 +276,6 @@ public final class PlayScreen implements Screen {
         font.setColor(Color.WHITE);
         layout.setText(font, text);
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
-    }
-
-    private void saveScore() {
-        prefs.putInteger("highScore", hud.highScore());
-        prefs.flush();
     }
 
     @Override

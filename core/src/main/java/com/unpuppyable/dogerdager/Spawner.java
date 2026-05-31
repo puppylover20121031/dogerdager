@@ -5,7 +5,7 @@ import com.unpuppyable.dogerdager.entity.Enemy;
 
 public final class Spawner {
 
-    private static final float LEVEL_TIME = 200f / 60f;
+    private static final float LEVEL_TIME = 3.0f;
 
     private final Difficulty difficulty;
     private final Hud hud;
@@ -31,25 +31,32 @@ public final class Spawner {
         boolean tough = difficulty == Difficulty.HARD || difficulty == Difficulty.HARDCORE;
 
         switch (level) {
-            case 5, 47, 92, 132 -> screen.spawn(Enemy.Kind.FAST);
-            case 6, 8, 10 -> screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
-            case 25, 52, 120 -> screen.spawn(Enemy.Kind.SMART);
             case 12 -> screen.spawnBoss(Boss.Kind.ONE);
             case 35, 80 -> screen.spawnBoss(Boss.Kind.TWO);
             case 100 -> screen.spawnBoss(Boss.Kind.THREE);
             default -> {
-                if (level > 25 && level % 10 == 0) {
-                    screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
-                }
+                if (!screen.bossActive()) spawnEnemy(level, tough);
             }
         }
 
-        if (level % 4 == 0) {
+        if (level % 5 == 0) {
             screen.spawnPotion();
         }
 
         if (level >= difficulty.winLevel) {
             screen.win();
+        }
+    }
+
+    private void spawnEnemy(int level, boolean tough) {
+        if (level == 5 || level == 47 || level == 92 || level == 132) {
+            screen.spawn(Enemy.Kind.FAST);
+        } else if (level == 6 || level == 8 || level == 10) {
+            screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
+        } else if (level == 25 || level == 52 || level == 120) {
+            screen.spawn(Enemy.Kind.SMART);
+        } else if (level > 25 && level % 10 == 0) {
+            screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
         }
     }
 }

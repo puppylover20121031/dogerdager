@@ -13,13 +13,13 @@ public final class PostProcessor implements Disposable {
     private final ShaderProgram shader;
     private FrameBuffer fbo;
     private float time;
-    private boolean enabled = false;
+    private boolean glitch;
 
     public PostProcessor() {
         ShaderProgram.pedantic = false;
-        shader = new ShaderProgram(VERT, GLITCH);
+        shader = new ShaderProgram(VERT, FRAG);
         if (!shader.isCompiled()) {
-            throw new IllegalStateException("glitch shader failed: " + shader.getLog());
+            throw new IllegalStateException("post shader failed: " + shader.getLog());
         }
     }
 
@@ -28,16 +28,20 @@ public final class PostProcessor implements Disposable {
         fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
     }
 
-    public void toggle() {
-        enabled = !enabled;
+    public void setGlitch(boolean glitch) {
+        this.glitch = glitch;
+    }
+
+    public void toggleGlitch() {
+        glitch = !glitch;
     }
 
     public void capture() {
-        if (enabled && fbo != null) fbo.begin();
+        if (fbo != null) fbo.begin();
     }
 
     public void render(float delta) {
-        if (!enabled || fbo == null) return;
+        if (fbo == null) return;
         fbo.end();
         time += delta;
 
@@ -49,6 +53,7 @@ public final class PostProcessor implements Disposable {
         batch.begin();
         shader.setUniformf("u_time", time);
         shader.setUniformf("u_resolution", fbo.getWidth(), fbo.getHeight());
+        shader.setUniformf("u_glitch", glitch ? 1f : 0f);
         batch.draw(region, 0, 0, fbo.getWidth(), fbo.getHeight());
         batch.end();
         batch.setShader(null);
@@ -75,7 +80,7 @@ public final class PostProcessor implements Disposable {
             }
             """;
 
-    private static final String GLITCH = """
+    private static final String FRAG = """
             #ifdef GL_ES
             precision mediump float;
             #endif
@@ -84,19 +89,33 @@ public final class PostProcessor implements Disposable {
             uniform sampler2D u_texture;
             uniform float u_time;
             uniform vec2 u_resolution;
+            uniform float u_glitch;
 
             float rand(vec2 c) { return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
 
             void main() {
                 vec2 uv = v_texCoords;
-                float line = rand(vec2(floor(uv.y * 90.0), floor(u_time * 11.0)));
-                if (line > 0.93) uv.x += (line - 0.93) * 0.35;
-                float ca = 0.0014 + 0.004 * step(0.97, rand(vec2(floor(u_time * 9.0), 3.0)));
-                float r = texture2D(u_texture, vec2(uv.x + ca, uv.y)).r;
-                float g = texture2D(u_texture, uv).g;
-                float b = texture2D(u_texture, vec2(uv.x - ca, uv.y)).b;
-                vec3 col = vec3(r, g, b);
-                col *= 0.92 + 0.08 * sin(uv.y * u_resolution.y * 3.14159);
+                if (u_glitch > 0.5) {
+                    float line = rand(vec2(floor(uv.y * 90.0), floor(u_time * 11.0)));
+                    if (line > 0.93) uv.x += (line - 0.93) * 0.35;
+                }
+                vec2 px = 1.0 / u_resolution;
+                vec3 base = texture2D(u_texture, uv).rgb;
+                vec3 bloom = vec3(0.0);
+                for (int i = 0; i < 8; i++) {
+                    float a = float(i) * 0.7853982;
+                    vec2 dir = vec2(cos(a), sin(a));
+                    bloom += max(texture2D(u_texture, uv + dir * px * 4.0).rgb - 0.45, 0.0);
+                    bloom += max(texture2D(u_texture, uv + dir * px * 8.0).rgb - 0.45, 0.0) * 0.6;
+                }
+                bloom *= 0.12;
+                vec3 col = base + bloom * 1.5;
+                if (u_glitch > 0.5) {
+                    float ca = 0.0014 + 0.004 * step(0.97, rand(vec2(floor(u_time * 9.0), 3.0)));
+                    col.r += texture2D(u_texture, vec2(uv.x + ca, uv.y)).r - base.r;
+                    col.b += texture2D(u_texture, vec2(uv.x - ca, uv.y)).b - base.b;
+                    col *= 0.92 + 0.08 * sin(uv.y * u_resolution.y * 3.14159);
+                }
                 gl_FragColor = vec4(col, 1.0) * v_color;
             }
             """;

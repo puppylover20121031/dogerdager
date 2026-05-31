@@ -2,7 +2,6 @@ package com.unpuppyable.dogerdager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -21,7 +20,7 @@ public final class MenuScreen extends ScreenAdapter {
 
     private final DogerDager game;
     private final Stage stage = new Stage(new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H));
-    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final Progress progress = new Progress();
     private final VisTextButton[] buttons = new VisTextButton[CHOICES.length];
 
     private int index = Difficulty.NORMAL.ordinal();
@@ -40,9 +39,12 @@ public final class MenuScreen extends ScreenAdapter {
         title.setFontScale(2f);
         root.add(title).padBottom(28).row();
 
+        boolean hardcoreUnlocked = progress.hardcoreUnlocked();
         for (int i = 0; i < CHOICES.length; i++) {
             var choice = CHOICES[i];
-            var button = new VisTextButton(choice.name());
+            boolean locked = choice == Difficulty.HARDCORE && !hardcoreUnlocked;
+            var button = new VisTextButton(locked ? "HARDCORE  (clear HARD)" : choice.name());
+            button.setDisabled(locked);
             button.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
@@ -53,7 +55,7 @@ public final class MenuScreen extends ScreenAdapter {
             root.add(button).width(220).height(34).pad(3).row();
         }
 
-        root.add(new VisLabel("Best  " + prefs.getInteger("highScore", 0))).padTop(20).row();
+        root.add(new VisLabel("Best  " + progress.bestOverall())).padTop(20).row();
 
         var hint = new VisTable();
         hint.add(new Label(Icons.GAMEPAD, new Label.LabelStyle(game.icons().font(), Color.LIGHT_GRAY))).padRight(8);
@@ -65,10 +67,32 @@ public final class MenuScreen extends ScreenAdapter {
 
     private void start(Difficulty difficulty) {
         if (switching) return;
+        if (difficulty == Difficulty.HARDCORE && !progress.hardcoreUnlocked()) {
+            game.menuMove();
+            return;
+        }
         switching = true;
         game.menuConfirm();
         Gdx.input.setInputProcessor(null);
         game.setScreen(new PlayScreen(game, difficulty));
+        dispose();
+    }
+
+    private void openStats() {
+        if (switching) return;
+        switching = true;
+        game.menuMove();
+        Gdx.input.setInputProcessor(null);
+        game.setScreen(new StatsScreen(game));
+        dispose();
+    }
+
+    private void openSettings() {
+        if (switching) return;
+        switching = true;
+        game.menuMove();
+        Gdx.input.setInputProcessor(null);
+        game.setScreen(new SettingsScreen(game));
         dispose();
     }
 
@@ -105,7 +129,16 @@ public final class MenuScreen extends ScreenAdapter {
             start(CHOICES[index]);
             return;
         }
+        if (Gdx.input.isKeyJustPressed(Keys.T)) {
+            openStats();
+            return;
+        }
+        if (Gdx.input.isKeyJustPressed(Keys.O)) {
+            openSettings();
+            return;
+        }
         for (int i = 0; i < buttons.length; i++) {
+            if (buttons[i].isDisabled()) continue;
             buttons[i].setColor(i == index ? Color.YELLOW : Color.WHITE);
         }
     }

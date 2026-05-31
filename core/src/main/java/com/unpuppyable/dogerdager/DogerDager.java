@@ -20,7 +20,12 @@ public class DogerDager extends Game {
         post = new PostProcessor();
         menuMove = Gdx.audio.newSound(Gdx.files.internal("menu-move.mp3"));
         menuConfirm = Gdx.audio.newSound(Gdx.files.internal("menu-confirm.mp3"));
+        new Settings().apply(this);
         setScreen(new MenuScreen(this));
+    }
+
+    public void setGlitch(boolean on) {
+        post.setGlitch(on);
     }
 
     public void menuMove() {
@@ -33,7 +38,7 @@ public class DogerDager extends Game {
 
     @Override
     public void render() {
-        if (Gdx.input.isKeyJustPressed(Keys.F1)) post.toggle();
+        if (Gdx.input.isKeyJustPressed(Keys.F1)) post.toggleGlitch();
         if (Gdx.input.isKeyJustPressed(Keys.F11)) toggleFullscreen();
         post.capture();
         super.render();
@@ -42,7 +47,7 @@ public class DogerDager extends Game {
 
     private void toggleFullscreen() {
         if (Gdx.graphics.isFullscreen()) {
-            Gdx.graphics.setWindowedMode(1280, 954);
+            Gdx.graphics.setWindowedMode(1280, 720);
         } else {
             Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
         }

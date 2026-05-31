@@ -22,10 +22,9 @@ public final class Boss extends Entity {
     private float vx = PATROL;
     private boolean settled;
     private float atkTimer;
-    private float burstTimer;
     private float minionTimer = 4f;
-    private float phaseTimer;
-    private int phase = 1;
+    private float fireTimer;
+    private int rocketsInBurst;
     private boolean armsSpawned;
 
     public Boss(Kind kind, float x, float restY, float worldW, PlayScreen screen, Player target) {
@@ -91,44 +90,16 @@ public final class Boss extends Entity {
             armsSpawned = true;
         }
 
-        phaseTimer += delta;
-        int prev = phase;
-        phase = phaseTimer < 20 ? 1 : phaseTimer < 40 ? 2 : 3;
-        if (phase != prev) {
-            for (int i = 0; i < 3; i++) screen.spawn(Enemy.Kind.NORMAL);
-        }
-
-        atkTimer -= delta;
-        burstTimer -= delta;
-        switch (phase) {
-            case 1 -> {
-                if (atkTimer <= 0) { twin(); atkTimer = 0.8f; }
+        fireTimer -= delta;
+        if (fireTimer <= 0) {
+            screen.addBullet(new Bullet(Bullet.Kind.ROCKET, bounds.x + SIZE / 2, bounds.y, worldW, target));
+            rocketsInBurst++;
+            if (rocketsInBurst >= 4) {
+                rocketsInBurst = 0;
+                fireTimer = 3f;
+            } else {
+                fireTimer = 0.4f;
             }
-            case 2 -> {
-                if (atkTimer <= 0) { twin(); atkTimer = 0.5f; }
-                if (burstTimer <= 0) { burst(12); burstTimer = 2.5f; }
-            }
-            default -> {
-                if (atkTimer <= 0) { salvo(); atkTimer = 0.25f; }
-                if (burstTimer <= 0) { burst(20); burstTimer = 1.6f; }
-            }
-        }
-    }
-
-    private void twin() {
-        screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + 12, bounds.y, worldW, target));
-        screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + SIZE - 24, bounds.y, worldW, target));
-    }
-
-    private void salvo() {
-        for (int i = 0; i < 3; i++) {
-            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + 10 + i * 28, bounds.y, worldW, target));
-        }
-    }
-
-    private void burst(int count) {
-        for (int i = 0; i < count; i++) {
-            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + MathUtils.random(SIZE), bounds.y, worldW, target));
         }
     }
 
@@ -138,9 +109,14 @@ public final class Boss extends Entity {
 
     @Override
     public void draw(ShapeRenderer shapes) {
+        if (kind == Kind.THREE && settled && fireTimer < 0.3f) {
+            float intensity = 1f - fireTimer / 0.3f;
+            shapes.setColor(1f, 0.25f * intensity, 0.1f, 1f);
+            shapes.rectLine(bounds.x + SIZE / 2f, bounds.y, target.bounds().x + 8f, target.bounds().y + 8f, 1.5f);
+        }
         shapes.setColor(switch (kind) {
             case ARM -> Color.MAROON;
-            case THREE -> phase == 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : Color.SCARLET;
+            case THREE -> Color.SCARLET;
             default -> Color.RED;
         });
         shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
