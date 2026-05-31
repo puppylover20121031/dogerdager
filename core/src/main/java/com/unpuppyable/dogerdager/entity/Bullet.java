@@ -30,9 +30,9 @@ public final class Bullet extends Entity {
         this.worldW = worldW;
         this.target = target;
         this.damage = switch (kind) {
-            case FALLING -> 10;
-            case HOMING -> 16;
-            case ROCKET -> 22;
+            case FALLING -> 1;
+            case HOMING -> 1;
+            case ROCKET -> 2;
         };
         if (kind == Kind.FALLING) {
             vx = MathUtils.random(-180f, 180f);

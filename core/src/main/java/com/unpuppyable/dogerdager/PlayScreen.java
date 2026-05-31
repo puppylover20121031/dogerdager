@@ -135,6 +135,21 @@ public final class PlayScreen implements Screen {
         pending.clear();
     }
 
+    // Floor transition: heal, wipe the arena, then either win or stage the next floor.
+    public void nextFloor() {
+        int floor = hud.advanceFloor();
+        clearHazards();
+        hud.healFull();
+        if (floor >= difficulty.winFloor) {
+            win();
+            return;
+        }
+        if (floor % 4 == 0) {
+            Boss.Kind k = floor >= 12 ? Boss.Kind.THREE : floor >= 8 ? Boss.Kind.TWO : Boss.Kind.ONE;
+            spawnBoss(k);
+        }
+    }
+
     public void win() {
         if (state == State.PLAYING) {
             state = State.WON;
@@ -200,7 +215,7 @@ public final class PlayScreen implements Screen {
         for (var e : entities) {
             if (e.dead() || !e.hits(player.bounds())) continue;
             if (e.heals()) {
-                hud.healFull();
+                hud.heal(2);
                 e.kill();
             } else if (e.contactDamage() > 0) {
                 if (e.knocksBack() && !player.strafing() && !hud.invulnerable()) {
@@ -239,7 +254,8 @@ public final class PlayScreen implements Screen {
 
     private void hurt(int amount) {
         if (god || player.strafing()) return;
-        if (hud.damage(difficulty.instantKill() ? INSTANT_KILL : amount)) {
+        int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
+        if (hud.damage(dmg)) {
             shake = 0.22f;
         }
     }

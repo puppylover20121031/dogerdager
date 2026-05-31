@@ -47,7 +47,7 @@ public final class Boss extends Entity {
 
     @Override
     public int contactDamage() {
-        return 25;
+        return 2;
     }
 
     @Override

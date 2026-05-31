@@ -28,9 +28,9 @@ public final class Enemy extends Entity {
             case NORMAL -> baseSpeed;
         };
         this.damage = switch (kind) {
-            case NORMAL -> 10;
-            case FAST -> 14;
-            case SMART -> 18;
+            case NORMAL -> 2;
+            case FAST -> 2;
+            case SMART -> 2;
         };
         this.worldW = worldW;
         this.playTop = playTop;

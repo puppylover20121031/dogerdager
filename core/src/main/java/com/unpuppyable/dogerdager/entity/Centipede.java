@@ -50,7 +50,7 @@ public final class Centipede extends Entity {
 
     @Override
     public int contactDamage() {
-        return 14;
+        return 2;
     }
 
     @Override

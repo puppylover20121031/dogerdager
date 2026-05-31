@@ -9,7 +9,7 @@ public final class Progress {
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
 
     public int bestScore(Difficulty difficulty) {
-        return prefs.getInteger("best." + difficulty.name(), 0);
+        return prefs.getInteger("floor." + difficulty.name(), 0);
     }
 
     public int bestOverall() {
@@ -55,7 +55,7 @@ public final class Progress {
     public void recordRun(Difficulty difficulty, int score, boolean won) {
         prefs.putInteger("runs", runs() + 1);
         if (score > bestScore(difficulty)) {
-            prefs.putInteger("best." + difficulty.name(), score);
+            prefs.putInteger("floor." + difficulty.name(), score);
         }
         if (won) {
             prefs.putBoolean("cleared." + difficulty.name(), true);

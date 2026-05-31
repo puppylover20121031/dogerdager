@@ -30,7 +30,7 @@ public final class Laser extends Entity {
 
     @Override
     public int contactDamage() {
-        return firing() ? 30 : 0;
+        return firing() ? 2 : 0;
     }
 
     @Override
