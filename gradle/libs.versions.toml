@@ -2,6 +2,7 @@
 gdx = "1.13.1"
 lwjgl = "3.3.6" # gdx's bundled 3.3.3 segfaults on Java 25's JNI version
 visui = "1.5.5"
+gdxcontrollers = "2.2.3"
 
 [libraries]
 gdx = { module = "com.badlogicgames.gdx:gdx", version.ref = "gdx" }
@@ -10,3 +11,5 @@ gdx-platform = { module = "com.badlogicgames.gdx:gdx-platform", version.ref = "g
 gdx-freetype = { module = "com.badlogicgames.gdx:gdx-freetype", version.ref = "gdx" }
 gdx-freetype-platform = { module = "com.badlogicgames.gdx:gdx-freetype-platform", version.ref = "gdx" }
 visui = { module = "com.kotcrab.vis:vis-ui", version.ref = "visui" }
+gdx-controllers-core = { module = "com.badlogicgames.gdx-controllers:gdx-controllers-core", version.ref = "gdxcontrollers" }
+gdx-controllers-desktop = { module = "com.badlogicgames.gdx-controllers:gdx-controllers-desktop", version.ref = "gdxcontrollers" }

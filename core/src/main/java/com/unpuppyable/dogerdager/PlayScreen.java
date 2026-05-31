@@ -156,7 +156,7 @@ public final class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
+        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE) || Pad.justStart()) {
             if (state == State.PLAYING) {
                 state = State.PAUSED;
             } else if (state == State.PAUSED) {
@@ -186,7 +186,7 @@ public final class PlayScreen implements Screen {
 
     private void update(float delta) {
         if (shake > 0) shake -= delta;
-        boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
+        boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT) || Pad.shield());
         player.setShielded(shield);
         player.setStamina(hud.staminaFraction());
         player.update(delta);

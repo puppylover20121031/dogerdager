@@ -38,6 +38,7 @@ public class DogerDager extends Game {
 
     @Override
     public void render() {
+        Pad.poll();
         if (Gdx.input.isKeyJustPressed(Keys.F1)) post.toggleGlitch();
         if (Gdx.input.isKeyJustPressed(Keys.F11)) toggleFullscreen();
         post.capture();

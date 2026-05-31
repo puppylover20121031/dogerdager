@@ -1,6 +1,7 @@
 package com.unpuppyable.dogerdager.entity;
 
 import com.badlogic.gdx.Gdx;
+import com.unpuppyable.dogerdager.Pad;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -54,6 +55,8 @@ public final class Player extends Entity {
         if (Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)) vx += SPEED;
         if (Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.UP))    vy += SPEED;
         if (Gdx.input.isKeyPressed(Keys.S) || Gdx.input.isKeyPressed(Keys.DOWN))  vy -= SPEED;
+        vx = MathUtils.clamp(vx + Pad.moveX() * SPEED, -SPEED, SPEED);
+        vy = MathUtils.clamp(vy + Pad.moveY() * SPEED, -SPEED, SPEED);
         if (vx != 0 || vy != 0) {
             lastDx = vx / SPEED;
             lastDy = vy / SPEED;
@@ -61,7 +64,7 @@ public final class Player extends Entity {
         bounds.x = MathUtils.clamp(bounds.x + vx * delta, 0, maxX);
         bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
 
-        if (Gdx.input.isKeyJustPressed(Keys.TAB) && strafeCd <= 0) {
+        if ((Gdx.input.isKeyJustPressed(Keys.TAB) || Pad.justA()) && strafeCd <= 0) {
             strafe();
         }
     }

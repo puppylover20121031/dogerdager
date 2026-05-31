@@ -12,4 +12,5 @@ dependencies {
     api(libs.gdx)
     api(libs.gdx.freetype)
     api(libs.visui)
+    api(libs.gdx.controllers.core)
 }

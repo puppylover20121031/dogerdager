@@ -130,15 +130,15 @@ public final class MenuScreen extends ScreenAdapter {
             Gdx.app.exit();
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) {
+        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP) || Pad.justUp()) {
             index = (index - 1 + CHOICES.length) % CHOICES.length;
             game.menuMove();
         }
-        if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN)) {
+        if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN) || Pad.justDown()) {
             index = (index + 1) % CHOICES.length;
             game.menuMove();
         }
-        if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)) {
+        if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE) || Pad.justA()) {
             start(CHOICES[index]);
             return;
         }
