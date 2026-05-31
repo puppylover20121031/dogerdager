@@ -10,7 +10,6 @@ public final class Boss extends Entity {
     public enum Kind { ONE, TWO, THREE, ARM }
 
     public static final float SIZE = 96;
-    private static final int MAX_HP = 12000;
     private static final float DESCEND = 180;
     private static final float PATROL = 150;
 
@@ -25,10 +24,8 @@ public final class Boss extends Entity {
     private float atkTimer;
     private float burstTimer;
     private float minionTimer = 4f;
-
-    private int health = MAX_HP;
+    private float phaseTimer;
     private int phase = 1;
-    private float shield;
     private boolean armsSpawned;
 
     public Boss(Kind kind, float x, float restY, float worldW, PlayScreen screen, Player target) {
@@ -40,29 +37,12 @@ public final class Boss extends Entity {
         this.target = target;
     }
 
-    public boolean damageable() {
-        return kind == Kind.THREE;
-    }
-
     public boolean arm() {
         return kind == Kind.ARM;
     }
 
-    public void damage(int amount) {
-        if (kind != Kind.THREE || shield > 0) return;
-        health -= amount;
-        if (amount > 50) shield = 0.6f;
-        if (health <= 0) {
-            screen.dropPotion(bounds.x + SIZE / 2, bounds.y + SIZE / 2);
-            screen.removeArms();
-            dead = true;
-        }
-    }
-
     @Override
     public void update(float delta) {
-        if (shield > 0) shield -= delta;
-
         if (!settled) {
             bounds.y -= DESCEND * delta;
             if (bounds.y <= restY) {
@@ -111,13 +91,12 @@ public final class Boss extends Entity {
             armsSpawned = true;
         }
 
+        phaseTimer += delta;
         int prev = phase;
-        phase = health > 8000 ? 1 : health > 4000 ? 2 : 3;
+        phase = phaseTimer < 20 ? 1 : phaseTimer < 40 ? 2 : 3;
         if (phase != prev) {
-            shield = 2f;
             for (int i = 0; i < 3; i++) screen.spawn(Enemy.Kind.NORMAL);
         }
-        if (shield > 0) return;
 
         atkTimer -= delta;
         burstTimer -= delta;
@@ -159,21 +138,11 @@ public final class Boss extends Entity {
 
     @Override
     public void draw(ShapeRenderer shapes) {
-        Color body = switch (kind) {
+        shapes.setColor(switch (kind) {
             case ARM -> Color.MAROON;
-            case THREE -> shield > 0 ? Color.SKY
-                    : phase == 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : Color.SCARLET;
+            case THREE -> phase == 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : Color.SCARLET;
             default -> Color.RED;
-        };
-        shapes.setColor(body);
+        });
         shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
-
-        if (kind == Kind.THREE) {
-            float w = SIZE * Math.max(0, health) / (float) MAX_HP;
-            shapes.setColor(Color.BLACK);
-            shapes.rect(bounds.x, bounds.y + SIZE + 4, SIZE, 6);
-            shapes.setColor(Color.GREEN);
-            shapes.rect(bounds.x, bounds.y + SIZE + 4, w, 6);
-        }
     }
 }

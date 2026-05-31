@@ -57,7 +57,7 @@ public final class MenuScreen extends ScreenAdapter {
 
         var hint = new VisTable();
         hint.add(new Label(Icons.GAMEPAD, new Label.LabelStyle(game.icons().font(), Color.LIGHT_GRAY))).padRight(8);
-        hint.add(new VisLabel("WASD move    Space shoot    Shift shield    Esc menu"));
+        hint.add(new VisLabel("WASD move    Shift boost    F11 fullscreen    Esc menu"));
         root.add(hint).padTop(24);
 
         stage.addActor(root);
@@ -66,6 +66,7 @@ public final class MenuScreen extends ScreenAdapter {
     private void start(Difficulty difficulty) {
         if (switching) return;
         switching = true;
+        game.menuConfirm();
         Gdx.input.setInputProcessor(null);
         game.setScreen(new PlayScreen(game, difficulty));
         dispose();
@@ -94,9 +95,11 @@ public final class MenuScreen extends ScreenAdapter {
         }
         if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) {
             index = (index - 1 + CHOICES.length) % CHOICES.length;
+            game.menuMove();
         }
         if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN)) {
             index = (index + 1) % CHOICES.length;
+            game.menuMove();
         }
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             start(CHOICES[index]);
