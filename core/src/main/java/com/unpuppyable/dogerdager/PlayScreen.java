@@ -107,6 +107,10 @@ public final class PlayScreen implements Screen {
         bullets.add(bullet);
     }
 
+    public boolean bossActive() {
+        return !bosses.isEmpty();
+    }
+
     public void spawnPotion() {
         potion = new Potion(MathUtils.random(0f, WORLD_W - 16), MathUtils.random(0f, PLAY_TOP - 16));
     }

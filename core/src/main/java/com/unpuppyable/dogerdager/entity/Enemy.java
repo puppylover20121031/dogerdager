@@ -46,13 +46,14 @@ public final class Enemy extends Entity {
     @Override
     public void update(float delta) {
         if (kind == Kind.SMART) {
-            float dx = target.bounds().x - bounds.x;
-            float dy = target.bounds().y - bounds.y;
-            float len = (float) Math.sqrt(dx * dx + dy * dy);
-            if (len > 0.001f) {
-                vx = dx / len * speed;
-                vy = dy / len * speed;
-            }
+            float desired = MathUtils.atan2(target.bounds().y - bounds.y, target.bounds().x - bounds.x);
+            float cur = MathUtils.atan2(vy, vx);
+            float diff = desired - cur;
+            while (diff > MathUtils.PI) diff -= MathUtils.PI2;
+            while (diff < -MathUtils.PI) diff += MathUtils.PI2;
+            cur += MathUtils.clamp(diff, -1.8f * delta, 1.8f * delta);
+            vx = MathUtils.cos(cur) * speed;
+            vy = MathUtils.sin(cur) * speed;
         } else {
             if (bounds.x <= 0 || bounds.x >= worldW - SIZE) vx = -vx;
             if (bounds.y <= 0 || bounds.y >= playTop - SIZE) vy = -vy;
