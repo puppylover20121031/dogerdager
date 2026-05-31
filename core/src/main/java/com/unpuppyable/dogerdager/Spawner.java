@@ -1,5 +1,6 @@
 package com.unpuppyable.dogerdager;
 
+import com.unpuppyable.dogerdager.entity.Boss;
 import com.unpuppyable.dogerdager.entity.Enemy;
 
 public final class Spawner {
@@ -33,12 +34,15 @@ public final class Spawner {
             case 5, 47, 92, 132 -> screen.spawn(Enemy.Kind.FAST);
             case 6, 8, 10 -> screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
             case 25, 52, 120 -> screen.spawn(Enemy.Kind.SMART);
-            default -> { }
+            case 12 -> screen.spawnBoss(Boss.Kind.ONE);
+            case 35, 80 -> screen.spawnBoss(Boss.Kind.TWO);
+            case 100 -> screen.spawnBoss(Boss.Kind.THREE);
+            default -> {
+                if (level > 25 && level % 10 == 0) {
+                    screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
+                }
+            }
         }
-        if (level > 25 && level % 10 == 0) {
-            screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
-        }
-        // bosses (12, 35, 80, 100) land in the next rewrite step
 
         if (level >= difficulty.winLevel) {
             screen.win();

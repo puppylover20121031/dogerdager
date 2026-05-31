@@ -3,7 +3,7 @@ package com.unpuppyable.dogerdager.entity;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 
-public sealed abstract class Entity permits Player, Enemy, Arrow {
+public sealed abstract class Entity permits Player, Enemy, Arrow, Boss, Bullet, Potion {
 
     protected final Rectangle bounds;
     protected boolean dead;

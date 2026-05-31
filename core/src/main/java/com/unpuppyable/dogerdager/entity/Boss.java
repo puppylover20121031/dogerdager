@@ -1,0 +1,179 @@
+package com.unpuppyable.dogerdager.entity;
+
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
+import com.unpuppyable.dogerdager.PlayScreen;
+
+public final class Boss extends Entity {
+
+    public enum Kind { ONE, TWO, THREE, ARM }
+
+    public static final float SIZE = 96;
+    private static final int MAX_HP = 12000;
+    private static final float DESCEND = 180;
+    private static final float PATROL = 150;
+
+    private final Kind kind;
+    private final PlayScreen screen;
+    private final Player target;
+    private final float worldW;
+    private final float restY;
+
+    private float vx = PATROL;
+    private boolean settled;
+    private float atkTimer;
+    private float burstTimer;
+    private float minionTimer = 4f;
+
+    private int health = MAX_HP;
+    private int phase = 1;
+    private float shield;
+    private boolean armsSpawned;
+
+    public Boss(Kind kind, float x, float restY, float worldW, PlayScreen screen, Player target) {
+        super(x, restY + 220, SIZE);
+        this.kind = kind;
+        this.restY = restY;
+        this.worldW = worldW;
+        this.screen = screen;
+        this.target = target;
+    }
+
+    public boolean damageable() {
+        return kind == Kind.THREE;
+    }
+
+    public boolean arm() {
+        return kind == Kind.ARM;
+    }
+
+    public void damage(int amount) {
+        if (kind != Kind.THREE || shield > 0) return;
+        health -= amount;
+        if (amount > 50) shield = 0.6f;
+        if (health <= 0) {
+            screen.dropPotion(bounds.x + SIZE / 2, bounds.y + SIZE / 2);
+            screen.removeArms();
+            dead = true;
+        }
+    }
+
+    @Override
+    public void update(float delta) {
+        if (shield > 0) shield -= delta;
+
+        if (!settled) {
+            bounds.y -= DESCEND * delta;
+            if (bounds.y <= restY) {
+                bounds.y = restY;
+                settled = true;
+            }
+            return;
+        }
+
+        if (kind == Kind.ARM) return;
+
+        bounds.x += vx * delta;
+        if (bounds.x <= 0 || bounds.x >= worldW - SIZE) vx = -vx;
+
+        if (kind == Kind.THREE) {
+            updateBoss3(delta);
+        } else {
+            atkTimer -= delta;
+            if (atkTimer <= 0) {
+                fireBasic();
+                atkTimer = kind == Kind.ONE ? 1.5f : 1.6f;
+            }
+            if (kind == Kind.TWO) {
+                minionTimer -= delta;
+                if (minionTimer <= 0) {
+                    screen.spawn(Enemy.Kind.SMART);
+                    minionTimer = 4f;
+                }
+            }
+        }
+    }
+
+    private void fireBasic() {
+        if (kind == Kind.TWO) {
+            screen.addBullet(new Bullet(Bullet.Kind.HOMING, bounds.x + SIZE / 2, bounds.y, worldW, target));
+        } else {
+            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + 20, bounds.y, worldW, target));
+            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + SIZE - 32, bounds.y, worldW, target));
+        }
+    }
+
+    private void updateBoss3(float delta) {
+        if (!armsSpawned) {
+            screen.addBoss(new Boss(Kind.ARM, clampArm(bounds.x - 110), restY, worldW, screen, target));
+            screen.addBoss(new Boss(Kind.ARM, clampArm(bounds.x + 110), restY, worldW, screen, target));
+            armsSpawned = true;
+        }
+
+        int prev = phase;
+        phase = health > 8000 ? 1 : health > 4000 ? 2 : 3;
+        if (phase != prev) {
+            shield = 2f;
+            for (int i = 0; i < 3; i++) screen.spawn(Enemy.Kind.NORMAL);
+        }
+        if (shield > 0) return;
+
+        atkTimer -= delta;
+        burstTimer -= delta;
+        switch (phase) {
+            case 1 -> {
+                if (atkTimer <= 0) { twin(); atkTimer = 0.8f; }
+            }
+            case 2 -> {
+                if (atkTimer <= 0) { twin(); atkTimer = 0.5f; }
+                if (burstTimer <= 0) { burst(12); burstTimer = 2.5f; }
+            }
+            default -> {
+                if (atkTimer <= 0) { salvo(); atkTimer = 0.25f; }
+                if (burstTimer <= 0) { burst(20); burstTimer = 1.6f; }
+            }
+        }
+    }
+
+    private void twin() {
+        screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + 12, bounds.y, worldW, target));
+        screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + SIZE - 24, bounds.y, worldW, target));
+    }
+
+    private void salvo() {
+        for (int i = 0; i < 3; i++) {
+            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + 10 + i * 28, bounds.y, worldW, target));
+        }
+    }
+
+    private void burst(int count) {
+        for (int i = 0; i < count; i++) {
+            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + MathUtils.random(SIZE), bounds.y, worldW, target));
+        }
+    }
+
+    private float clampArm(float x) {
+        return MathUtils.clamp(x, 0, worldW - SIZE);
+    }
+
+    @Override
+    public void draw(ShapeRenderer shapes) {
+        Color body = switch (kind) {
+            case ARM -> Color.MAROON;
+            case THREE -> shield > 0 ? Color.SKY
+                    : phase == 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : Color.SCARLET;
+            default -> Color.RED;
+        };
+        shapes.setColor(body);
+        shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
+
+        if (kind == Kind.THREE) {
+            float w = SIZE * Math.max(0, health) / (float) MAX_HP;
+            shapes.setColor(Color.BLACK);
+            shapes.rect(bounds.x, bounds.y + SIZE + 4, SIZE, 6);
+            shapes.setColor(Color.GREEN);
+            shapes.rect(bounds.x, bounds.y + SIZE + 4, w, 6);
+        }
+    }
+}

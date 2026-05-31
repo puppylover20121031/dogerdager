@@ -50,6 +50,10 @@ public final class Hud {
         if (!shieldActive) health = Math.max(0, health - amount);
     }
 
+    public void healFull() {
+        health = maxHealth;
+    }
+
     public int nextLevel() {
         return ++level;
     }
