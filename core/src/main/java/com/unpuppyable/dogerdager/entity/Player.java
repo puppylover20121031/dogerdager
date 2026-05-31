@@ -28,6 +28,7 @@ public final class Player extends Entity {
     private float stun;
     private float kbX;
     private float kbY;
+    private float stamina;
 
     public Player(float worldW, float playTop) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
@@ -79,8 +80,8 @@ public final class Player extends Entity {
         return strafeInvuln > 0;
     }
 
-    public float dashCharge() {
-        return strafeCd <= 0 ? 1f : 1f - strafeCd / STRAFE_CD;
+    public void setStamina(float fraction) {
+        this.stamina = fraction;
     }
 
     public void knockback(float worldW, float playTop) {
@@ -113,7 +114,13 @@ public final class Player extends Entity {
             shapes.rect(fromX, fromY, bounds.width, bounds.height);
         }
         if (invulnerable && (int) (anim * 10) % 2 == 0) return;
-        shapes.setColor(stun > 0 ? Color.GRAY : shielded ? Color.SKY : Color.WHITE);
-        shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+        Color body = stun > 0 ? Color.GRAY : shielded ? Color.SKY : Color.CYAN;
+        shapes.setColor(body);
+        shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
+        shapes.setColor(Color.BLACK);
+        shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, SIZE - 4);
+        shapes.setColor(body);
+        shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, (SIZE - 4) * stamina);
     }
 }

@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.unpuppyable.dogerdager.entity.Player;
 
 public final class Hud {
 
@@ -113,15 +112,8 @@ public final class Hud {
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    // Line pass: stamina + dash readiness as rings around the player.
-    public void drawRings(ShapeRenderer shapes, Player player) {
-        float cx = player.bounds().x + Player.SIZE / 2f;
-        float cy = player.bounds().y + Player.SIZE / 2f;
-
-        float staminaFrac = stamina / MAX_STAMINA;
-        shapes.setColor(shieldActive ? Color.SKY : staminaLocked ? Color.FIREBRICK : Color.GOLD);
-        shapes.arc(cx, cy, 16, 90, 360 * staminaFrac);
-        shapes.arc(cx, cy, 17, 90, 360 * staminaFrac);
+    public float staminaFraction() {
+        return stamina / MAX_STAMINA;
     }
 
     // Batch pass: HP/level (left), score/best (right).

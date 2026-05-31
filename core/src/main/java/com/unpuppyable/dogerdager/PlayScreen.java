@@ -179,6 +179,7 @@ public final class PlayScreen implements Screen {
         if (shake > 0) shake -= delta;
         boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
         player.setShielded(shield);
+        player.setStamina(hud.staminaFraction());
         player.update(delta);
         spawner.update(delta);
 
@@ -267,10 +268,6 @@ public final class PlayScreen implements Screen {
         for (var bullet : bullets) bullet.draw(shapes);
         if (potion != null) potion.draw(shapes);
         hud.drawBars(shapes);
-        shapes.end();
-
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        hud.drawRings(shapes, player);
         shapes.end();
 
         if (state == State.PAUSED) {
