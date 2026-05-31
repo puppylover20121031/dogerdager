@@ -16,8 +16,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.unpuppyable.dogerdager.entity.Boss;
-import com.unpuppyable.dogerdager.entity.Bullet;
 import com.unpuppyable.dogerdager.entity.Enemy;
+import com.unpuppyable.dogerdager.entity.Entity;
 import com.unpuppyable.dogerdager.entity.Player;
 import com.unpuppyable.dogerdager.entity.Potion;
 
@@ -46,17 +46,14 @@ public final class PlayScreen implements Screen {
     private final GlyphLayout layout = new GlyphLayout();
     private final Progress progress = new Progress();
 
-    private final List<Enemy> enemies = new ArrayList<>();
-    private final List<Boss> bosses = new ArrayList<>();
-    private final List<Boss> pendingBosses = new ArrayList<>();
-    private final List<Bullet> bullets = new ArrayList<>();
+    private final List<Entity> entities = new ArrayList<>();
+    private final List<Entity> pending = new ArrayList<>();
     private final Music bgm;
     private final Sound failSound;
 
     private Player player;
     private Hud hud;
     private Spawner spawner;
-    private Potion potion;
     private State state;
     private boolean muted = true;
     private float shake;
@@ -75,11 +72,8 @@ public final class PlayScreen implements Screen {
     }
 
     private void reset() {
-        enemies.clear();
-        bosses.clear();
-        pendingBosses.clear();
-        bullets.clear();
-        potion = null;
+        entities.clear();
+        pending.clear();
         player = new Player(WORLD_W, PLAY_TOP);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
@@ -89,39 +83,34 @@ public final class PlayScreen implements Screen {
         bgm.play();
     }
 
+    public void add(Entity entity) {
+        pending.add(entity);
+    }
+
     public void spawn(Enemy.Kind kind) {
         float x = MathUtils.random(0f, WORLD_W - 24);
         float y = MathUtils.random(0f, PLAY_TOP - 24);
-        enemies.add(new Enemy(kind, x, y, difficulty.enemySpeed, WORLD_W, PLAY_TOP, player));
+        add(new Enemy(kind, x, y, difficulty.enemySpeed, WORLD_W, PLAY_TOP, player));
     }
 
     public void spawnBoss(Boss.Kind kind) {
         clearHazards();
         float restY = PLAY_TOP - Boss.SIZE - 8;
-        bosses.add(new Boss(kind, (WORLD_W - Boss.SIZE) / 2, restY, WORLD_W, this, player));
-    }
-
-    public void addBoss(Boss boss) {
-        pendingBosses.add(boss);
-    }
-
-    public void addBullet(Bullet bullet) {
-        bullets.add(bullet);
-    }
-
-    public boolean bossActive() {
-        return !bosses.isEmpty();
+        add(new Boss(kind, (WORLD_W - Boss.SIZE) / 2, restY, WORLD_W, this, player));
     }
 
     public void spawnPotion() {
-        potion = new Potion(MathUtils.random(0f, WORLD_W - 16), MathUtils.random(0f, PLAY_TOP - 16));
+        add(new Potion(MathUtils.random(0f, WORLD_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
+    }
+
+    public boolean bossActive() {
+        for (var e : entities) if (e.isBoss()) return true;
+        return false;
     }
 
     private void clearHazards() {
-        enemies.clear();
-        bullets.clear();
-        bosses.clear();
-        potion = null;
+        entities.clear();
+        pending.clear();
     }
 
     public void win() {
@@ -182,40 +171,25 @@ public final class PlayScreen implements Screen {
         player.update(delta);
         spawner.update(delta);
 
-        for (var enemy : enemies) {
-            enemy.update(delta);
-            if (enemy.bounds().overlaps(player.bounds())) hurt(enemy.damage());
-        }
-        for (var boss : bosses) {
-            boss.update(delta);
-            if (boss.bounds().overlaps(player.bounds())) hurt(25);
-        }
-        bosses.addAll(pendingBosses);
-        pendingBosses.clear();
+        for (var e : entities) e.update(delta);
+        entities.addAll(pending);
+        pending.clear();
 
-        for (var bullet : bullets) {
-            bullet.update(delta);
-            if (!bullet.dead() && bullet.bounds().overlaps(player.bounds())) {
-                if (bullet.rocket() && !player.strafing() && !hud.invulnerable()) {
+        for (var e : entities) {
+            if (e.dead() || !e.bounds().overlaps(player.bounds())) continue;
+            if (e.heals()) {
+                hud.healFull();
+                e.kill();
+            } else if (e.contactDamage() > 0) {
+                if (e.knocksBack() && !player.strafing() && !hud.invulnerable()) {
                     player.knockback(WORLD_W, PLAY_TOP);
                 }
-                hurt(bullet.damage());
-                bullet.kill();
-            }
-        }
-        if (potion != null) {
-            potion.update(delta);
-            if (potion.dead()) {
-                potion = null;
-            } else if (potion.bounds().overlaps(player.bounds())) {
-                hud.healFull();
-                potion = null;
+                hurt(e.contactDamage());
+                if (e.diesOnPlayerHit()) e.kill();
             }
         }
 
-        enemies.removeIf(Enemy::dead);
-        bullets.removeIf(Bullet::dead);
-        bosses.removeIf(Boss::dead);
+        entities.removeIf(Entity::dead);
 
         player.setInvulnerable(hud.invulnerable());
 
@@ -261,10 +235,7 @@ public final class PlayScreen implements Screen {
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         player.draw(shapes);
-        for (var enemy : enemies) enemy.draw(shapes);
-        for (var boss : bosses) boss.draw(shapes);
-        for (var bullet : bullets) bullet.draw(shapes);
-        if (potion != null) potion.draw(shapes);
+        for (var e : entities) e.draw(shapes);
         hud.drawBars(shapes);
         shapes.end();
 

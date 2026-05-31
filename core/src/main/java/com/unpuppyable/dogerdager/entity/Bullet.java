@@ -49,11 +49,18 @@ public final class Bullet extends Entity {
         }
     }
 
-    public int damage() {
+    @Override
+    public int contactDamage() {
         return damage;
     }
 
-    public boolean rocket() {
+    @Override
+    public boolean diesOnPlayerHit() {
+        return true;
+    }
+
+    @Override
+    public boolean knocksBack() {
         return kind == Kind.ROCKET;
     }
 

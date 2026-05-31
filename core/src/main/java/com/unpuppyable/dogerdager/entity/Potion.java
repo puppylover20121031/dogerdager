@@ -13,6 +13,11 @@ public final class Potion extends Entity {
     }
 
     @Override
+    public boolean heals() {
+        return true;
+    }
+
+    @Override
     public void update(float delta) {
         anim += delta;
         life -= delta;

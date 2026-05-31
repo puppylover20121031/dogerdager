@@ -39,7 +39,8 @@ public final class Enemy extends Entity {
         this.vy = speed;
     }
 
-    public int damage() {
+    @Override
+    public int contactDamage() {
         return damage;
     }
 

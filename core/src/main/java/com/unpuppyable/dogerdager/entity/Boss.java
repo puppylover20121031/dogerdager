@@ -26,7 +26,6 @@ public final class Boss extends Entity {
     private float atkTimer;
     private float minionTimer = 4f;
     private float fireTimer;
-    boolean armsSettled = false;
     private int rocketsInBurst;
     private boolean armsSpawned;
 
@@ -41,6 +40,16 @@ public final class Boss extends Entity {
 
     public boolean arm() {
         return kind == Kind.ARM;
+    }
+
+    @Override
+    public int contactDamage() {
+        return 25;
+    }
+
+    @Override
+    public boolean isBoss() {
+        return true;
     }
 
     @Override
@@ -81,31 +90,23 @@ public final class Boss extends Entity {
 
     private void fireBasic() {
         if (kind == Kind.TWO) {
-            screen.addBullet(new Bullet(Bullet.Kind.HOMING, bounds.x + SIZE / 2, bounds.y, worldW, target));
+            screen.add(new Bullet(Bullet.Kind.HOMING, bounds.x + SIZE / 2, bounds.y, worldW, target));
         } else {
-            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + 20, bounds.y, worldW, target));
-            screen.addBullet(new Bullet(Bullet.Kind.FALLING, bounds.x + SIZE - 32, bounds.y, worldW, target));
+            screen.add(new Bullet(Bullet.Kind.FALLING, bounds.x + 20, bounds.y, worldW, target));
+            screen.add(new Bullet(Bullet.Kind.FALLING, bounds.x + SIZE - 32, bounds.y, worldW, target));
         }
     }
 
     private void updateBoss3(float delta) {
         if (!armsSpawned) {
-            Boss bossarm1 = new Boss(Kind.ARM, clampArm(bounds.x - 110), restY, worldW, screen, target);
-            Boss bossarm2 = new Boss(Kind.ARM, clampArm(bounds.x + 110), restY, worldW, screen, target);
-            screen.addBoss(bossarm1);
-            screen.addBoss(bossarm2);
-            if (bossarm1.settled || bossarm2.settled) {
-
-                armsSettled = true;
-
-            }
-
+            screen.add(new Boss(Kind.ARM, clampArm(bounds.x - 110), restY, worldW, screen, target));
+            screen.add(new Boss(Kind.ARM, clampArm(bounds.x + 110), restY, worldW, screen, target));
             armsSpawned = true;
         }
 
         fireTimer -= delta;
         if (fireTimer <= 0) {
-            screen.addBullet(new Bullet(Bullet.Kind.ROCKET, bounds.x + SIZE / 2, bounds.y, worldW, target));
+            screen.add(new Bullet(Bullet.Kind.ROCKET, bounds.x + SIZE / 2, bounds.y, worldW, target));
             rocketsInBurst++;
             if (rocketsInBurst >= 4) {
                 rocketsInBurst = 0;
