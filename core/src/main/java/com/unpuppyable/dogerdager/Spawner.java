@@ -5,7 +5,7 @@ import com.unpuppyable.dogerdager.entity.Enemy;
 
 public final class Spawner {
 
-    private static final float LEVEL_TIME = 200f / 60f;
+    private static final float LEVEL_TIME = 3.0f;
 
     private final Difficulty difficulty;
     private final Hud hud;
@@ -44,7 +44,7 @@ public final class Spawner {
             }
         }
 
-        if (level % 4 == 0) {
+        if (level % 5 == 0) {
             screen.spawnPotion();
         }
 

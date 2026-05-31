@@ -1,10 +1,10 @@
 package com.unpuppyable.dogerdager;
 
 public enum Difficulty {
-    EASY(300f, 300, 80),
-    NORMAL(300f, 300, 200),
-    HARD(600f, 300, 300),
-    HARDCORE(600f, 10, 300);
+    EASY(220f, 300, 80),
+    NORMAL(300f, 300, 150),
+    HARD(430f, 300, 220),
+    HARDCORE(520f, 300, 220);
 
     public final float enemySpeed;
     public final int maxHealth;

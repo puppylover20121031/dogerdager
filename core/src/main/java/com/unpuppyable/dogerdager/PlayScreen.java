@@ -149,11 +149,11 @@ public final class PlayScreen implements Screen {
 
         for (var enemy : enemies) {
             enemy.update(delta);
-            if (enemy.bounds().overlaps(player.bounds())) hurt(5);
+            if (enemy.bounds().overlaps(player.bounds())) hurt(enemy.damage());
         }
         for (var boss : bosses) {
             boss.update(delta);
-            if (boss.bounds().overlaps(player.bounds())) hurt(5);
+            if (boss.bounds().overlaps(player.bounds())) hurt(25);
         }
         bosses.addAll(pendingBosses);
         pendingBosses.clear();

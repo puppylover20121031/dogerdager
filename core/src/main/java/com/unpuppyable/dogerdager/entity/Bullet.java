@@ -22,11 +22,11 @@ public final class Bullet extends Entity {
         this.worldW = worldW;
         this.target = target;
         if (kind == Kind.FALLING) {
-            damage = 5;
+            damage = 10;
             vx = MathUtils.random(-180f, 180f);
             vy = -300f;
         } else {
-            damage = 10;
+            damage = 16;
             life = 6f;
         }
     }

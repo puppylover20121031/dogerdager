@@ -12,6 +12,7 @@ public final class Enemy extends Entity {
 
     private final Kind kind;
     private final float speed;
+    private final int damage;
     private final float worldW;
     private final float playTop;
     private final Player target;
@@ -26,11 +27,20 @@ public final class Enemy extends Entity {
             case SMART -> baseSpeed * 0.6f;
             case NORMAL -> baseSpeed;
         };
+        this.damage = switch (kind) {
+            case NORMAL -> 10;
+            case FAST -> 14;
+            case SMART -> 18;
+        };
         this.worldW = worldW;
         this.playTop = playTop;
         this.target = target;
         this.vx = speed;
         this.vy = speed;
+    }
+
+    public int damage() {
+        return damage;
     }
 
     @Override

@@ -11,7 +11,7 @@ public final class Hud {
     private static final float DRAIN = 300;
     private static final float REGEN = 60;
     private static final float BAR_W = 600;
-    private static final float HIT_GRACE = 0.8f;
+    private static final float HIT_GRACE = 0.7f;
 
     private final float worldW;
     private final float worldH;
