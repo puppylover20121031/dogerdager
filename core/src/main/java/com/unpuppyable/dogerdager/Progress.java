@@ -43,6 +43,14 @@ public final class Progress {
         prefs.flush();
     }
 
+    public boolean achieved(Achievement a) {
+        return achieved(a.name());
+    }
+
+    public void unlock(Achievement a) {
+        if (!achieved(a)) unlock(a.name());
+    }
+
     public boolean flag(String id) {
         return prefs.getBoolean("flag." + id, false);
     }

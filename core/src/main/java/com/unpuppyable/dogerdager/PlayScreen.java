@@ -127,6 +127,8 @@ public final class PlayScreen implements Screen {
     // Floor transition: heal, wipe the arena, then either win or stage the next floor.
     public void nextFloor() {
         int floor = hud.advanceFloor();
+        if (floor >= 5) progress.unlock(Achievement.FLOOR_5);
+        if (floor >= 10) progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         hud.healFull();
         if (floor >= difficulty.winFloor) {
@@ -143,6 +145,12 @@ public final class PlayScreen implements Screen {
         if (state == State.PLAYING) {
             state = State.WON;
             progress.recordRun(difficulty, hud.highScore(), true);
+            switch (difficulty) {
+                case NORMAL -> progress.unlock(Achievement.CLEAR_NORMAL);
+                case HARD -> progress.unlock(Achievement.CLEAR_HARD);
+                case HARDCORE -> progress.unlock(Achievement.CLEAR_HARDCORE);
+                default -> { }
+            }
         }
     }
 
@@ -192,6 +200,7 @@ public final class PlayScreen implements Screen {
             if (e.dead() || !e.hits(player.bounds())) continue;
             if (e.heals()) {
                 hud.heal(2);
+                progress.unlock(Achievement.POTIONER);
                 e.kill();
             } else if (e.contactDamage() > 0) {
                 if (e.knocksBack() && !player.strafing() && !hud.invulnerable()) {

@@ -60,7 +60,11 @@ public final class MenuScreen extends ScreenAdapter {
         var hint = new VisTable();
         hint.add(new Label(Icons.GAMEPAD, new Label.LabelStyle(game.icons().font(), Color.LIGHT_GRAY))).padRight(8);
         hint.add(new VisLabel("WASD move    Shift boost    F11 fullscreen    Esc menu"));
-        root.add(hint).padTop(24);
+        root.add(hint).padTop(24).row();
+
+        var nav = new VisLabel("T stats     O settings     A achievements");
+        nav.setColor(Color.GRAY);
+        root.add(nav).padTop(8);
 
         stage.addActor(root);
     }
@@ -93,6 +97,15 @@ public final class MenuScreen extends ScreenAdapter {
         game.menuMove();
         Gdx.input.setInputProcessor(null);
         game.setScreen(new SettingsScreen(game));
+        dispose();
+    }
+
+    private void openAchievements() {
+        if (switching) return;
+        switching = true;
+        game.menuMove();
+        Gdx.input.setInputProcessor(null);
+        game.setScreen(new AchievementsScreen(game));
         dispose();
     }
 
@@ -135,6 +148,10 @@ public final class MenuScreen extends ScreenAdapter {
         }
         if (Gdx.input.isKeyJustPressed(Keys.O)) {
             openSettings();
+            return;
+        }
+        if (Gdx.input.isKeyJustPressed(Keys.A)) {
+            openAchievements();
             return;
         }
         for (int i = 0; i < buttons.length; i++) {
