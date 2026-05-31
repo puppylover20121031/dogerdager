@@ -21,9 +21,18 @@ public class DogerDager extends Game {
     @Override
     public void render() {
         if (Gdx.input.isKeyJustPressed(Keys.F1)) post.toggle();
+        if (Gdx.input.isKeyJustPressed(Keys.F11)) toggleFullscreen();
         post.capture();
         super.render();
         post.render(Gdx.graphics.getDeltaTime());
+    }
+
+    private void toggleFullscreen() {
+        if (Gdx.graphics.isFullscreen()) {
+            Gdx.graphics.setWindowedMode(1280, 954);
+        } else {
+            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+        }
     }
 
     @Override
