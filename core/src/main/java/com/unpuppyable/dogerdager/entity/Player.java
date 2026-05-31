@@ -25,6 +25,9 @@ public final class Player extends Entity {
     private float strafeCd;
     private float fromX;
     private float fromY;
+    private float stun;
+    private float kbX;
+    private float kbY;
 
     public Player(float worldW, float playTop) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
@@ -37,6 +40,13 @@ public final class Player extends Entity {
         anim += delta;
         if (strafeInvuln > 0) strafeInvuln -= delta;
         if (strafeCd > 0) strafeCd -= delta;
+
+        if (stun > 0) {
+            stun -= delta;
+            bounds.x = MathUtils.clamp(bounds.x + kbX * delta, 0, maxX);
+            bounds.y = MathUtils.clamp(bounds.y + kbY * delta, 0, maxY);
+            return;
+        }
 
         float vx = 0, vy = 0;
         if (Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT))  vx -= SPEED;
@@ -69,6 +79,21 @@ public final class Player extends Entity {
         return strafeInvuln > 0;
     }
 
+    public void knockback(float worldW, float playTop) {
+        float dl = bounds.x;
+        float dr = worldW - SIZE - bounds.x;
+        float db = bounds.y;
+        float dt = playTop - SIZE - bounds.y;
+        float min = Math.min(Math.min(dl, dr), Math.min(db, dt));
+        kbX = 0;
+        kbY = 0;
+        if (min == dl) kbX = -700;
+        else if (min == dr) kbX = 700;
+        else if (min == db) kbY = -700;
+        else kbY = 700;
+        stun = 1.5f;
+    }
+
     public void setShielded(boolean shielded) {
         this.shielded = shielded;
     }
@@ -84,7 +109,7 @@ public final class Player extends Entity {
             shapes.rect(fromX, fromY, bounds.width, bounds.height);
         }
         if (invulnerable && (int) (anim * 10) % 2 == 0) return;
-        shapes.setColor(shielded ? Color.SKY : Color.WHITE);
+        shapes.setColor(stun > 0 ? Color.GRAY : shielded ? Color.SKY : Color.WHITE);
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 }

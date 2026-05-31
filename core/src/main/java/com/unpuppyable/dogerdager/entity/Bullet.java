@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.MathUtils;
 
 public final class Bullet extends Entity {
 
-    public enum Kind { FALLING, HOMING }
+    public enum Kind { FALLING, HOMING, ROCKET }
 
     private final Kind kind;
     private final int damage;
@@ -17,17 +17,20 @@ public final class Bullet extends Entity {
     private float life;
 
     public Bullet(Kind kind, float x, float y, float worldW, Player target) {
-        super(x, y, kind == Kind.HOMING ? 16 : 32);
+        super(x, y, kind == Kind.FALLING ? 32 : kind == Kind.ROCKET ? 18 : 16);
         this.kind = kind;
         this.worldW = worldW;
         this.target = target;
+        this.damage = switch (kind) {
+            case FALLING -> 10;
+            case HOMING -> 16;
+            case ROCKET -> 22;
+        };
         if (kind == Kind.FALLING) {
-            damage = 10;
             vx = MathUtils.random(-180f, 180f);
             vy = -300f;
         } else {
-            damage = 16;
-            life = 6f;
+            life = kind == Kind.ROCKET ? 8f : 6f;
         }
     }
 
@@ -35,15 +38,20 @@ public final class Bullet extends Entity {
         return damage;
     }
 
+    public boolean rocket() {
+        return kind == Kind.ROCKET;
+    }
+
     @Override
     public void update(float delta) {
-        if (kind == Kind.HOMING) {
+        if (kind != Kind.FALLING) {
+            float speed = kind == Kind.ROCKET ? 200f : 120f;
             float dx = target.bounds().x - bounds.x;
             float dy = target.bounds().y - bounds.y;
             float len = (float) Math.sqrt(dx * dx + dy * dy);
             if (len > 0.001f) {
-                vx = dx / len * 120f;
-                vy = dy / len * 120f;
+                vx = dx / len * speed;
+                vy = dy / len * speed;
             }
             life -= delta;
             if (life <= 0) dead = true;
@@ -55,7 +63,11 @@ public final class Bullet extends Entity {
 
     @Override
     public void draw(ShapeRenderer shapes) {
-        shapes.setColor(kind == Kind.HOMING ? Color.ROYAL : Color.RED);
+        shapes.setColor(switch (kind) {
+            case ROCKET -> Color.GOLD;
+            case HOMING -> Color.ROYAL;
+            case FALLING -> Color.RED;
+        });
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 }

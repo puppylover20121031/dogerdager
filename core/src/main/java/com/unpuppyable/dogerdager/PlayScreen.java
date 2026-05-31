@@ -161,6 +161,9 @@ public final class PlayScreen implements Screen {
         for (var bullet : bullets) {
             bullet.update(delta);
             if (!bullet.dead() && bullet.bounds().overlaps(player.bounds())) {
+                if (bullet.rocket() && !player.strafing() && !hud.invulnerable()) {
+                    player.knockback(WORLD_W, PLAY_TOP);
+                }
                 hurt(bullet.damage());
                 bullet.kill();
             }
