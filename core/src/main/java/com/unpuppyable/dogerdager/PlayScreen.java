@@ -29,6 +29,7 @@ public final class PlayScreen implements Screen {
     static final float WORLD_W = 640;
     static final float WORLD_H = 360;
     static final float HUD_H = 72;
+    private boolean debug = false;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
     private static final int INSTANT_KILL = 100_000;
@@ -37,6 +38,7 @@ public final class PlayScreen implements Screen {
     private enum State { PLAYING, PAUSED, GAME_OVER, WON }
 
     private final DogerDager game;
+    private  PlayScreen screen;
     private final Difficulty difficulty;
 
     private final Viewport viewport;
@@ -63,6 +65,7 @@ public final class PlayScreen implements Screen {
 
     public PlayScreen(DogerDager game, Difficulty difficulty) {
         this.game = game;
+        this.screen = screen;
         this.difficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.bgm = Gdx.audio.newMusic(Gdx.files.internal("puppysong.mp3"));
@@ -159,6 +162,11 @@ public final class PlayScreen implements Screen {
             reset();
         }
         draw();
+
+
+
+
+
     }
 
     private void toMenu() {
@@ -217,6 +225,20 @@ public final class PlayScreen implements Screen {
             failSound.play();
             progress.recordRun(difficulty, hud.highScore(), false);
         }
+
+        if (Gdx.input.isKeyJustPressed(Keys.HOME)) {
+            debug = true;
+        }
+        
+        if (debug && Gdx.input.isKeyJustPressed(Keys.END)) {
+            win();
+        }
+        if (debug && Gdx.input.isKeyJustPressed(Keys.B)) {
+            
+            spawner.screen.spawnBoss(Boss.Kind.THREE);
+        }
+
+
     }
 
     private void hurt(int amount) {

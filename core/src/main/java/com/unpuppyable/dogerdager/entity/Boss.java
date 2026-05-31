@@ -7,7 +7,9 @@ import com.unpuppyable.dogerdager.PlayScreen;
 
 public final class Boss extends Entity {
 
-    public enum Kind { ONE, TWO, THREE, ARM }
+    public enum Kind {
+        ONE, TWO, THREE, ARM
+    }
 
     public static final float SIZE = 96;
     private static final float DESCEND = 180;
@@ -24,6 +26,7 @@ public final class Boss extends Entity {
     private float atkTimer;
     private float minionTimer = 4f;
     private float fireTimer;
+    boolean armsSettled = false;
     private int rocketsInBurst;
     private boolean armsSpawned;
 
@@ -51,10 +54,12 @@ public final class Boss extends Entity {
             return;
         }
 
-        if (kind == Kind.ARM) return;
+        if (kind == Kind.ARM)
+            return;
 
         bounds.x += vx * delta;
-        if (bounds.x <= 0 || bounds.x >= worldW - SIZE) vx = -vx;
+        if (bounds.x <= 0 || bounds.x >= worldW - SIZE)
+            vx = -vx;
 
         if (kind == Kind.THREE) {
             updateBoss3(delta);
@@ -85,8 +90,16 @@ public final class Boss extends Entity {
 
     private void updateBoss3(float delta) {
         if (!armsSpawned) {
-            screen.addBoss(new Boss(Kind.ARM, clampArm(bounds.x - 110), restY, worldW, screen, target));
-            screen.addBoss(new Boss(Kind.ARM, clampArm(bounds.x + 110), restY, worldW, screen, target));
+            Boss bossarm1 = new Boss(Kind.ARM, clampArm(bounds.x - 110), restY, worldW, screen, target);
+            Boss bossarm2 = new Boss(Kind.ARM, clampArm(bounds.x + 110), restY, worldW, screen, target);
+            screen.addBoss(bossarm1);
+            screen.addBoss(bossarm2);
+            if (bossarm1.settled || bossarm2.settled) {
+
+                armsSettled = true;
+
+            }
+
             armsSpawned = true;
         }
 

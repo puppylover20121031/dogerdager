@@ -11,8 +11,7 @@ public final class Spawner {
 
     private final Difficulty difficulty;
     private final Hud hud;
-    private final PlayScreen screen;
-    private boolean debug = false;
+    public final PlayScreen screen;
     private float timer;
 
     public Spawner(Difficulty difficulty, Hud hud, PlayScreen screen) {
@@ -46,11 +45,8 @@ public final class Spawner {
             screen.spawnPotion();
         }
 
-        if (Gdx.input.isKeyJustPressed(Keys.HOME)) {
-            debug = true;
-        }
 
-        if (level >= difficulty.winLevel || (debug && Gdx.input.isKeyJustPressed(Keys.END))) {
+        if (level >= difficulty.winLevel) {
             screen.win();
         }
     }
