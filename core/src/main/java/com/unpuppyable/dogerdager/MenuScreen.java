@@ -88,6 +88,10 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void handleKeys() {
+        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
+            Gdx.app.exit();
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) {
             index = (index - 1 + CHOICES.length) % CHOICES.length;
         }

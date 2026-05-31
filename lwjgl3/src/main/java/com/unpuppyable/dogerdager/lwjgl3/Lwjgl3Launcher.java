@@ -9,7 +9,9 @@ public class Lwjgl3Launcher {
     void main() {
         var config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Doger Dager");
-        config.setWindowedMode(640, 477);
+        var mode = Lwjgl3ApplicationConfiguration.getDisplayMode();
+        config.setDecorated(false);
+        config.setWindowedMode(mode.width, mode.height);
         config.useVsync(true);
         config.setForegroundFPS(60);
         config.setIdleFPS(60);
