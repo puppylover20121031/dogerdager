@@ -34,18 +34,18 @@ public final class MenuScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-        handleInput();
+        if (handleInput()) return;
         draw();
     }
 
-    private void handleInput() {
+    private boolean handleInput() {
         if (info) {
             if (Gdx.input.isKeyJustPressed(Keys.A)
                     || Gdx.input.isKeyJustPressed(Keys.ESCAPE)
                     || Gdx.input.isKeyJustPressed(Keys.ENTER)) {
                 info = false;
             }
-            return;
+            return false;
         }
         if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) {
             index = (index - 1 + CHOICES.length) % CHOICES.length;
@@ -59,7 +59,9 @@ public final class MenuScreen extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)) {
             game.setScreen(new PlayScreen(game, CHOICES[index]));
             dispose();
+            return true;
         }
+        return false;
     }
 
     private void draw() {
