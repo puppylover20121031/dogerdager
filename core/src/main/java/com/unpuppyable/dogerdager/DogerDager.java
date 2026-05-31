@@ -25,7 +25,7 @@ public class DogerDager extends Game {
     }
 
     public void setGlitch(boolean on) {
-        post.setEnabled(on);
+        post.setGlitch(on);
     }
 
     public void menuMove() {
@@ -38,7 +38,7 @@ public class DogerDager extends Game {
 
     @Override
     public void render() {
-        if (Gdx.input.isKeyJustPressed(Keys.F1)) post.toggle();
+        if (Gdx.input.isKeyJustPressed(Keys.F1)) post.toggleGlitch();
         if (Gdx.input.isKeyJustPressed(Keys.F11)) toggleFullscreen();
         post.capture();
         super.render();
