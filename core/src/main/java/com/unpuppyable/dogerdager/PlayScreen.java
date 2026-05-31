@@ -28,6 +28,7 @@ public final class PlayScreen implements Screen {
 
     static final float WORLD_W = 640;
     static final float WORLD_H = 360;
+    static final float ARENA_W = 704;
     static final float HUD_H = 72;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
@@ -74,7 +75,7 @@ public final class PlayScreen implements Screen {
     private void reset() {
         entities.clear();
         pending.clear();
-        player = new Player(WORLD_W, PLAY_TOP);
+        player = new Player(ARENA_W, PLAY_TOP);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         state = State.PLAYING;
@@ -88,19 +89,19 @@ public final class PlayScreen implements Screen {
     }
 
     public void spawn(Enemy.Kind kind) {
-        float x = MathUtils.random(0f, WORLD_W - 24);
+        float x = MathUtils.random(0f, ARENA_W - 24);
         float y = MathUtils.random(0f, PLAY_TOP - 24);
-        add(new Enemy(kind, x, y, difficulty.enemySpeed, WORLD_W, PLAY_TOP, player));
+        add(new Enemy(kind, x, y, difficulty.enemySpeed, ARENA_W, PLAY_TOP, player));
     }
 
     public void spawnBoss(Boss.Kind kind) {
         clearHazards();
         float restY = PLAY_TOP - Boss.SIZE - 8;
-        add(new Boss(kind, (WORLD_W - Boss.SIZE) / 2, restY, WORLD_W, this, player));
+        add(new Boss(kind, (ARENA_W - Boss.SIZE) / 2, restY, ARENA_W, this, player));
     }
 
     public void spawnPotion() {
-        add(new Potion(MathUtils.random(0f, WORLD_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
+        add(new Potion(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
     }
 
     public boolean bossActive() {
@@ -182,7 +183,7 @@ public final class PlayScreen implements Screen {
                 e.kill();
             } else if (e.contactDamage() > 0) {
                 if (e.knocksBack() && !player.strafing() && !hud.invulnerable()) {
-                    player.knockback(WORLD_W, PLAY_TOP);
+                    player.knockback(ARENA_W, PLAY_TOP);
                 }
                 hurt(e.contactDamage());
                 if (e.diesOnPlayerHit()) e.kill();
@@ -223,30 +224,40 @@ public final class PlayScreen implements Screen {
 
     private void draw() {
         ScreenUtils.clear(Color.BLACK);
-        viewport.apply(true);
+        viewport.apply();
         var cam = viewport.getCamera();
+
+        // World pass: the camera follows the player horizontally, clamped to the arena.
+        float camX = MathUtils.clamp(player.bounds().x + Player.SIZE / 2f, WORLD_W / 2f, ARENA_W - WORLD_W / 2f);
+        float camY = WORLD_H / 2f;
         if (shake > 0) {
             float mag = shake * 45;
-            cam.translate(MathUtils.random(-mag, mag), MathUtils.random(-mag, mag), 0);
-            cam.update();
+            camX += MathUtils.random(-mag, mag);
+            camY += MathUtils.random(-mag, mag);
         }
+        cam.position.set(camX, camY, 0);
+        cam.update();
+        shapes.setProjectionMatrix(cam.combined);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        player.draw(shapes);
+        for (var e : entities) e.draw(shapes);
+        shapes.end();
+
+        // HUD pass: fixed screen-space camera.
+        cam.position.set(WORLD_W / 2f, WORLD_H / 2f, 0);
+        cam.update();
         shapes.setProjectionMatrix(cam.combined);
         batch.setProjectionMatrix(cam.combined);
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        player.draw(shapes);
-        for (var e : entities) e.draw(shapes);
         hud.drawBars(shapes);
-        shapes.end();
-
         if (state == State.PAUSED) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
-            shapes.begin(ShapeRenderer.ShapeType.Filled);
             shapes.setColor(0f, 0f, 0f, 0.6f);
             shapes.rect(0, 0, WORLD_W, WORLD_H);
-            shapes.end();
             Gdx.gl.glDisable(GL20.GL_BLEND);
         }
+        shapes.end();
 
         batch.begin();
         hud.drawText(batch, font);
