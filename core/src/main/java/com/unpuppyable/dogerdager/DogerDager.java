@@ -3,19 +3,32 @@ package com.unpuppyable.dogerdager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.audio.Sound;
 import com.kotcrab.vis.ui.VisUI;
 
 public class DogerDager extends Game {
 
     private Icons icons;
     private PostProcessor post;
+    private Sound menuMove;
+    private Sound menuConfirm;
 
     @Override
     public void create() {
         VisUI.load();
         icons = new Icons(26);
         post = new PostProcessor();
+        menuMove = Gdx.audio.newSound(Gdx.files.internal("menu-move.mp3"));
+        menuConfirm = Gdx.audio.newSound(Gdx.files.internal("menu-confirm.mp3"));
         setScreen(new MenuScreen(this));
+    }
+
+    public void menuMove() {
+        menuMove.play();
+    }
+
+    public void menuConfirm() {
+        menuConfirm.play();
     }
 
     @Override
@@ -50,6 +63,8 @@ public class DogerDager extends Game {
         if (getScreen() != null) getScreen().dispose();
         post.dispose();
         icons.dispose();
+        menuMove.dispose();
+        menuConfirm.dispose();
         VisUI.dispose();
     }
 }
