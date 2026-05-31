@@ -109,6 +109,11 @@ public final class Boss extends Entity {
 
     @Override
     public void draw(ShapeRenderer shapes) {
+        if (kind == Kind.THREE && settled && fireTimer < 0.3f) {
+            float intensity = 1f - fireTimer / 0.3f;
+            shapes.setColor(1f, 0.25f * intensity, 0.1f, 1f);
+            shapes.rectLine(bounds.x + SIZE / 2f, bounds.y, target.bounds().x + 8f, target.bounds().y + 8f, 1.5f);
+        }
         shapes.setColor(switch (kind) {
             case ARM -> Color.MAROON;
             case THREE -> Color.SCARLET;

@@ -10,11 +10,16 @@ public final class Bullet extends Entity {
 
     private static final float ROCKET_SPEED = 200f;
     private static final float ROCKET_TURN = 2.2f;
+    private static final int TRAIL = 6;
 
     private final Kind kind;
     private final int damage;
     private final float worldW;
     private final Player target;
+    private final float[] tx = new float[TRAIL];
+    private final float[] ty = new float[TRAIL];
+    private int head;
+    private int filled;
     private float vx;
     private float vy;
     private float life;
@@ -80,12 +85,25 @@ public final class Bullet extends Entity {
         }
         bounds.x += vx * delta;
         bounds.y += vy * delta;
+        if (kind == Kind.ROCKET) {
+            tx[head] = bounds.x + bounds.width / 2f;
+            ty[head] = bounds.y + bounds.height / 2f;
+            head = (head + 1) % TRAIL;
+            if (filled < TRAIL) filled++;
+        }
         if (bounds.x < -50 || bounds.x > worldW + 50 || bounds.y < -50 || bounds.y > worldW) dead = true;
     }
 
     @Override
     public void draw(ShapeRenderer shapes) {
         if (kind == Kind.ROCKET) {
+            for (int i = 0; i < filled; i++) {
+                int idx = (head - 1 - i + 2 * TRAIL) % TRAIL;
+                float t = 1f - (float) i / TRAIL;
+                float s = 7f * t;
+                shapes.setColor(0.9f * t, 0.7f * t, 0.1f * t, 1f);
+                shapes.rect(tx[idx] - s / 2f, ty[idx] - s / 2f, s, s);
+            }
             float cx = bounds.x + bounds.width / 2f;
             float cy = bounds.y + bounds.height / 2f;
             float a = MathUtils.atan2(vy, vx);
