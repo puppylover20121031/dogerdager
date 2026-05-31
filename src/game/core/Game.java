@@ -11,12 +11,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.newdawn.slick.Music;
-import org.newdawn.slick.Sound;
-
-import com.bearwaves.eos4j.EOS;
-import com.bearwaves.eos4j.EOSAuth;
-
 import game.enums.STATE;
 import game.enums.STATE2;
 import game.gui.HUD;
@@ -26,7 +20,6 @@ import game.gui.Menu3;
 import game.gui.Window;
 
 import javax.swing.*;
-import com.bearwaves.eos4j.EOS;
 
 public class Game extends Canvas implements Runnable {
 

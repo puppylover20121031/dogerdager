@@ -17,7 +17,6 @@ import game.enums.ID;
 import game.gui.HUD;
 import game.object.*;
 import game.gui.Menu2;
-import org.newdawn.slick.Input;
 
 import static game.core.Spawn.*;
 
