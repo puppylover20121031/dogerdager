@@ -1,20 +1,16 @@
 package com.unpuppyable.dogerdager;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.Game;
 
-/**
- * Entry point of the game on the libGDX side. For now it just clears the
- * screen; gameplay (player, enemies, bosses, audio, menus) is ported on top of
- * this skeleton step by step, using the legacy AWT build only as a behaviour
- * reference.
- */
-public class DogerDager extends ApplicationAdapter {
+public class DogerDager extends Game {
 
     @Override
-    public void render() {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+    public void create() {
+        setScreen(new PlayScreen(this, Difficulty.NORMAL));
+    }
+
+    @Override
+    public void dispose() {
+        if (getScreen() != null) getScreen().dispose();
     }
 }
