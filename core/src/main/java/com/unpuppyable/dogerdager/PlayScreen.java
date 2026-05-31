@@ -136,6 +136,12 @@ public final class PlayScreen implements Screen {
             muted = !muted;
             bgm.setVolume(muted ? 0f : 0.5f);
         }
+        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
+            bgm.stop();
+            game.setScreen(new MenuScreen(game));
+            dispose();
+            return;
+        }
         if (state == State.PLAYING) update(delta);
         else if (Gdx.input.isKeyJustPressed(Keys.R)) reset();
         draw();
@@ -219,7 +225,7 @@ public final class PlayScreen implements Screen {
         batch.begin();
         hud.drawText(batch, font);
         if (state != State.PLAYING) drawCentered(state == State.WON
-                ? "YOU WON  -  press R" : "GAME OVER  -  press R");
+                ? "YOU WON  -  R retry   Esc menu" : "GAME OVER  -  R retry   Esc menu");
         batch.end();
     }
 

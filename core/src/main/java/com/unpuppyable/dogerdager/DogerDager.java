@@ -6,7 +6,7 @@ public class DogerDager extends Game {
 
     @Override
     public void create() {
-        setScreen(new PlayScreen(this, Difficulty.NORMAL));
+        setScreen(new MenuScreen(this));
     }
 
     @Override
