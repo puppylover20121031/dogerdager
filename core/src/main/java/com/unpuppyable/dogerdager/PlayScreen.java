@@ -2,7 +2,6 @@ package com.unpuppyable.dogerdager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
@@ -44,7 +43,7 @@ public final class PlayScreen implements Screen {
     private final SpriteBatch batch = new SpriteBatch();
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
-    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final Progress progress = new Progress();
 
     private final List<Enemy> enemies = new ArrayList<>();
     private final List<Boss> bosses = new ArrayList<>();
@@ -78,7 +77,7 @@ public final class PlayScreen implements Screen {
         bullets.clear();
         potion = null;
         player = new Player(WORLD_W, PLAY_TOP);
-        hud = new Hud(difficulty, prefs.getInteger("highScore", 0), WORLD_W, WORLD_H);
+        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         state = State.PLAYING;
         bgm.stop();
@@ -120,7 +119,7 @@ public final class PlayScreen implements Screen {
         if (state == State.PLAYING) {
             state = State.WON;
             bgm.stop();
-            saveScore();
+            progress.recordRun(difficulty, hud.highScore(), true);
         }
     }
 
@@ -183,7 +182,7 @@ public final class PlayScreen implements Screen {
             state = State.GAME_OVER;
             bgm.stop();
             failSound.play();
-            saveScore();
+            progress.recordRun(difficulty, hud.highScore(), false);
         }
     }
 
@@ -218,11 +217,6 @@ public final class PlayScreen implements Screen {
         font.setColor(Color.WHITE);
         layout.setText(font, text);
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
-    }
-
-    private void saveScore() {
-        prefs.putInteger("highScore", hud.highScore());
-        prefs.flush();
     }
 
     @Override

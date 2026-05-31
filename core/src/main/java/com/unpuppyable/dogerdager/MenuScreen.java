@@ -2,7 +2,6 @@ package com.unpuppyable.dogerdager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -21,7 +20,7 @@ public final class MenuScreen extends ScreenAdapter {
 
     private final DogerDager game;
     private final Stage stage = new Stage(new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H));
-    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final Progress progress = new Progress();
     private final VisTextButton[] buttons = new VisTextButton[CHOICES.length];
 
     private int index = Difficulty.NORMAL.ordinal();
@@ -53,7 +52,7 @@ public final class MenuScreen extends ScreenAdapter {
             root.add(button).width(220).height(34).pad(3).row();
         }
 
-        root.add(new VisLabel("Best  " + prefs.getInteger("highScore", 0))).padTop(20).row();
+        root.add(new VisLabel("Best  " + progress.bestOverall())).padTop(20).row();
 
         var hint = new VisTable();
         hint.add(new Label(Icons.GAMEPAD, new Label.LabelStyle(game.icons().font(), Color.LIGHT_GRAY))).padRight(8);
