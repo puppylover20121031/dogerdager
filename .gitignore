@@ -1,19 +1,24 @@
-### IntelliJ IDEA ###
+### Build output ###
+target/
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+outjar/
+bin/
+*.class
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.ipr
+*.iws
 
 ### Eclipse ###
-.apt_generated
+.apt_generated/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+.sts4-cache/
 
 ### NetBeans ###
 /nbproject/private/
@@ -25,7 +30,9 @@ bin/
 ### VS Code ###
 .vscode/
 
-### Mac OS ###
+### Stray recordings ###
+*.mkv
+
+### OS ###
 .DS_Store
-.idea/vcs.xml
-/.idea
+Thumbs.db
