@@ -59,6 +59,7 @@ public final class PlayScreen implements Screen {
     private Potion potion;
     private State state;
     private boolean muted = true;
+    private float shake;
 
     public PlayScreen(DogerDager game, Difficulty difficulty) {
         this.game = game;
@@ -81,6 +82,7 @@ public final class PlayScreen implements Screen {
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         state = State.PLAYING;
+        shake = 0;
         bgm.stop();
         bgm.play();
     }
@@ -162,6 +164,7 @@ public final class PlayScreen implements Screen {
     }
 
     private void update(float delta) {
+        if (shake > 0) shake -= delta;
         boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
         player.setShielded(shield);
         player.update(delta);
@@ -209,14 +212,22 @@ public final class PlayScreen implements Screen {
 
     private void hurt(int amount) {
         if (player.strafing()) return;
-        hud.damage(difficulty.instantKill() ? INSTANT_KILL : amount);
+        if (hud.damage(difficulty.instantKill() ? INSTANT_KILL : amount)) {
+            shake = 0.22f;
+        }
     }
 
     private void draw() {
         ScreenUtils.clear(Color.BLACK);
-        viewport.apply();
-        shapes.setProjectionMatrix(viewport.getCamera().combined);
-        batch.setProjectionMatrix(viewport.getCamera().combined);
+        viewport.apply(true);
+        var cam = viewport.getCamera();
+        if (shake > 0) {
+            float mag = shake * 45;
+            cam.translate(MathUtils.random(-mag, mag), MathUtils.random(-mag, mag), 0);
+            cam.update();
+        }
+        shapes.setProjectionMatrix(cam.combined);
+        batch.setProjectionMatrix(cam.combined);
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         player.draw(shapes);

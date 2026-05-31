@@ -58,10 +58,11 @@ public final class Hud {
         return shieldActive;
     }
 
-    public void damage(int amount) {
-        if (shieldActive || invuln > 0) return;
+    public boolean damage(int amount) {
+        if (shieldActive || invuln > 0) return false;
         health = Math.max(0, health - amount);
         invuln = HIT_GRACE;
+        return true;
     }
 
     public boolean invulnerable() {
