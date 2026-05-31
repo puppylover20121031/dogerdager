@@ -31,6 +31,7 @@ public final class Hud {
     private int level = 1;
     private int highScore;
     private boolean shieldActive;
+    private boolean staminaLocked;
     private float invuln;
 
     public Hud(Difficulty difficulty, int highScore, float worldW, float worldH) {
@@ -45,7 +46,9 @@ public final class Hud {
 
     public boolean update(float delta, boolean shieldHeld) {
         if (invuln > 0) invuln -= delta;
-        shieldActive = shieldHeld && stamina > 3;
+        if (stamina <= 0) staminaLocked = true;
+        else if (stamina >= 300) staminaLocked = false;
+        shieldActive = shieldHeld && !staminaLocked && stamina > 0;
         if (shieldActive) stamina = Math.max(0, stamina - DRAIN * delta);
         else if (stamina < MAX_STAMINA) stamina = Math.min(MAX_STAMINA, stamina + REGEN * delta);
 
@@ -116,13 +119,9 @@ public final class Hud {
         float cy = player.bounds().y + Player.SIZE / 2f;
 
         float staminaFrac = stamina / MAX_STAMINA;
-        shapes.setColor(shieldActive ? Color.SKY : Color.GOLD);
+        shapes.setColor(shieldActive ? Color.SKY : staminaLocked ? Color.FIREBRICK : Color.GOLD);
         shapes.arc(cx, cy, 16, 90, 360 * staminaFrac);
         shapes.arc(cx, cy, 17, 90, 360 * staminaFrac);
-
-        float dash = player.dashCharge();
-        shapes.setColor(dash >= 1f ? Color.LIME : Color.GRAY);
-        shapes.arc(cx, cy, 21, 90, 360 * dash);
     }
 
     // Batch pass: HP/level (left), score/best (right).

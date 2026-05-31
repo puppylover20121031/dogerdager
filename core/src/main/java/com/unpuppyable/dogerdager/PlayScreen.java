@@ -191,9 +191,14 @@ public final class PlayScreen implements Screen {
                 bullet.kill();
             }
         }
-        if (potion != null && potion.bounds().overlaps(player.bounds())) {
-            hud.healFull();
-            potion = null;
+        if (potion != null) {
+            potion.update(delta);
+            if (potion.dead()) {
+                potion = null;
+            } else if (potion.bounds().overlaps(player.bounds())) {
+                hud.healFull();
+                potion = null;
+            }
         }
 
         enemies.removeIf(Enemy::dead);
