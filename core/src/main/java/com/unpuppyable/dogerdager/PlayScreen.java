@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.unpuppyable.dogerdager.entity.Boss;
+import com.unpuppyable.dogerdager.entity.Centipede;
 import com.unpuppyable.dogerdager.entity.Enemy;
 import com.unpuppyable.dogerdager.entity.Entity;
 import com.unpuppyable.dogerdager.entity.Laser;
@@ -105,6 +106,12 @@ public final class PlayScreen implements Screen {
         add(new Potion(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
     }
 
+    public void spawnCentipede() {
+        float x = MathUtils.random(60f, ARENA_W - 60);
+        float y = MathUtils.random(60f, PLAY_TOP - 60);
+        add(new Centipede(x, y, ARENA_W, PLAY_TOP, player));
+    }
+
     // Vertical laser walls with one guaranteed safe slot -- never an impossible config.
     public void spawnLaserWall() {
         int slots = 5;
@@ -191,7 +198,7 @@ public final class PlayScreen implements Screen {
         pending.clear();
 
         for (var e : entities) {
-            if (e.dead() || !e.bounds().overlaps(player.bounds())) continue;
+            if (e.dead() || !e.hits(player.bounds())) continue;
             if (e.heals()) {
                 hud.healFull();
                 e.kill();
@@ -227,6 +234,7 @@ public final class PlayScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Keys.NUM_3)) hud.refillStamina();
         if (Gdx.input.isKeyJustPressed(Keys.NUM_4)) spawnBoss(Boss.Kind.THREE);
         if (Gdx.input.isKeyJustPressed(Keys.NUM_5)) win();
+        if (Gdx.input.isKeyJustPressed(Keys.NUM_6)) spawnCentipede();
     }
 
     private void hurt(int amount) {
@@ -298,7 +306,7 @@ public final class PlayScreen implements Screen {
         font.draw(batch, "CHEATS  ~", 16, y);
         font.draw(batch, "1 god " + (god ? "ON" : "off"), 16, y - 18);
         font.draw(batch, "2 heal   3 stamina", 16, y - 34);
-        font.draw(batch, "4 boss3  5 win", 16, y - 50);
+        font.draw(batch, "4 boss3  5 win  6 centi", 16, y - 50);
     }
 
     @Override

@@ -52,4 +52,10 @@ public abstract class Entity {
     public boolean heals() {
         return false;
     }
+
+    // Player-overlap footprint. Defaults to the bounds rectangle; multi-part
+    // entities (e.g. a segmented body) override to test every piece.
+    public boolean hits(Rectangle other) {
+        return bounds.overlaps(other);
+    }
 }

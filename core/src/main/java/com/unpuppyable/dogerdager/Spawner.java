@@ -56,6 +56,8 @@ public final class Spawner {
             screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
         } else if (level == 25 || level == 52 || level == 120) {
             screen.spawn(Enemy.Kind.SMART);
+        } else if (level == 18 || level == 60 || level == 110) {
+            screen.spawnCentipede();
         } else if (level > 25 && level % 10 == 0) {
             screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
         }
