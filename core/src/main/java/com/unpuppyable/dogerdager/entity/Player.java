@@ -79,6 +79,10 @@ public final class Player extends Entity {
         return strafeInvuln > 0;
     }
 
+    public float dashCharge() {
+        return strafeCd <= 0 ? 1f : 1f - strafeCd / STRAFE_CD;
+    }
+
     public void knockback(float worldW, float playTop) {
         float dl = bounds.x;
         float dr = worldW - SIZE - bounds.x;

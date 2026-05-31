@@ -206,6 +206,10 @@ public final class PlayScreen implements Screen {
         hud.drawBars(shapes);
         shapes.end();
 
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        hud.drawRings(shapes, player);
+        shapes.end();
+
         batch.begin();
         hud.drawText(batch, font);
         if (state != State.PLAYING) drawCentered(state == State.WON

@@ -1,22 +1,28 @@
 package com.unpuppyable.dogerdager;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.unpuppyable.dogerdager.entity.Player;
 
 public final class Hud {
 
     private static final float MAX_STAMINA = 1200;
     private static final float DRAIN = 300;
     private static final float REGEN = 60;
-    private static final float BAR_W = 600;
     private static final float HIT_GRACE = 0.7f;
+    private static final float BAND = 72;
 
     private final float worldW;
     private final float worldH;
     private final int maxHealth;
+    private final int winLevel;
     private final float scoreRate;
+    private final GlyphLayout layout = new GlyphLayout();
 
     private int health;
     private float stamina = MAX_STAMINA;
@@ -29,6 +35,7 @@ public final class Hud {
 
     public Hud(Difficulty difficulty, int highScore, float worldW, float worldH) {
         this.maxHealth = difficulty.maxHealth;
+        this.winLevel = difficulty.winLevel;
         this.scoreRate = REGEN * difficulty.scoreMultiplier;
         this.health = maxHealth;
         this.highScore = highScore;
@@ -81,23 +88,53 @@ public final class Hud {
         return highScore;
     }
 
+    // Filled pass: top band + corner stat bars.
     public void drawBars(ShapeRenderer shapes) {
-        float healthY = worldH - 32;
-        float staminaY = worldH - 58;
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        shapes.setColor(0f, 0f, 0f, 0.45f);
+        shapes.rect(0, worldH - BAND, worldW, BAND);
 
-        shapes.setColor(Color.DARK_GRAY);
-        shapes.rect(20, healthY, BAR_W, 22);
-        shapes.setColor(Color.GREEN);
-        shapes.rect(20, healthY, BAR_W * health / maxHealth, 22);
+        float hpX = 18, hpY = worldH - 28, hpW = 150, hpH = 12;
+        shapes.setColor(0.15f, 0.15f, 0.15f, 1f);
+        shapes.rect(hpX, hpY, hpW, hpH);
+        shapes.setColor(Color.LIME);
+        shapes.rect(hpX, hpY, hpW * health / maxHealth, hpH);
 
-        shapes.setColor(Color.DARK_GRAY);
-        shapes.rect(20, staminaY, BAR_W, 18);
-        shapes.setColor(shieldActive ? Color.SKY : Color.YELLOW);
-        shapes.rect(20, staminaY, BAR_W * stamina / MAX_STAMINA, 18);
+        float lvY = worldH - 46, lvW = 110, lvH = 5;
+        shapes.setColor(0.15f, 0.15f, 0.15f, 1f);
+        shapes.rect(hpX, lvY, lvW, lvH);
+        shapes.setColor(Color.SKY);
+        shapes.rect(hpX, lvY, lvW * Math.min(1f, (float) level / winLevel), lvH);
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
+    // Line pass: stamina + dash readiness as rings around the player.
+    public void drawRings(ShapeRenderer shapes, Player player) {
+        float cx = player.bounds().x + Player.SIZE / 2f;
+        float cy = player.bounds().y + Player.SIZE / 2f;
+
+        float staminaFrac = stamina / MAX_STAMINA;
+        shapes.setColor(shieldActive ? Color.SKY : Color.GOLD);
+        shapes.arc(cx, cy, 16, 90, 360 * staminaFrac);
+        shapes.arc(cx, cy, 17, 90, 360 * staminaFrac);
+
+        float dash = player.dashCharge();
+        shapes.setColor(dash >= 1f ? Color.LIME : Color.GRAY);
+        shapes.arc(cx, cy, 21, 90, 360 * dash);
+    }
+
+    // Batch pass: HP/level (left), score/best (right).
     public void drawText(SpriteBatch batch, BitmapFont font) {
         font.setColor(Color.WHITE);
-        font.draw(batch, "Score " + score + "    Level " + level + "    Best " + highScore, 20, worldH - 64);
+        font.draw(batch, health + "/" + maxHealth, 174, worldH - 18);
+        font.draw(batch, "LV " + level, 18, worldH - 50);
+        drawRight(batch, font, "SCORE " + score, worldH - 18);
+        drawRight(batch, font, "BEST " + highScore, worldH - 40);
+    }
+
+    private void drawRight(SpriteBatch batch, BitmapFont font, String text, float y) {
+        layout.setText(font, text);
+        font.draw(batch, text, worldW - 18 - layout.width, y);
     }
 }
