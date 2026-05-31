@@ -3,8 +3,6 @@ package com.unpuppyable.dogerdager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -51,27 +49,18 @@ public final class PlayScreen implements Screen {
 
     private final List<Entity> entities = new ArrayList<>();
     private final List<Entity> pending = new ArrayList<>();
-    private final Music bgm;
-    private final Sound failSound;
 
     private Player player;
     private Hud hud;
     private Spawner spawner;
     private State state;
-    private boolean muted = true;
     private float shake;
     private float camX = ARENA_W / 2f;
-    private boolean cheats;
-    private boolean god;
 
     public PlayScreen(DogerDager game, Difficulty difficulty) {
         this.game = game;
         this.difficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
-        this.bgm = Gdx.audio.newMusic(Gdx.files.internal("puppysong.mp3"));
-        this.bgm.setLooping(true);
-        this.bgm.setVolume(0f);
-        this.failSound = Gdx.audio.newSound(Gdx.files.internal("losing.wav"));
         reset();
     }
 
@@ -84,8 +73,6 @@ public final class PlayScreen implements Screen {
         state = State.PLAYING;
         shake = 0;
         camX = ARENA_W / 2f;
-        bgm.stop();
-        bgm.play();
     }
 
     public void add(Entity entity) {
@@ -155,24 +142,17 @@ public final class PlayScreen implements Screen {
     public void win() {
         if (state == State.PLAYING) {
             state = State.WON;
-            bgm.stop();
             progress.recordRun(difficulty, hud.highScore(), true);
         }
     }
 
     @Override
     public void render(float delta) {
-        if (Gdx.input.isKeyJustPressed(Keys.M)) {
-            muted = !muted;
-            bgm.setVolume(muted ? 0f : 0.5f);
-        }
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
             if (state == State.PLAYING) {
                 state = State.PAUSED;
-                bgm.pause();
             } else if (state == State.PAUSED) {
                 state = State.PLAYING;
-                bgm.play();
             } else {
                 toMenu();
                 return;
@@ -189,11 +169,9 @@ public final class PlayScreen implements Screen {
             reset();
         }
         draw(delta);
-
     }
 
     private void toMenu() {
-        bgm.stop();
         game.setScreen(new MenuScreen(game));
         dispose();
     }
@@ -230,28 +208,12 @@ public final class PlayScreen implements Screen {
 
         if (hud.dead()) {
             state = State.GAME_OVER;
-            bgm.stop();
-            failSound.play();
             progress.recordRun(difficulty, hud.highScore(), false);
         }
-
-        cheatInput();
-    }
-
-    // Чит-меню для тех, кто совершенно ничего не умеет.
-    private void cheatInput() {
-        if (Gdx.input.isKeyJustPressed(Keys.GRAVE)) cheats = !cheats;
-        if (!cheats) return;
-        if (Gdx.input.isKeyJustPressed(Keys.NUM_1)) god = !god;
-        if (Gdx.input.isKeyJustPressed(Keys.NUM_2)) hud.healFull();
-        if (Gdx.input.isKeyJustPressed(Keys.NUM_3)) hud.refillStamina();
-        if (Gdx.input.isKeyJustPressed(Keys.NUM_4)) spawnBoss(Boss.Kind.THREE);
-        if (Gdx.input.isKeyJustPressed(Keys.NUM_5)) win();
-        if (Gdx.input.isKeyJustPressed(Keys.NUM_6)) spawnCentipede();
     }
 
     private void hurt(int amount) {
-        if (god || player.strafing()) return;
+        if (player.strafing()) return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
         if (hud.damage(dmg)) {
             shake = 0.22f;
@@ -300,7 +262,6 @@ public final class PlayScreen implements Screen {
 
         batch.begin();
         hud.drawText(batch, font);
-        if (cheats) drawCheats();
         if (state == State.PAUSED) {
             drawCentered("PAUSED   -   Esc resume   Q menu");
         } else if (state == State.WON) {
@@ -331,15 +292,6 @@ public final class PlayScreen implements Screen {
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
     }
 
-    private void drawCheats() {
-        font.setColor(Color.LIME);
-        float y = PLAY_TOP - 16;
-        font.draw(batch, "CHEATS  ~", 16, y);
-        font.draw(batch, "1 god " + (god ? "ON" : "off"), 16, y - 18);
-        font.draw(batch, "2 heal   3 stamina", 16, y - 34);
-        font.draw(batch, "4 boss3  5 win  6 centi", 16, y - 50);
-    }
-
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
@@ -350,8 +302,6 @@ public final class PlayScreen implements Screen {
         shapes.dispose();
         batch.dispose();
         font.dispose();
-        bgm.dispose();
-        failSound.dispose();
     }
 
     @Override public void show() { }
