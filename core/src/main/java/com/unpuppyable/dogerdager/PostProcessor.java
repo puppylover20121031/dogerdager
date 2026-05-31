@@ -32,6 +32,10 @@ public final class PostProcessor implements Disposable {
         enabled = !enabled;
     }
 
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public void capture() {
         if (enabled && fbo != null) fbo.begin();
     }
