@@ -27,7 +27,7 @@ import java.util.List;
 public final class PlayScreen implements Screen {
 
     static final float WORLD_W = 640;
-    static final float WORLD_H = 477;
+    static final float WORLD_H = 360;
     static final float HUD_H = 72;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 

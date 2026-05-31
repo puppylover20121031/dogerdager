@@ -42,7 +42,7 @@ public class DogerDager extends Game {
 
     private void toggleFullscreen() {
         if (Gdx.graphics.isFullscreen()) {
-            Gdx.graphics.setWindowedMode(1280, 954);
+            Gdx.graphics.setWindowedMode(1280, 720);
         } else {
             Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
         }
