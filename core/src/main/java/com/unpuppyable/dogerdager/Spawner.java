@@ -44,6 +44,10 @@ public final class Spawner {
             }
         }
 
+        if (level % 4 == 0) {
+            screen.spawnPotion();
+        }
+
         if (level >= difficulty.winLevel) {
             screen.win();
         }

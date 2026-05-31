@@ -15,7 +15,6 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.unpuppyable.dogerdager.entity.Arrow;
 import com.unpuppyable.dogerdager.entity.Boss;
 import com.unpuppyable.dogerdager.entity.Bullet;
 import com.unpuppyable.dogerdager.entity.Enemy;
@@ -47,7 +46,6 @@ public final class PlayScreen implements Screen {
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
 
     private final List<Enemy> enemies = new ArrayList<>();
-    private final List<Arrow> arrows = new ArrayList<>();
     private final List<Boss> bosses = new ArrayList<>();
     private final List<Boss> pendingBosses = new ArrayList<>();
     private final List<Bullet> bullets = new ArrayList<>();
@@ -74,7 +72,6 @@ public final class PlayScreen implements Screen {
 
     private void reset() {
         enemies.clear();
-        arrows.clear();
         bosses.clear();
         pendingBosses.clear();
         bullets.clear();
@@ -107,12 +104,8 @@ public final class PlayScreen implements Screen {
         bullets.add(bullet);
     }
 
-    public void dropPotion(float x, float y) {
-        potion = new Potion(x, y);
-    }
-
-    public void removeArms() {
-        for (var boss : bosses) if (boss.arm()) boss.kill();
+    public void spawnPotion() {
+        potion = new Potion(MathUtils.random(0f, WORLD_W - 16), MathUtils.random(0f, PLAY_TOP - 16));
     }
 
     private void clearHazards() {
@@ -153,10 +146,6 @@ public final class PlayScreen implements Screen {
         player.update(delta);
         spawner.update(delta);
 
-        if (Gdx.input.isKeyJustPressed(Keys.SPACE)) {
-            arrows.add(new Arrow(player.bounds().x + Player.SIZE, player.bounds().y, WORLD_W));
-        }
-
         for (var enemy : enemies) {
             enemy.update(delta);
             if (enemy.bounds().overlaps(player.bounds())) hurt(5);
@@ -175,22 +164,12 @@ public final class PlayScreen implements Screen {
                 bullet.kill();
             }
         }
-        for (var arrow : arrows) {
-            arrow.update(delta);
-            for (var enemy : enemies)
-                if (!enemy.dead() && arrow.bounds().overlaps(enemy.bounds())) { enemy.kill(); arrow.kill(); }
-            for (var bullet : bullets)
-                if (!bullet.dead() && arrow.bounds().overlaps(bullet.bounds())) { bullet.kill(); arrow.kill(); }
-            for (var boss : bosses)
-                if (boss.damageable() && arrow.bounds().overlaps(boss.bounds())) { boss.damage(100); arrow.kill(); }
-        }
         if (potion != null && potion.bounds().overlaps(player.bounds())) {
             hud.healFull();
             potion = null;
         }
 
         enemies.removeIf(Enemy::dead);
-        arrows.removeIf(Arrow::dead);
         bullets.removeIf(Bullet::dead);
         bosses.removeIf(Boss::dead);
 
@@ -218,7 +197,6 @@ public final class PlayScreen implements Screen {
         for (var boss : bosses) boss.draw(shapes);
         for (var bullet : bullets) bullet.draw(shapes);
         if (potion != null) potion.draw(shapes);
-        for (var arrow : arrows) arrow.draw(shapes);
         hud.drawBars(shapes);
         shapes.end();
 

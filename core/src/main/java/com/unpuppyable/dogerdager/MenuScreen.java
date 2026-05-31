@@ -57,7 +57,7 @@ public final class MenuScreen extends ScreenAdapter {
 
         var hint = new VisTable();
         hint.add(new Label(Icons.GAMEPAD, new Label.LabelStyle(game.icons().font(), Color.LIGHT_GRAY))).padRight(8);
-        hint.add(new VisLabel("WASD move    Space shoot    Shift shield    Esc menu"));
+        hint.add(new VisLabel("WASD move    Shift boost    F11 fullscreen    Esc menu"));
         root.add(hint).padTop(24);
 
         stage.addActor(root);
