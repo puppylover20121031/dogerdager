@@ -55,8 +55,8 @@ public final class Enemy extends Entity {
     public void draw(ShapeRenderer shapes) {
         shapes.setColor(switch (kind) {
             case NORMAL -> Color.RED;
-            case FAST -> Color.ORANGE;
-            case SMART -> Color.MAGENTA;
+            case FAST -> Color.GRAY;
+            case SMART -> Color.GREEN;
         });
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
