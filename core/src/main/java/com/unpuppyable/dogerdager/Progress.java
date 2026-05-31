@@ -31,7 +31,7 @@ public final class Progress {
     }
 
     public boolean hardcoreUnlocked() {
-        return hardClears() >= 2;
+        return cleared(Difficulty.HARD);
     }
 
     public boolean achieved(String id) {

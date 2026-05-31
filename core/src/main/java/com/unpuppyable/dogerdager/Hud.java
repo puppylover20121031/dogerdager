@@ -16,6 +16,7 @@ public final class Hud {
     private final float worldW;
     private final float worldH;
     private final int maxHealth;
+    private final float scoreRate;
 
     private int health;
     private float stamina = MAX_STAMINA;
@@ -28,6 +29,7 @@ public final class Hud {
 
     public Hud(Difficulty difficulty, int highScore, float worldW, float worldH) {
         this.maxHealth = difficulty.maxHealth;
+        this.scoreRate = REGEN * difficulty.scoreMultiplier;
         this.health = maxHealth;
         this.highScore = highScore;
         this.worldW = worldW;
@@ -40,7 +42,7 @@ public final class Hud {
         if (shieldActive) stamina = Math.max(0, stamina - DRAIN * delta);
         else if (stamina < MAX_STAMINA) stamina = Math.min(MAX_STAMINA, stamina + REGEN * delta);
 
-        scoreAcc += REGEN * delta;
+        scoreAcc += scoreRate * delta;
         while (scoreAcc >= 1) {
             scoreAcc -= 1;
             score++;
