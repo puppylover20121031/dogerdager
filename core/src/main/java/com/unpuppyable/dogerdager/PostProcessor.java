@@ -13,7 +13,7 @@ public final class PostProcessor implements Disposable {
     private final ShaderProgram shader;
     private FrameBuffer fbo;
     private float time;
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     public PostProcessor() {
         ShaderProgram.pedantic = false;
