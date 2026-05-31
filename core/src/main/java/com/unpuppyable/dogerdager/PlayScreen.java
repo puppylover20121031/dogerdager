@@ -185,6 +185,7 @@ public final class PlayScreen implements Screen {
     }
 
     private void hurt(int amount) {
+        if (player.strafing()) return;
         hud.damage(difficulty.instantKill() ? INSTANT_KILL : amount);
     }
 
