@@ -433,7 +433,12 @@ public final class PlayScreen implements Screen {
 
     @Override
     public void dispose() {
-        prefs.putBoolean("music", false);
+        prefs.putBoolean("music", true);
+        if (bgm != null) {
+            bgm.stop();
+            bgm.dispose();
+            bgm = null;
+        }
         shapes.dispose();
         batch.dispose();
         font.dispose();
