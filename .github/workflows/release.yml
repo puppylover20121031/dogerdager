@@ -56,16 +56,30 @@ jobs:
       - name: Zip the app-image
         run: 7z a DogerDager-windows.zip ./dist/DogerDager
 
-      # -------------------------
-      # Install Butler (FIXED)
-      # -------------------------
-      - name: Install Butler (reliable method)
+
+      - name: Install Butler (robust)
         shell: bash
         run: |
           curl -L -o butler.zip https://github.com/itchio/butler/releases/latest/download/butler-windows-amd64.zip
+      
           unzip -o butler.zip
-          chmod +x butler.exe
+      
+          echo "Listing extracted files:"
+          ls -R
+      
+          BUTLER_PATH=$(find . -name "butler.exe" | head -n 1)
+      
+          echo "Found Butler at: $BUTLER_PATH"
+      
+          chmod +x "$BUTLER_PATH"
+      
           echo "$(pwd)" >> $GITHUB_PATH
+      
+          # Move to root for convenience
+          cp "$BUTLER_PATH" ./butler.exe
+
+
+
 
       # -------------------------
       # Authenticate Butler
