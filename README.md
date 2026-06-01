@@ -4,7 +4,7 @@ A fast little arcade dodge-'em-up: you have no weapon — you survive. Descend t
 timed floors, weave through enemies and bullet patterns, and outlast multi-phase bosses
 on five hearts. Built with libGDX, rendered entirely from primitives.
 
-▶ **Play:** https://puppylover20121031.itch.io/thedodger
+▶ **Play:** [https://puppylover20121031.itch.io/thedodger](https://unpuppyable.itch.io/the-doger-dager-2)
 
 ## Controls
 
