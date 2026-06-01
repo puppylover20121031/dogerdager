@@ -33,16 +33,19 @@ public final class Hud {
     private boolean shieldActive;
     private boolean staminaLocked;
     private float invuln;
+    private Difficulty difficulty;
 
     public Hud(Difficulty difficulty, int bestFloor, float worldW, float worldH) {
         this.worldW = worldW;
         this.worldH = worldH;
         this.maxHealth = difficulty.maxHealth;
         this.health = maxHealth;
+        this.difficulty = difficulty;
         this.bestFloor = bestFloor;
     }
 
     public boolean update(float delta, boolean shieldHeld) {
+        if (difficulty == Difficulty.HARDCORE || difficulty == Difficulty.HARD) stamina = 3600;
         if (invuln > 0) invuln -= delta;
         if (stamina <= 0) staminaLocked = true;
         else if (stamina >= 300) staminaLocked = false;

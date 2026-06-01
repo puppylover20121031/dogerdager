@@ -42,6 +42,7 @@ public final class PlayScreen implements Screen {
 
     private final DogerDager game;
     private final Difficulty difficulty;
+    public Difficulty curDifficulty;
 
     private boolean mute = false;
 
@@ -67,6 +68,7 @@ public final class PlayScreen implements Screen {
     public PlayScreen(DogerDager game, Difficulty difficulty, float delta) {
         this.game = game;
         this.difficulty = difficulty;
+        curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         player = new Player(ARENA_W, PLAY_TOP);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
