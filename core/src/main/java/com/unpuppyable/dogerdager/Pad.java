@@ -18,6 +18,7 @@ public final class Pad {
     private static boolean shield;
     private static boolean upE, downE, leftE, rightE, aE, bE, startE;
     private static boolean pUp, pDown, pLeft, pRight, pA, pB, pStart;
+    private static boolean rE, lE, pR, pL;
 
     private Pad() {
     }
@@ -50,6 +51,8 @@ public final class Pad {
         boolean a = c.getButton(m.buttonA);
         boolean b = c.getButton(m.buttonB);
         boolean start = c.getButton(m.buttonStart);
+        boolean L = c.getButton(m.buttonL1);
+        boolean R = c.getButton(m.buttonR1);
 
         upE = up && !pUp;       pUp = up;
         downE = down && !pDown; pDown = down;
@@ -58,6 +61,8 @@ public final class Pad {
         aE = a && !pA;          pA = a;
         bE = b && !pB;          pB = b;
         startE = start && !pStart; pStart = start;
+        lE = L && !pL; pL = L;
+        rE = R && !pR; pR = R;
     }
 
     private static float dead(float v) {
@@ -78,4 +83,6 @@ public final class Pad {
     public static boolean justDown() { return downE; }
     public static boolean justLeft() { return leftE; }
     public static boolean justRight() { return rightE; }
+    public static boolean justL() { return lE; }
+    public static boolean justR() { return rE; }
 }

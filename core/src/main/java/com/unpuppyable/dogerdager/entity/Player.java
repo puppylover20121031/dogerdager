@@ -10,7 +10,7 @@ import com.badlogic.gdx.math.MathUtils;
 public final class Player extends Entity {
 
     public static final float SIZE = 16;
-    private static final float SPEED = 300;
+    private static float SPEED = 300;
     private static final float STRAFE_DIST = 110;
     private static final float STRAFE_INVULN = 0.2f;
     private static final float STRAFE_CD = 1.2f;
@@ -50,6 +50,13 @@ public final class Player extends Entity {
             return;
         }
 
+
+        SPEED = 300f;
+        
+        if (Gdx.input.isKeyJustPressed(Keys.SHIFT_LEFT) || Pad.justL() || Pad.justR()) {
+            SPEED *= 2;
+        }
+
         float vx = 0, vy = 0;
         if (Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT))  vx -= SPEED;
         if (Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)) vx += SPEED;
@@ -67,6 +74,8 @@ public final class Player extends Entity {
         if ((Gdx.input.isKeyJustPressed(Keys.TAB) || Pad.justA()) && strafeCd <= 0) {
             strafe();
         }
+
+
     }
 
     private void strafe() {
