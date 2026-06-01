@@ -59,9 +59,10 @@ jobs:
       # -------------------------
       # Install Butler (FIXED)
       # -------------------------
-      - name: Install Butler
+      - name: Install Butler (reliable method)
+        shell: bash
         run: |
-          curl -L -o butler.zip https://broth.itch.ovh/butler/windows-amd64/LATEST/archive/default
+          curl -L -o butler.zip https://github.com/itchio/butler/releases/latest/download/butler-windows-amd64.zip
           unzip -o butler.zip
           chmod +x butler.exe
           echo "$(pwd)" >> $GITHUB_PATH
