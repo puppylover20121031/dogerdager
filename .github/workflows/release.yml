@@ -110,9 +110,21 @@ jobs:
 
       - name: Package Windows executable ZIP
         run: |
-          cd dist
-          zip -r DogerDager-windows.zip DogerDager
-          cd -
+          python - <<'PY'
+          import zipfile
+          import os
+
+          root = 'dist'
+          archive_name = os.path.join(root, 'DogerDager-windows.zip')
+          folder = os.path.join(root, 'DogerDager')
+
+          with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
+              for dirpath, dirnames, filenames in os.walk(folder):
+                  for filename in filenames:
+                      filepath = os.path.join(dirpath, filename)
+                      archive.write(filepath, os.path.relpath(filepath, root))
+          print(f'Created {archive_name}')
+          PY
 
       - name: Upload Windows build artifact
         uses: actions/upload-artifact@v4
