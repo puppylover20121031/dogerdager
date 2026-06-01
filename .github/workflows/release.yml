@@ -65,7 +65,7 @@ jobs:
       - name: Install Butler
         shell: bash
         run: |
-          curl -L -o butler.zip https://broth.itch.ovh/butler/windows-amd64/LATEST/archive/default
+          curl -L -o butler.zip https://broth.itch.io/butler/windows-amd64/LATEST/archive/default
           unzip -o butler.zip
           chmod +x butler.exe
           echo "$(pwd)" >> $GITHUB_PATH
