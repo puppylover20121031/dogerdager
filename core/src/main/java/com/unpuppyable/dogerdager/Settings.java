@@ -60,7 +60,7 @@ public final class Settings {
         prefs.putBoolean("set.bingo", value);
         prefs.flush();
     }
-    public boolean bingo() {
+    public static boolean bingo() {
         return prefs.getBoolean("set.bingo", false);
     }
 }

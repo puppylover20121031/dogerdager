@@ -43,7 +43,7 @@ public final class SettingsScreen extends ScreenAdapter {
             dispose();
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) index = (index + 3) % 5;
+        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) index = (index + 4) % 5;
         if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN)) index = (index + 1) % 5;
 
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)
@@ -76,7 +76,7 @@ public final class SettingsScreen extends ScreenAdapter {
         line(1, "Fullscreen", settings.fullscreen() ? "ON" : "OFF", 212);
         line(2, "FPS", settings.fps() == 0 ? "uncapped" : String.valueOf(settings.fps()), 184);
         line(3, "Glitch", settings.glitch() ? "ON" : "OFF", 156);
-        line(4, "bingo heeler mode", settings.bingo() ? "ON" : "OFF", 124);
+        line(4, "bingo heeler mode\n(needs restart)", settings.bingo() ? "ON" : "OFF", 124);
         font.setColor(Color.GRAY);
         centered("up/down select    left/right change    Esc back", 60);
         batch.end();

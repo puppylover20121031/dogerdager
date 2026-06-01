@@ -3,6 +3,8 @@ package com.unpuppyable.dogerdager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -60,29 +62,31 @@ public final class PlayScreen implements Screen {
     boolean bingo = false;
     private float shake;
     private float camX = ARENA_W / 2f;
+    private Music bgm;
 
     public PlayScreen(DogerDager game, Difficulty difficulty, float delta) {
         this.game = game;
         this.difficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
+        player = new Player(ARENA_W, PLAY_TOP);
+        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
+        spawner = new Spawner(difficulty, hud, this);
         update(delta);
+        bingo = Settings.bingo();
         if (bingo) {
             this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
         } else {
-            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("song.wav"));
+            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("opening.wav"));
         }
         this.bgm.setLooping(true);
         this.bgm.setVolume(1f);
-        this.failSound = Gdx.audio.newSound(Gdx.files.internal("losing.wav"));
+        this.bgm.play();
         reset();
     }
 
     private void reset() {
         entities.clear();
         pending.clear();
-        player = new Player(ARENA_W, PLAY_TOP);
-        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
-        spawner = new Spawner(difficulty, hud, this);
         state = State.PLAYING;
         shake = 0;
         camX = ARENA_W / 2f;

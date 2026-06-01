@@ -41,6 +41,7 @@ public final class MenuScreen extends ScreenAdapter {
 
         boolean hardcoreUnlocked = progress.hardcoreUnlocked();
         for (int i = 0; i < CHOICES.length; i++) {
+            final int index = i;
             var choice = CHOICES[i];
             boolean locked = choice == Difficulty.HARDCORE && !hardcoreUnlocked;
             var button = new VisTextButton(locked ? "HARDCORE  (clear HARD)" : choice.name());
@@ -48,7 +49,7 @@ public final class MenuScreen extends ScreenAdapter {
             button.addListener(new ChangeListener() {
                 @Override
                 public void changed(ChangeEvent event, Actor actor) {
-                    start(choice, ((float) i));
+                    start(choice, ((float) index));
                 }
             });
             buttons[i] = button;
@@ -139,7 +140,7 @@ public final class MenuScreen extends ScreenAdapter {
             game.menuMove();
         }
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE) || Pad.justA()) {
-            start(CHOICES[index]);
+            start(CHOICES[index], 0f);
             return;
         }
         if (Gdx.input.isKeyJustPressed(Keys.T)) {
