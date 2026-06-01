@@ -37,7 +37,7 @@ public final class MenuScreen extends ScreenAdapter {
 
         var title = new VisLabel("DOGER DAGER");
         title.setFontScale(2f);
-        root.add(title).padBottom(28).row();
+        root.add(title).padBottom(8).row();
 
         boolean hardcoreUnlocked = progress.hardcoreUnlocked();
         for (int i = 0; i < CHOICES.length; i++) {
@@ -79,7 +79,11 @@ public final class MenuScreen extends ScreenAdapter {
         switching = true;
         game.menuConfirm();
         Gdx.input.setInputProcessor(null);
+        if (difficulty != Difficulty.CUSTOM) {
         game.setScreen(new PlayScreen(game, difficulty, delta));
+        } else {
+            game.setScreen(new CustomScreen(game));
+        }
         dispose();
     }
 
