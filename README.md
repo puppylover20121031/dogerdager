@@ -50,4 +50,4 @@ Want to help? Open an issue. The wiki documents how the code works.
 
 ## Credits
 
-Made by **puppy**. Thanks to [@Kitty-Hivens](https://github.com/Kitty-Hivens) and **jackmann**.
+Made by **unpuppyable**. Thanks to [@Kitty-Hivens](https://github.com/Kitty-Hivens) and **jackmann**.
