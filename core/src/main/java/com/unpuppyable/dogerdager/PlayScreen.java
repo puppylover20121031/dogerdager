@@ -67,6 +67,7 @@ public final class PlayScreen implements Screen {
     private float shake;
     private float camX = ARENA_W / 2f;
     private Music bgm;
+    private boolean playedMusic = false;
 
     public boolean Easy_unlocked = false;
 
@@ -87,7 +88,10 @@ public final class PlayScreen implements Screen {
         }
         this.bgm.setLooping(true);
         this.bgm.setVolume(1f);
-        this.bgm.play();
+        if (!playedMusic) {
+            this.bgm.play();
+            playedMusic = true;
+        }
         reset();
     }
 
@@ -125,21 +129,25 @@ public final class PlayScreen implements Screen {
         add(new Centipede(x, y, ARENA_W, PLAY_TOP, player));
     }
 
-    // Vertical laser walls with one guaranteed safe slot -- never an impossible config.
+    // Vertical laser walls with one guaranteed safe slot -- never an impossible
+    // config.
     public void spawnLaserWall() {
         int slots = 5;
         float slotW = ARENA_W / slots;
         float laserW = slotW * 0.78f;
         int gap = MathUtils.random(slots - 1);
         for (int i = 0; i < slots; i++) {
-            if (i == gap) continue;
+            if (i == gap)
+                continue;
             float cx = (i + 0.5f) * slotW;
             add(new Laser(cx - laserW / 2f, laserW, PLAY_TOP));
         }
     }
 
     public boolean bossActive() {
-        for (var e : entities) if (e.isBoss()) return true;
+        for (var e : entities)
+            if (e.isBoss())
+                return true;
         return false;
     }
 
@@ -148,11 +156,14 @@ public final class PlayScreen implements Screen {
         pending.clear();
     }
 
-    // Floor transition: heal, wipe the arena, then either win or stage the next floor.
+    // Floor transition: heal, wipe the arena, then either win or stage the next
+    // floor.
     public void nextFloor() {
         int floor = hud.advanceFloor();
-        if (floor >= 5) progress.unlock(Achievement.FLOOR_5);
-        if (floor >= 10) progress.unlock(Achievement.FLOOR_10);
+        if (floor >= 5)
+            progress.unlock(Achievement.FLOOR_5);
+        if (floor >= 10)
+            progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         hud.healFull();
         if (floor >= difficulty.winFloor) {
@@ -174,9 +185,11 @@ public final class PlayScreen implements Screen {
                 case NORMAL -> progress.unlock(Achievement.CLEAR_NORMAL);
                 case HARD -> progress.unlock(Achievement.CLEAR_HARD);
                 case HARDCORE -> progress.unlock(Achievement.CLEAR_HARDCORE);
-                default -> { }
+                default -> {
+                }
             }
-            if (progress.achieved(Achievement.CLEAR_HARD) && progress.achieved(Achievement.CLEAR_HARDCORE) && progress.achieved(Achievement.CLEAR_HARD) && prefs.getBoolean("Easy_unlock", false)) {
+            if (progress.achieved(Achievement.CLEAR_HARD) && progress.achieved(Achievement.CLEAR_HARDCORE)
+                    && progress.achieved(Achievement.CLEAR_HARD) && prefs.getBoolean("Easy_unlock", false)) {
                 progress.unlock(Achievement.CLEAR_ALL);
             }
         }
@@ -221,12 +234,14 @@ public final class PlayScreen implements Screen {
         player.update(delta);
         spawner.update(delta);
 
-        for (var e : entities) e.update(delta);
+        for (var e : entities)
+            e.update(delta);
         entities.addAll(pending);
         pending.clear();
 
         for (var e : entities) {
-            if (e.dead() || !e.hits(player.bounds())) continue;
+            if (e.dead() || !e.hits(player.bounds()))
+                continue;
             if (e.heals()) {
                 hud.heal(2);
                 progress.unlock(Achievement.POTIONER);
@@ -236,7 +251,8 @@ public final class PlayScreen implements Screen {
                     player.knockback(ARENA_W, PLAY_TOP);
                 }
                 hurt(e.contactDamage());
-                if (e.diesOnPlayerHit()) e.kill();
+                if (e.diesOnPlayerHit())
+                    e.kill();
             }
         }
 
@@ -259,14 +275,16 @@ public final class PlayScreen implements Screen {
             }
         }
 
-        if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.W)) {
+        if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
+                && Gdx.input.isKeyPressed(Keys.W)) {
             win();
         }
-        
+
     }
 
     private void hurt(int amount) {
-        if (player.strafing()) return;
+        if (player.strafing())
+            return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
         if (hud.damage(dmg)) {
             shake = 0.22f;
@@ -278,7 +296,8 @@ public final class PlayScreen implements Screen {
         viewport.apply();
         var cam = viewport.getCamera();
 
-        // World pass: the camera eases toward the player horizontally, clamped to the arena.
+        // World pass: the camera eases toward the player horizontally, clamped to the
+        // arena.
         float targetX = MathUtils.clamp(player.bounds().x + Player.SIZE / 2f, WORLD_W / 2f, ARENA_W - WORLD_W / 2f);
         camX = MathUtils.lerp(camX, targetX, Math.min(1f, 9f * delta));
         float drawX = camX;
@@ -294,7 +313,8 @@ public final class PlayScreen implements Screen {
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawBackground(shapes);
         player.draw(shapes);
-        for (var e : entities) e.draw(shapes);
+        for (var e : entities)
+            e.draw(shapes);
         shapes.end();
 
         // HUD pass: fixed screen-space camera.
@@ -325,13 +345,16 @@ public final class PlayScreen implements Screen {
         batch.end();
     }
 
-    // World-space backdrop -- gives the panning camera something to scroll over so motion reads.
+    // World-space backdrop -- gives the panning camera something to scroll over so
+    // motion reads.
     private void drawBackground(ShapeRenderer shapes) {
         shapes.setColor(0.05f, 0.05f, 0.08f, 1f);
         shapes.rect(0, 0, ARENA_W, PLAY_TOP);
         shapes.setColor(0.11f, 0.11f, 0.16f, 1f);
-        for (float x = 0; x <= ARENA_W; x += 32f) shapes.rect(x, 0, 1f, PLAY_TOP);
-        for (float y = 0; y <= PLAY_TOP; y += 32f) shapes.rect(0, y, ARENA_W, 1f);
+        for (float x = 0; x <= ARENA_W; x += 32f)
+            shapes.rect(x, 0, 1f, PLAY_TOP);
+        for (float y = 0; y <= PLAY_TOP; y += 32f)
+            shapes.rect(0, y, ARENA_W, 1f);
         shapes.setColor(0.28f, 0.30f, 0.42f, 1f);
         shapes.rect(0, 0, ARENA_W, 2f);
         shapes.rect(0, PLAY_TOP - 2f, ARENA_W, 2f);
