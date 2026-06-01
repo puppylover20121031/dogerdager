@@ -33,7 +33,42 @@ jobs:
           JAR=$(find build/libs -maxdepth 1 -name "*.jar" ! -name "*sources.jar" ! -name "*javadoc.jar" | head -n 1)
           echo "jar=$JAR" >> "$GITHUB_OUTPUT"
 
+      # -----------------------------
+      # Upload to GitHub Release
+      # -----------------------------
       - name: Upload JAR to Release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.jar.outputs.jar }}
+
+      # -----------------------------
+      # Install Butler (itch.io CLI)
+      # -----------------------------
+      - name: Install Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          sudo mv butler /usr/local/bin/butler
+
+      # -----------------------------
+      # Authenticate Butler
+      # -----------------------------
+      - name: Authenticate Butler
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler login
+
+      # -----------------------------
+      # Push to itch.io
+      # -----------------------------
+      - name: Upload to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ secrets.ITCH_USER }}
+          ITCH_GAME: ${{ secrets.ITCH_GAME }}
+          ITCH_CHANNEL: ${{ secrets.ITCH_CHANNEL }}
+        run: |
+          butler push "${{ steps.jar.outputs.jar }}" \
+            "$ITCH_USER/$ITCH_GAME:$ITCH_CHANNEL"
