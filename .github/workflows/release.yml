@@ -4,8 +4,10 @@ name: build
 # No native Linux/Mac packaging.
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [libgdx-port, main]
+    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write   # needed to attach files to a Release on tag
@@ -63,7 +65,7 @@ jobs:
       - name: Install Butler
         shell: bash
         run: |
-          curl -L -o butler.zip https://broth.itch.io/butler/windows-amd64/LATEST/archive/default
+          curl -L -o butler.zip https://broth.itch.ovh/butler/windows-amd64/LATEST/archive/default
           unzip -o butler.zip
           chmod +x butler.exe
           echo "$(pwd)" >> $GITHUB_PATH
