@@ -32,3 +32,19 @@ application {
 tasks.named<JavaExec>("run") {
     workingDir = rootProject.file("assets")
 }
+
+// Self-contained runnable jar: our classes + all deps (incl. natives) + assets.
+tasks.register<Jar>("fatJar") {
+    group = "distribution"
+    archiveFileName.set("DogerDager.jar")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes["Main-Class"] = "com.unpuppyable.dogerdager.lwjgl3.Lwjgl3Launcher"
+    }
+    from(sourceSets["main"].output)
+    from(rootProject.file("assets"))
+    val runtime = configurations.runtimeClasspath.get()
+    dependsOn(runtime)
+    from(runtime.filter { it.name.endsWith(".jar") }.map { zipTree(it) })
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+}
