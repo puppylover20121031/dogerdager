@@ -43,6 +43,8 @@ public final class PlayScreen implements Screen {
     private final DogerDager game;
     private final Difficulty difficulty;
 
+    private boolean mute = false;
+
     private final Viewport viewport;
     private final ShapeRenderer shapes = new ShapeRenderer();
     private final SpriteBatch batch = new SpriteBatch();
@@ -235,6 +237,17 @@ public final class PlayScreen implements Screen {
             state = State.GAME_OVER;
             progress.recordRun(difficulty, hud.highScore(), false);
         }
+
+        if (Pad.justL() || Gdx.input.isKeyJustPressed(Keys.M)) {
+            if (mute) {
+                bgm.play();
+                mute = false;
+            } else {
+                bgm.pause();
+                mute = true;
+            }
+        }
+        
     }
 
     private void hurt(int amount) {
