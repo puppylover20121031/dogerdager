@@ -4,10 +4,8 @@ name: build
 # No native Linux/Mac packaging.
 
 on:
-  push:
-    branches: [libgdx-port, main]
-    tags: ['v*']
-  workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
   contents: write   # needed to attach files to a Release on tag
