@@ -83,27 +83,30 @@ public final class PlayScreen implements Screen {
         this.difficulty = difficulty;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
+        this.playedMusic = playedMusic;
         player = new Player(ARENA_W, PLAY_TOP);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         update(delta);
         bingo = Settings.bingo();
-        if (bingo) {
-            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
-        } else {
-            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("opening.wav"));
-        }
-        this.bgm.setLooping(true);
-        this.bgm.setVolume(1f);
-        if (!playedMusic) {
+        if (prefs.getBoolean("music", true)) {
+            if (bingo) {
+                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
+            } else {
+                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("opening.wav"));
+            }
+            this.bgm.setLooping(true);
+            this.bgm.setVolume(1f);
             this.bgm.play();
-            playedMusic = true;
+            prefs.putBoolean("music", false);
         }
         reset();
-        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false)) playerShootingEnabled = true;
+        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
+            playerShootingEnabled = true;
     }
 
     private void reset() {
+        playedMusic = true;
         entities.clear();
         pending.clear();
         state = State.PLAYING;
@@ -254,6 +257,7 @@ public final class PlayScreen implements Screen {
     }
 
     private void toMenu() {
+        reset();
         game.setScreen(new MenuScreen(game));
         dispose();
     }
@@ -266,7 +270,8 @@ public final class PlayScreen implements Screen {
         player.setStamina(hud.staminaFraction());
         player.update(delta);
         spawner.update(delta);
-        if (shootCooldown > 0) shootCooldown -= delta;
+        if (shootCooldown > 0)
+            shootCooldown -= delta;
         if (playerShootingEnabled && shootCooldown <= 0
                 && (Gdx.input.isKeyJustPressed(Keys.SPACE) || Pad.justB())) {
             shootPlayer();
@@ -318,15 +323,15 @@ public final class PlayScreen implements Screen {
             progress.recordRun(difficulty, hud.highScore(), false);
         }
 
-        if (Pad.justL() || Gdx.input.isKeyJustPressed(Keys.M)) {
-            if (mute) {
-                bgm.play();
-                mute = false;
-            } else {
-                bgm.pause();
-                mute = true;
-            }
-        }
+        // if (Pad.justL() || Gdx.input.isKeyJustPressed(Keys.M)) {
+        // if (mute) {
+        // bgm.pause();
+        // mute = false;
+        // } else {
+        // bgm.play();
+        // mute = true;
+        // }
+        // }
 
         if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
                 && Gdx.input.isKeyPressed(Keys.W)) {
@@ -428,6 +433,7 @@ public final class PlayScreen implements Screen {
 
     @Override
     public void dispose() {
+        prefs.putBoolean("music", false);
         shapes.dispose();
         batch.dispose();
         font.dispose();
