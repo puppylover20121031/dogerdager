@@ -108,11 +108,86 @@ jobs:
           name: DogerDager-jar
           path: lwjgl3/build/libs/DogerDager.jar
 
+      - name: Package Windows executable ZIP
+        run: |
+          cd dist
+          zip -r DogerDager-windows.zip DogerDager
+          cd -
+
       - name: Upload Windows build artifact
         uses: actions/upload-artifact@v4
         with:
           name: DogerDager-windows
-          path: dist/DogerDager
+          path: dist/DogerDager-windows.zip
+
+      - name: Create next GitHub release
+        if: startsWith(github.ref, 'refs/heads/') || github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          python - <<'PY'
+          import os, re, json, urllib.request, urllib.parse
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GITHUB_TOKEN']
+          api = f'https://api.github.com/repos/{repo}'
+          headers = {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': f'Bearer {token}',
+              'User-Agent': 'github-actions'
+          }
+
+          def request(url, data=None, method='GET', extra_headers=None):
+              hdrs = {**headers}
+              if extra_headers:
+                  hdrs.update(extra_headers)
+              if data is not None:
+                  data = data.encode('utf-8')
+              req = urllib.request.Request(url, data=data, headers=hdrs, method=method)
+              with urllib.request.urlopen(req) as resp:
+                  return json.load(resp)
+
+          releases = request(f'{api}/releases?per_page=100')
+          semver = re.compile(r'^v(\d+)\.(\d+)\.(\d+)$')
+          versions = []
+          for r in releases:
+              tag = r.get('tag_name', '')
+              m = semver.match(tag)
+              if m:
+                  versions.append((int(m.group(1)), int(m.group(2)), int(m.group(3)), r))
+
+          if not versions:
+              raise SystemExit('No existing release with a vMAJOR.MINOR.PATCH tag found')
+
+          latest = max(versions)
+          new_tag = f'v{latest[0]}.{latest[1]}.{latest[2] + 1}'
+          print('Latest release:', latest[3]['tag_name'])
+          print('Creating release:', new_tag)
+
+          payload = {
+              'tag_name': new_tag,
+              'name': new_tag,
+              'body': '',
+              'draft': False,
+              'prerelease': False,
+              'target_commitish': os.environ['GITHUB_SHA'],
+          }
+          release = request(f'{api}/releases', data=json.dumps(payload), method='POST')
+          upload_url = release['upload_url'].split('{')[0]
+
+          assets = [
+              ('lwjgl3/build/libs/DogerDager.jar', 'application/java-archive'),
+              ('dist/DogerDager-windows.zip', 'application/zip'),
+          ]
+          for path, content_type in assets:
+              with open(path, 'rb') as f:
+                  data = f.read()
+              url = f"{upload_url}?name={urllib.parse.quote(os.path.basename(path))}"
+              req = urllib.request.Request(url, data=data, headers={**headers, 'Content-Type': content_type}, method='POST')
+              with urllib.request.urlopen(req) as resp:
+                  print('Uploaded', os.path.basename(path), resp.status)
+          PY
 
       # -------------------------
       # GITHUB RELEASE (tags only)
@@ -121,5 +196,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ github.ref_name }}
           files: |
             lwjgl3/build/libs/DogerDager.jar
+
+
