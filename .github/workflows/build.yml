@@ -1,0 +1,73 @@
+name: build
+
+# Windows-only by design: targets are a runnable .jar and a Windows .exe.
+# No native Linux/Mac packaging.
+
+on:
+  push:
+    branches: [libgdx-port, main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to attach files to a Release on tag
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash   # git-bash: gradlew script, jpackage and 7z all work here
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Build self-contained jar
+        run: |
+          chmod +x gradlew
+          ./gradlew :lwjgl3:fatJar --no-daemon --console=plain
+
+      - name: Stage jar for jpackage
+        run: |
+          mkdir -p stage
+          cp lwjgl3/build/libs/DogerDager.jar stage/
+
+      - name: Package Windows app-image (.exe + bundled JRE)
+        run: |
+          jpackage \
+            --type app-image \
+            --name DogerDager \
+            --input stage \
+            --main-jar DogerDager.jar \
+            --main-class com.unpuppyable.dogerdager.lwjgl3.Lwjgl3Launcher \
+            --java-options "--enable-native-access=ALL-UNNAMED" \
+            --dest dist
+
+      - name: Zip the app-image
+        run: 7z a DogerDager-windows.zip ./dist/DogerDager
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DogerDager-jar
+          path: lwjgl3/build/libs/DogerDager.jar
+
+      - name: Upload Windows app-image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DogerDager-windows
+          path: DogerDager-windows.zip
+
+      - name: Attach to Release on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            lwjgl3/build/libs/DogerDager.jar
+            DogerDager-windows.zip

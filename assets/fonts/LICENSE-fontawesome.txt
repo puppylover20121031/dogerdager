@@ -1,0 +1,3 @@
+Font Awesome Free — fa-solid-900.ttf
+Font files licensed under SIL OFL 1.1 (https://scripts.sil.org/OFL).
+Icons under CC BY 4.0. Source: https://fontawesome.com
