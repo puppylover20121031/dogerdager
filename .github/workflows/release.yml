@@ -1,8 +1,5 @@
 name: build
 
-# Windows-only by design: targets are a runnable .jar and a Windows .exe.
-# No native Linux/Mac packaging.
-
 on:
   push:
     branches: [libgdx-port, main]
@@ -10,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # needed to attach files to a Release on tag
+  contents: write
 
 jobs:
   windows:
@@ -60,12 +57,11 @@ jobs:
         run: 7z a DogerDager-windows.zip ./dist/DogerDager
 
       # -------------------------
-      # Install Butler (itch.io CLI)
+      # Install Butler (FIXED)
       # -------------------------
       - name: Install Butler
-        shell: bash
         run: |
-          curl -L -o butler.zip https://broth.itch.io/butler/windows-amd64/LATEST/archive/default
+          curl -L -o butler.zip https://broth.itch.ovh/butler/windows-amd64/LATEST/archive/default
           unzip -o butler.zip
           chmod +x butler.exe
           echo "$(pwd)" >> $GITHUB_PATH
@@ -80,7 +76,7 @@ jobs:
           ./butler.exe login
 
       # -------------------------
-      # Push build to itch.io
+      # Upload to itch.io
       # -------------------------
       - name: Upload to itch.io
         env:
@@ -93,7 +89,7 @@ jobs:
             "$ITCH_USER/$ITCH_GAME:$ITCH_CHANNEL"
 
       # -------------------------
-      # Artifacts
+      # Upload artifacts
       # -------------------------
       - name: Upload jar artifact
         uses: actions/upload-artifact@v4
@@ -108,7 +104,7 @@ jobs:
           path: DogerDager-windows.zip
 
       # -------------------------
-      # GitHub Release (only on tags)
+      # GitHub Release (tags only)
       # -------------------------
       - name: Attach to Release on tag
         if: startsWith(github.ref, 'refs/tags/v')
