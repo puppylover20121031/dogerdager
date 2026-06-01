@@ -24,6 +24,7 @@ import com.unpuppyable.dogerdager.entity.Potion;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.badlogic.gdx.Preferences;
 
 public final class PlayScreen implements Screen {
 
@@ -56,6 +57,8 @@ public final class PlayScreen implements Screen {
     private final List<Entity> entities = new ArrayList<>();
     private final List<Entity> pending = new ArrayList<>();
 
+    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+
     private Player player;
     private Hud hud;
     private Spawner spawner;
@@ -64,6 +67,8 @@ public final class PlayScreen implements Screen {
     private float shake;
     private float camX = ARENA_W / 2f;
     private Music bgm;
+
+    public boolean Easy_unlocked = false;
 
     public PlayScreen(DogerDager game, Difficulty difficulty, float delta) {
         this.game = game;
@@ -165,10 +170,14 @@ public final class PlayScreen implements Screen {
             state = State.WON;
             progress.recordRun(difficulty, hud.highScore(), true);
             switch (difficulty) {
+                case EASY -> prefs.putBoolean("Easy_unlock", true);
                 case NORMAL -> progress.unlock(Achievement.CLEAR_NORMAL);
                 case HARD -> progress.unlock(Achievement.CLEAR_HARD);
                 case HARDCORE -> progress.unlock(Achievement.CLEAR_HARDCORE);
                 default -> { }
+            }
+            if (progress.achieved(Achievement.CLEAR_HARD) && progress.achieved(Achievement.CLEAR_HARDCORE) && progress.achieved(Achievement.CLEAR_HARD) && prefs.getBoolean("Easy_unlock", false)) {
+                progress.unlock(Achievement.CLEAR_ALL);
             }
         }
     }
@@ -248,6 +257,10 @@ public final class PlayScreen implements Screen {
                 bgm.pause();
                 mute = true;
             }
+        }
+
+        if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.W)) {
+            win();
         }
         
     }

@@ -7,7 +7,8 @@ public enum Achievement {
     POTIONER("Lucky", "Grab a healing potion"),
     CLEAR_NORMAL("Survivor", "Clear Normal"),
     CLEAR_HARD("Hardened", "Clear Hard"),
-    CLEAR_HARDCORE("Untouchable", "Clear Hardcore");
+    CLEAR_HARDCORE("Untouchable", "Clear Hardcore"),
+    CLEAR_ALL("God Climer", "Clear ALL of them");
 
     public final String title;
     public final String desc;
