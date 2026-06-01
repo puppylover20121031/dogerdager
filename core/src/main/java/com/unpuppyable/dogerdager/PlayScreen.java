@@ -21,10 +21,13 @@ import com.unpuppyable.dogerdager.entity.Entity;
 import com.unpuppyable.dogerdager.entity.Laser;
 import com.unpuppyable.dogerdager.entity.Player;
 import com.unpuppyable.dogerdager.entity.Potion;
+import com.unpuppyable.dogerdager.entity.PlayerArrow;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.math.Vector3;
 
 public final class PlayScreen implements Screen {
 
@@ -36,6 +39,9 @@ public final class PlayScreen implements Screen {
 
     private static final int INSTANT_KILL = 100_000;
     private static final float MAX_STEP = 0.05f;
+    public static boolean playerShootingEnabled = false;
+    private static final float PLAYER_SHOOT_SPEED = 380f;
+    private static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
     private enum State {
         PLAYING, PAUSED, GAME_OVER, WON
@@ -66,6 +72,7 @@ public final class PlayScreen implements Screen {
     boolean bingo = false;
     private float shake;
     private float camX = ARENA_W / 2f;
+    private float shootCooldown;
     private Music bgm;
     private boolean playedMusic = false;
 
@@ -93,6 +100,7 @@ public final class PlayScreen implements Screen {
             playedMusic = true;
         }
         reset();
+        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false)) playerShootingEnabled = true;
     }
 
     private void reset() {
@@ -176,6 +184,31 @@ public final class PlayScreen implements Screen {
         }
     }
 
+    private void shootPlayer() {
+        Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        viewport.unproject(aim);
+        float px = player.bounds().x + Player.SIZE / 2f;
+        float py = player.bounds().y + Player.SIZE / 2f;
+        float dx = 0f;
+        float dy = 0f;
+        if (Gdx.input.isTouched() || Gdx.input.isButtonPressed(Buttons.LEFT)) {
+            dx = aim.x - px;
+            dy = aim.y - py;
+        }
+        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
+            dx = player.aimX();
+            dy = player.aimY();
+        }
+        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
+            dx = 1f;
+            dy = 0f;
+        }
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        float vx = dx / len * PLAYER_SHOOT_SPEED;
+        float vy = dy / len * PLAYER_SHOOT_SPEED;
+        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP));
+    }
+
     public void win() {
         if (state == State.PLAYING) {
             state = State.WON;
@@ -233,11 +266,31 @@ public final class PlayScreen implements Screen {
         player.setStamina(hud.staminaFraction());
         player.update(delta);
         spawner.update(delta);
+        if (shootCooldown > 0) shootCooldown -= delta;
+        if (playerShootingEnabled && shootCooldown <= 0
+                && (Gdx.input.isKeyJustPressed(Keys.SPACE) || Pad.justB())) {
+            shootPlayer();
+            shootCooldown = PLAYER_SHOOT_COOLDOWN;
+        }
 
         for (var e : entities)
             e.update(delta);
         entities.addAll(pending);
         pending.clear();
+
+        for (var e : entities) {
+            if (e instanceof PlayerArrow arrow) {
+                for (var target : entities) {
+                    if (target == arrow || target.dead())
+                        continue;
+                    if ((target instanceof Enemy || target instanceof Centipede) && arrow.hits(target.bounds())) {
+                        arrow.kill();
+                        target.kill();
+                        break;
+                    }
+                }
+            }
+        }
 
         for (var e : entities) {
             if (e.dead() || !e.hits(player.bounds()))

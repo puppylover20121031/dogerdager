@@ -90,6 +90,14 @@ public final class Player extends Entity {
         this.stamina = fraction;
     }
 
+    public float aimX() {
+        return lastDx;
+    }
+
+    public float aimY() {
+        return lastDy;
+    }
+
     public void knockback(float worldW, float playTop) {
         float dl = bounds.x;
         float dr = worldW - SIZE - bounds.x;
