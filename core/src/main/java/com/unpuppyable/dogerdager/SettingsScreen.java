@@ -53,7 +53,7 @@ public final class SettingsScreen extends ScreenAdapter {
                 case 1 -> settings.setFullscreen(!settings.fullscreen());
                 case 2 -> settings.setFps(nextFps(settings.fps()));
                 case 3 -> settings.setGlitch(!settings.glitch());
-                case 4 -> settings.setBingo(!settings.bingo());
+                case 4 -> settings.setBingo(!Settings.bingo());
             }
             settings.apply(game);
         }
@@ -76,7 +76,7 @@ public final class SettingsScreen extends ScreenAdapter {
         line(1, "Fullscreen", settings.fullscreen() ? "ON" : "OFF", 212);
         line(2, "FPS", settings.fps() == 0 ? "uncapped" : String.valueOf(settings.fps()), 184);
         line(3, "Glitch", settings.glitch() ? "ON" : "OFF", 156);
-        line(4, "bingo heeler mode\n(needs restart)", settings.bingo() ? "ON" : "OFF", 124);
+        line(4, "bingo heeler mode\n(needs restart)", Settings.bingo() ? "ON" : "OFF", 124);
         font.setColor(Color.GRAY);
         centered("up/down select    left/right change    Esc back", 60);
         batch.end();
