@@ -51,12 +51,6 @@ public final class Player extends Entity {
         }
 
 
-        SPEED = 300f;
-        
-        if (Gdx.input.isKeyJustPressed(Keys.SHIFT_LEFT) || Pad.justL() || Pad.justR()) {
-            SPEED *= 2;
-        }
-
         float vx = 0, vy = 0;
         if (Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT))  vx -= SPEED;
         if (Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)) vx += SPEED;
