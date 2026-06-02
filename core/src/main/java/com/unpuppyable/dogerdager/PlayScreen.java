@@ -93,7 +93,7 @@ public final class PlayScreen implements Screen {
             if (bingo) {
                 this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
             } else {
-                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("opening.wav"));
+                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
             }
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
