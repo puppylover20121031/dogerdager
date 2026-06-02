@@ -34,24 +34,38 @@ public final class Spawner {
         spawnTimer -= delta;
         if (spawnTimer <= 0) {
             spawnWave();
-            spawnTimer = Math.max(1.3f, 4f - hud.floor() * 0.2f);
+            spawnTimer = Math.max(difficulty.spawnMin, difficulty.spawnStart - hud.floor() * difficulty.spawnRamp);
         }
     }
 
     private void spawnWave() {
         int floor = hud.floor();
         boolean tough = difficulty == Difficulty.HARD || difficulty == Difficulty.HARDCORE;
-        float r = MathUtils.random();
-        if (floor >= 5 && r < 0.22f) {
-            screen.spawnCentipede();
-        } else if (r < 0.45f) {
-            screen.spawn(Enemy.Kind.FAST);
-        } else if (floor >= 3 && r < 0.65f) {
-            screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
+        SpawnRule rule = difficulty.spawnSchedule.choose(floor);
+        if (rule != null) {
+            switch (rule.type) {
+                case CENTIPEDE:
+                    screen.spawnCentipede();
+                    break;
+                case FAST:
+                    screen.spawn(Enemy.Kind.FAST);
+                    break;
+                case SMART:
+                    screen.spawn(tough ? Enemy.Kind.SMART : Enemy.Kind.NORMAL);
+                    break;
+                case POTION:
+                    screen.spawnPotion();
+                    break;
+                case NORMAL:
+                default:
+                    screen.spawn(Enemy.Kind.NORMAL);
+                    break;
+            }
         } else {
             screen.spawn(Enemy.Kind.NORMAL);
         }
-        if (MathUtils.random() < 0.10f) {
+
+        if (MathUtils.random() < difficulty.potionChance) {
             screen.spawnPotion();
         }
     }

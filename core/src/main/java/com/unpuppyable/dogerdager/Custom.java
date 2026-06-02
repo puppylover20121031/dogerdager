@@ -20,6 +20,16 @@ public final class Custom {
         return prefs.getInteger("set.customWinFloor", 12);
     }
 
+    public int customHitBonus() {
+        return prefs.getInteger("set.customHitBonus", -1);
+    }
+    public int customCentipedeFloor() {
+        return prefs.getInteger("set.customCentipedeFloor", 5);
+    }
+
+    public int customSmartFloor() {
+        return prefs.getInteger("set.customSmartFloor", 3);
+    }
     public void setHealth(int value) {
         prefs.putInteger("set.customHealth", value);
         prefs.flush();
@@ -35,9 +45,27 @@ public final class Custom {
         prefs.flush();
     }
 
+    public void setCentipedeFloor(int value) {
+        prefs.putInteger("set.customCentipedeFloor", value);
+        prefs.flush();
+    }
+
+    public void setSmartFloor(int value) {
+        prefs.putInteger("set.customSmartFloor", value);
+        prefs.flush();
+    }
+
+    public void setHitBonus(int value) {
+        prefs.putInteger("set.customHitBonus", value);
+        prefs.flush();
+    }
+
     public void apply(DogerDager game) {
         Difficulty.CUSTOM.setMaxHealth(customHealth());
         Difficulty.CUSTOM.setEnemySpeed(customEnemySpeed());
         Difficulty.CUSTOM.setWinFloor(customWinFloor());
+        Difficulty.CUSTOM.setHitBonus(customHitBonus());
+        Difficulty.CUSTOM.setCentipedeFloor(customCentipedeFloor());
+        Difficulty.CUSTOM.setSmartFloor(customSmartFloor());
     }
 }

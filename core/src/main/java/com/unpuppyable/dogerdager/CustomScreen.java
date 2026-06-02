@@ -13,10 +13,11 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 public final class CustomScreen extends ScreenAdapter {
 
-    private static final int MENU_ITEMS = 4;
+    private static final int MENU_ITEMS = 6;
 
     private final DogerDager game;
     private final Custom custom = new Custom();
+    private final SpawnSettings spawnSettings = new SpawnSettings();
     private final Viewport viewport = new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H);
     private final SpriteBatch batch = new SpriteBatch();
     private final BitmapFont font = new BitmapFont();
@@ -27,13 +28,16 @@ public final class CustomScreen extends ScreenAdapter {
     private int setHealth;
     private int setWinFloor;
     private int setEnemySpeed;
+    private int setHitBonus;
 
     public CustomScreen(DogerDager game) {
         this.game = game;
         this.setHealth = custom.customHealth();
         this.setEnemySpeed = Math.round(custom.customEnemySpeed());
         this.setWinFloor = custom.customWinFloor();
+        this.setHitBonus = custom.customHitBonus();
         custom.apply(game);
+        spawnSettings.apply();
     }
 
     @Override
@@ -60,11 +64,19 @@ public final class CustomScreen extends ScreenAdapter {
             index = (index + 1) % MENU_ITEMS;
 
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)) {
-            if (index == 3) {
+            if (index == 4) {
+                switching = true;
+                game.setScreen(new SpawnEditorScreen(game));
+                dispose();
+                return;
+            }
+            if (index == 5) {
                 custom.setHealth(setHealth);
                 custom.setEnemySpeed(setEnemySpeed);
                 custom.setWinFloor(setWinFloor);
+                custom.setHitBonus(setHitBonus);
                 custom.apply(game);
+                spawnSettings.apply();
                 switching = true;
                 game.setScreen(new PlayScreen(game, Difficulty.CUSTOM, 0f));
                 dispose();
@@ -85,6 +97,10 @@ public final class CustomScreen extends ScreenAdapter {
                 setWinFloor -= 1;
                 custom.setWinFloor(setWinFloor);
                 custom.apply(game);
+            } else if (index == 3 && setHitBonus > -2) {
+                setHitBonus -= 1;
+                custom.setHitBonus(setHitBonus);
+                custom.apply(game);
             }
         } else if (Gdx.input.isKeyJustPressed(Keys.RIGHT)) {
             if (index == 0 && setHealth < 24) {
@@ -99,6 +115,10 @@ public final class CustomScreen extends ScreenAdapter {
                 setWinFloor += 1;
                 custom.setWinFloor(setWinFloor);
                 custom.apply(game);
+            } else if (index == 3 && setHitBonus < 2) {
+                setHitBonus += 1;
+                custom.setHitBonus(setHitBonus);
+                custom.apply(game);
             }
         }
     }
@@ -112,9 +132,11 @@ public final class CustomScreen extends ScreenAdapter {
         line(0, "Amount of health", Integer.toString(setHealth), 260);
         line(1, "Enemy speed", Integer.toString(setEnemySpeed), 220);
         line(2, "Win floor", Integer.toString(setWinFloor), 180);
-        line(3, "Start game", "", 140);
+        line(3, "Hit bonus", Integer.toString(setHitBonus), 140);
+        line(4, "Spawn editor...", "", 100);
+        line(5, "Start game", "", 60);
         font.setColor(Color.GRAY);
-        centered("up/down select    left/right change    Enter start    Esc back", 60);
+        centered("up/down select    left/right change    Enter select    Esc back", 20);
         batch.end();
     }
 
