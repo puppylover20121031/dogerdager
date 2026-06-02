@@ -173,7 +173,10 @@ jobs:
               raise SystemExit('No existing release with a vMAJOR.MINOR.PATCH tag found')
 
           latest = max(versions)
-          new_tag = f'v{latest[0]}.{latest[1]}.{latest[2] + 1}'
+          if not latest[2] >= 9:
+              new_tag = f'v{latest[0]}.{latest[1]}.{latest[2] + 1}'
+          else:
+              new_tag = f'v{latest[0]}.{latest[1] + 1}.0'
           print('Latest release:', latest[3]['tag_name'])
           print('Creating release:', new_tag)
 
