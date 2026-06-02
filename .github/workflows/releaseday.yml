@@ -1,0 +1,28 @@
+name: release day automation
+
+
+on:
+  schedule:
+    - cron: '0 0 4 6 *'
+  workflow_dispatch:
+
+jobs: 
+    one:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+              shell: bash
+
+        steps:
+          - name: Make itch.io page public
+            env:
+              ITCH_API_KEY: ${{ secrets.ITCH_IO_API_KEY }}
+              ITCH_USERNAME: ${{ secrets.ITCH_USERNAME }}
+              ITCH_GAME_ID: ${{ secrets.ITCH_GAME_ID }}
+            run: |
+              curl -X PATCH \
+                -H "Authorization: Bearer $ITCH_API_KEY" \
+                -H "Content-Type: application/json" \
+                -d '{"visibility":"public"}' \
+                "https://itch.io/api/1/$ITCH_API_KEY/games/$ITCH_GAME_ID"
+

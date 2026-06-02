@@ -1,0 +1,20 @@
+name: sdhedule 1
+
+
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+
+jobs: 
+    runmessage:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+              shell: bash
+
+        steps:
+          - run: echo this got ran
+    
+
