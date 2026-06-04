@@ -8,7 +8,7 @@ import com.unpuppyable.dogerdager.PlayScreen;
 public final class Boss extends Entity {
 
     public enum Kind {
-        ONE, TWO, THREE, ARM
+        ONE, TWO, THREE, ARM, CENTIPEDE
     }
 
     public static final float SIZE = 96;
@@ -16,6 +16,7 @@ public final class Boss extends Entity {
     private static final float PATROL = 150;
     private static final Color ONE_COL = new Color(1f, 0.48f, 0.2f, 1f);
     private static final Color TWO_COL = new Color(0.78f, 0.24f, 1f, 1f);
+    private static final Color CENTIPEDE_COL = new Color(0.84f, 0.38f, 0.08f, 1f);
 
     private final Kind kind;
     private final PlayScreen screen;
@@ -34,6 +35,7 @@ public final class Boss extends Entity {
     private float phaseTimer;
     private int phase = 1;
     private float laserTimer = 4f;
+    private float centipedeAttackTimer = 3.5f;
 
     public Boss(Kind kind, float x, float restY, float worldW, PlayScreen screen, Player target) {
         super(x, restY + 220, SIZE);
@@ -80,6 +82,8 @@ public final class Boss extends Entity {
             updateBoss3(delta);
         } else if (kind == Kind.ONE) {
             updateBoss1(delta);
+        } else if (kind == Kind.CENTIPEDE) {
+            updateBossCentipede(delta);
         } else {
             updateBoss2(delta);
         }
@@ -171,6 +175,26 @@ public final class Boss extends Entity {
         }
     }
 
+    private void updateBossCentipede(float delta) {
+        phaseTimer += delta;
+        boolean rage = phaseTimer > 10f;
+        centipedeAttackTimer -= delta;
+        if (centipedeAttackTimer <= 0) {
+            if (MathUtils.randomBoolean()) {
+                screen.spawnCentipede();
+            } else {
+                screen.add(new Bullet(Bullet.Kind.HOMING, bounds.x + SIZE / 2, bounds.y, worldW, target));
+            }
+            centipedeAttackTimer = rage ? 2f : 3.5f;
+        }
+
+        atkTimer -= delta;
+        if (atkTimer <= 0) {
+            fireFan(rage ? 7 : 5, rage ? 0.6f : 0.8f, rage ? 190f : 140f);
+            atkTimer = rage ? 1.5f : 2.2f;
+        }
+    }
+
     private float clampArm(float x) {
         return MathUtils.clamp(x, 0, worldW - SIZE);
     }
@@ -187,11 +211,19 @@ public final class Boss extends Entity {
             case ONE -> ONE_COL;
             case TWO -> TWO_COL;
             case THREE -> phase <= 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : phase == 3 ? Color.SCARLET : Color.VIOLET;
+            case CENTIPEDE -> CENTIPEDE_COL;
         };
-        if ((kind == Kind.ONE || kind == Kind.TWO) && settled && atkTimer < 0.25f) {
+        if ((kind == Kind.ONE || kind == Kind.TWO || kind == Kind.CENTIPEDE) && settled && atkTimer < 0.25f) {
             body = body.cpy().lerp(Color.WHITE, 1f - atkTimer / 0.25f);
         }
         shapes.setColor(body);
         shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
+
+        if (kind == Kind.CENTIPEDE) {
+            shapes.setColor(Color.GOLD);
+            for (int i = 0; i < 4; i++) {
+                shapes.rect(bounds.x + 12 + i * 18, bounds.y + SIZE / 3f, 10, SIZE / 3f);
+            }
+        }
     }
 }

@@ -181,7 +181,9 @@ public final class PlayScreen implements Screen {
             win();
             return;
         }
-        if (floor % 4 == 0) {
+        if (floor == difficulty.centipedeFloor) {
+            spawnBoss(Boss.Kind.CENTIPEDE);
+        } else if (floor % 4 == 0) {
             Boss.Kind k = floor >= 12 ? Boss.Kind.THREE : floor >= 8 ? Boss.Kind.TWO : Boss.Kind.ONE;
             spawnBoss(k);
         }
