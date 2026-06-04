@@ -111,7 +111,7 @@ public final class CustomScreen extends ScreenAdapter {
                 setEnemySpeed += 10;
                 custom.setEnemySpeed(setEnemySpeed);
                 custom.apply(game);
-            } else if (index == 2 && setWinFloor < 20) {
+            } else if (index == 2 && setWinFloor < 200) {
                 setWinFloor += 1;
                 custom.setWinFloor(setWinFloor);
                 custom.apply(game);
