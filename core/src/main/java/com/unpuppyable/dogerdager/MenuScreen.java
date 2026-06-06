@@ -3,6 +3,7 @@ package com.unpuppyable.dogerdager;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -26,12 +27,17 @@ public final class MenuScreen extends ScreenAdapter {
     private int index = Difficulty.NORMAL.ordinal();
     private boolean switching;
 
+    private Music bgm;
     public MenuScreen(DogerDager game) {
         this.game = game;
         build();
     }
 
     private void build() {
+                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu.mp3"));
+            this.bgm.setLooping(true);
+            this.bgm.setVolume(1f);
+            this.bgm.play();
         var root = new VisTable();
         root.setFillParent(true);
 
@@ -71,6 +77,8 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void start(Difficulty difficulty, float delta) {
+        bgm.stop();
+        
         if (switching) return;
         if (difficulty == Difficulty.HARDCORE && !progress.hardcoreUnlocked()) {
             game.menuMove();
@@ -88,6 +96,7 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void openStats() {
+        bgm.stop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -97,6 +106,7 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void openSettings() {
+        bgm.stop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -106,6 +116,7 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void openAchievements() {
+        bgm.stop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -172,6 +183,7 @@ public final class MenuScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
+        bgm.stop();
         stage.dispose();
     }
 }

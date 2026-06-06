@@ -47,6 +47,9 @@ public final class Spawner {
                 case CENTIPEDE:
                     screen.spawnCentipede();
                     break;
+                case LongGuy:
+                    screen.spawnCentipede();
+                    break;
                 case FAST:
                     screen.spawn(Enemy.Kind.FAST);
                     break;

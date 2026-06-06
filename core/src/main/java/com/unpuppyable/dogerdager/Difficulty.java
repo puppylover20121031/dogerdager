@@ -47,6 +47,7 @@ public enum Difficulty {
         schedule.rules.add(new SpawnRule(1, 30, SpawnRule.Type.FAST));
         schedule.rules.add(new SpawnRule(3, 25, SpawnRule.Type.SMART));
         schedule.rules.add(new SpawnRule(5, 15, SpawnRule.Type.CENTIPEDE));
+        schedule.rules.add(new SpawnRule(1, 100, SpawnRule.Type.LongGuy));
         schedule.rules.add(new SpawnRule(1, 10, SpawnRule.Type.POTION));
         return schedule;
     }

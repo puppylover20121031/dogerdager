@@ -31,10 +31,10 @@ import com.badlogic.gdx.math.Vector3;
 
 public final class PlayScreen implements Screen {
 
-    static final float WORLD_W = 640;
-    static final float WORLD_H = 360;
-    static final float ARENA_W = 704;
-    static final float HUD_H = 72;
+    static final float WORLD_W = 640 * 3;
+    static final float WORLD_H = 360 * 3;
+    static final float ARENA_W = WORLD_W;
+    static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
     private static final int INSTANT_KILL = 100_000;
@@ -71,7 +71,8 @@ public final class PlayScreen implements Screen {
     private State state;
     boolean bingo = false;
     private float shake;
-    private float camX = ARENA_W / 2f;
+    //private float camX = ARENA_W / 2f;
+    private float camX = ARENA_W;
     private float shootCooldown;
     private Music bgm;
     private boolean playedMusic = false;
@@ -111,7 +112,8 @@ public final class PlayScreen implements Screen {
         pending.clear();
         state = State.PLAYING;
         shake = 0;
-        camX = ARENA_W / 2f;
+        //camX = ARENA_W / 2f;
+        camX = ARENA_W;
     }
 
     public void add(Entity entity) {
@@ -182,7 +184,7 @@ public final class PlayScreen implements Screen {
             return;
         }
         if (floor == difficulty.centipedeFloor) {
-            spawnBoss(Boss.Kind.CENTIPEDE);
+            //spawnBoss(Boss.Kind.CENTIPEDE);
         } else if (floor % 4 == 0) {
             Boss.Kind k = floor >= 12 ? Boss.Kind.THREE : floor >= 8 ? Boss.Kind.TWO : Boss.Kind.ONE;
             spawnBoss(k);
