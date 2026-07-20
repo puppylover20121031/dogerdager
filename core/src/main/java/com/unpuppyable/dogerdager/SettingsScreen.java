@@ -16,6 +16,7 @@ public final class SettingsScreen extends ScreenAdapter {
     private static final int[] FPS = {60, 120, 144, 0};
 
     private final DogerDager game;
+    private final PostProcessor post;
     private final Settings settings = new Settings();
     private final Viewport viewport = new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H);
     private final SpriteBatch batch = new SpriteBatch();
@@ -24,22 +25,27 @@ public final class SettingsScreen extends ScreenAdapter {
     private int index;
     private boolean switching;
 
-    public SettingsScreen(DogerDager game) {
+    public SettingsScreen(DogerDager game, PostProcessor post) {
         this.game = game;
+        this.post = post;
     }
 
     @Override
     public void render(float delta) {
+        render(delta, post);
+    }
+
+    public void render(float delta, PostProcessor post) {
         if (switching) return;
-        handleKeys();
+        handleKeys(post);
         if (switching) return;
         draw();
     }
 
-    private void handleKeys() {
+    private void handleKeys(PostProcessor post) {
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
             switching = true;
-            game.setScreen(new MenuScreen(game));
+            game.setScreen(new MenuScreen(game, post));
             dispose();
             return;
         }

@@ -59,6 +59,9 @@ public final class Spawner {
                 case POTION:
                     screen.spawnPotion();
                     break;
+                case Powerup1:
+                    screen.spawnPowerup1();
+                    break;
                 case NORMAL:
                 default:
                     screen.spawn(Enemy.Kind.NORMAL);

@@ -141,6 +141,7 @@ public final class Hud {
         drawRight(batch, font, "BEST F" + bestFloor, worldH - 40);
     }
 
+
     private String time() {
         int s = (int) runTime;
         return s / 60 + ":" + String.format("%02d", s % 60);

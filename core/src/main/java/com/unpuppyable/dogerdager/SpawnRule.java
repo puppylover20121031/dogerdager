@@ -7,7 +7,9 @@ public final class SpawnRule {
         FAST,
         SMART,
         CENTIPEDE,
-        POTION, LongGuy
+        POTION, 
+        LongGuy,
+        Powerup1
     }
 
     public int minFloor;

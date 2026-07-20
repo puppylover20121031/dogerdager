@@ -21,7 +21,7 @@ public class DogerDager extends Game {
         menuMove = Gdx.audio.newSound(Gdx.files.internal("menu-move.mp3"));
         menuConfirm = Gdx.audio.newSound(Gdx.files.internal("menu-confirm.mp3"));
         new Settings().apply(this);
-        setScreen(new MenuScreen(this));
+        setScreen(new MenuScreen(this, post));
     }
 
     public void setGlitch(boolean on) {

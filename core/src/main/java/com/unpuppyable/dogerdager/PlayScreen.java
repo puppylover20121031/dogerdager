@@ -22,6 +22,7 @@ import com.unpuppyable.dogerdager.entity.Laser;
 import com.unpuppyable.dogerdager.entity.Player;
 import com.unpuppyable.dogerdager.entity.Potion;
 import com.unpuppyable.dogerdager.entity.PlayerArrow;
+import com.unpuppyable.dogerdager.entity.Powerup1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,8 @@ public final class PlayScreen implements Screen {
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
     private final Progress progress = new Progress();
+    private final String endingText = "THE END\n\nYOU WON\n\nRIP Honey Bun\n\nIn loving memory\n\nCredits\nHoney Bun\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
+    private float endingScroll;
 
     private final List<Entity> entities = new ArrayList<>();
     private final List<Entity> pending = new ArrayList<>();
@@ -78,17 +81,19 @@ public final class PlayScreen implements Screen {
     private boolean playedMusic = false;
 
     public boolean Easy_unlocked = false;
+    private PostProcessor post;
 
-    public PlayScreen(DogerDager game, Difficulty difficulty, float delta) {
+    public PlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
         this.game = game;
         this.difficulty = difficulty;
+        this.post = post;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
         player = new Player(ARENA_W, PLAY_TOP);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
-        update(delta);
+        update(delta, post);
         bingo = Settings.bingo();
         if (prefs.getBoolean("music", true)) {
             if (bingo) {
@@ -134,6 +139,10 @@ public final class PlayScreen implements Screen {
 
     public void spawnPotion() {
         add(new Potion(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
+    }
+
+    public void spawnPowerup1() {
+        add(new Powerup1(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
     }
 
     public void spawnCentipede() {
@@ -248,7 +257,7 @@ public final class PlayScreen implements Screen {
             }
         }
         if (state == State.PLAYING) {
-            update(Math.min(delta, MAX_STEP));
+            update(Math.min(delta, MAX_STEP), post);
         } else if (state == State.PAUSED) {
             if (Gdx.input.isKeyJustPressed(Keys.Q)) {
                 toMenu();
@@ -262,11 +271,11 @@ public final class PlayScreen implements Screen {
 
     private void toMenu() {
         reset();
-        game.setScreen(new MenuScreen(game));
+        game.setScreen(new MenuScreen(game, post));
         dispose();
     }
 
-    private void update(float delta) {
+    private void update(float delta, PostProcessor post) {
         if (shake > 0)
             shake -= delta;
         boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
@@ -315,6 +324,9 @@ public final class PlayScreen implements Screen {
                 hurt(e.contactDamage());
                 if (e.diesOnPlayerHit())
                     e.kill();
+            } if (e.glitches()) {
+                post.setGlitch(true);
+                e.kill();
             }
         }
 
@@ -323,6 +335,7 @@ public final class PlayScreen implements Screen {
         player.setInvulnerable(hud.invulnerable());
 
         if (hud.dead()) {
+            progress.unlock(Achievement.FIRST_DEATH);
             state = State.GAME_OVER;
             progress.recordRun(difficulty, hud.highScore(), false);
         }
@@ -400,9 +413,9 @@ public final class PlayScreen implements Screen {
         if (state == State.PAUSED) {
             drawCentered("PAUSED   -   Esc resume   Q menu");
         } else if (state == State.WON) {
-            drawCentered("YOU WON  -  R retry   Esc menu");
+            drawMovieEnding(endingText.replace("YOU WON", "YOU WON"), delta);
         } else if (state == State.GAME_OVER) {
-            drawCentered("GAME OVER  -  R retry   Esc menu");
+            drawMovieEnding(endingText.replace("YOU WON", "GAME OVER"), delta);
         }
         batch.end();
     }
@@ -428,6 +441,33 @@ public final class PlayScreen implements Screen {
         font.setColor(Color.WHITE);
         layout.setText(font, text);
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
+    }
+
+    private void drawMovieEnding(String text, float delta) {
+        if (state != State.PAUSED) {
+            endingScroll += delta * 50f;
+        }
+        font.setColor(Color.WHITE);
+        font.getData().setScale(1.4f);
+        layout.setText(font, "THE END");
+        float titleY = PLAY_TOP / 2f + 90f;
+        font.draw(batch, "THE END", (WORLD_W - layout.width) / 2f, titleY);
+        font.getData().setScale(1f);
+        String[] lines = text.split("\\n");
+        float startY = PLAY_TOP / 2f - 20f + endingScroll;
+        float lineHeight = 24f;
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) continue;
+            layout.setText(font, line);
+            float y = startY - i * lineHeight;
+            if (y + 20f < -40f) {
+                endingScroll = 0f;
+                break;
+            }
+            font.draw(batch, line, (WORLD_W - layout.width) / 2f, y);
+        }
+        font.getData().setScale(1f);
     }
 
     @Override

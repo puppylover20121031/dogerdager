@@ -13,12 +13,14 @@ import com.kotcrab.vis.ui.widget.VisTable;
 public final class AchievementsScreen extends ScreenAdapter {
 
     private final DogerDager game;
+    private final PostProcessor post;
     private final Stage stage = new Stage(new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H));
     private final Progress progress = new Progress();
     private boolean switching;
 
-    public AchievementsScreen(DogerDager game) {
+    public AchievementsScreen(DogerDager game, PostProcessor post) {
         this.game = game;
+        this.post = post;
         build();
     }
 
@@ -56,13 +58,16 @@ public final class AchievementsScreen extends ScreenAdapter {
     public void show() {
         Gdx.input.setInputProcessor(stage);
     }
-
     @Override
     public void render(float delta) {
+        render(delta, post);
+    }
+
+    public void render(float delta, PostProcessor post) {
         if (switching) return;
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
             switching = true;
-            game.setScreen(new MenuScreen(game));
+            game.setScreen(new MenuScreen(game, post));
             dispose();
             return;
         }

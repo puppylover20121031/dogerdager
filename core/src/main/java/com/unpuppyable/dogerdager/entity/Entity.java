@@ -58,4 +58,9 @@ public abstract class Entity {
     public boolean hits(Rectangle other) {
         return bounds.overlaps(other);
     }
+
+    public boolean glitches() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'glitches'");
+    }
 }

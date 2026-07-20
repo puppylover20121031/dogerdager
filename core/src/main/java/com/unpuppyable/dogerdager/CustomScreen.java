@@ -40,20 +40,19 @@ public final class CustomScreen extends ScreenAdapter {
         spawnSettings.apply();
     }
 
-    @Override
-    public void render(float delta) {
+    public void render(float delta, PostProcessor post) {
         if (switching)
             return;
-        handleKeys();
+        handleKeys(post);
         if (switching)
             return;
         draw();
     }
 
-    private void handleKeys() {
+    private void handleKeys(PostProcessor post) {
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
             switching = true;
-            game.setScreen(new MenuScreen(game));
+            game.setScreen(new MenuScreen(game, post));
             dispose();
             return;
         }
@@ -78,7 +77,7 @@ public final class CustomScreen extends ScreenAdapter {
                 custom.apply(game);
                 spawnSettings.apply();
                 switching = true;
-                game.setScreen(new PlayScreen(game, Difficulty.CUSTOM, 0f));
+                game.setScreen(new PlayScreen(game, Difficulty.CUSTOM, 0f, post));
                 dispose();
                 return;
             }
