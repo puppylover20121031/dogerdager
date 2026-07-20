@@ -1,0 +1,172 @@
+name: build
+
+on:
+  push:
+    branches: [libgdx-port, main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      # -------------------------
+      # BUILD JAR
+      # -------------------------
+      - name: Build fat JAR
+        run: |
+          chmod +x gradlew
+          ./gradlew :lwjgl3:fatJar --no-daemon --console=plain
+
+      # -------------------------
+      # PREPARE JAR
+      # -------------------------
+      - name: Stage JAR
+        run: |
+          mkdir -p stage
+          cp lwjgl3/build/libs/DogerDager.jar stage/
+
+      # -------------------------
+      # BUILD WINDOWS EXE (APP IMAGE)
+      # -------------------------
+      - name: Build Windows app-image
+        run: |
+          jpackage \
+            --type app-image \
+            --name DogerDager \
+            --input stage \
+            --main-jar DogerDager.jar \
+            --main-class com.unpuppyable.dogerdager.lwjgl3.Lwjgl3Launcher \
+            --java-options "--enable-native-access=ALL-UNNAMED" \
+            --dest dist
+
+     
+      # -------------------------
+      # ARTIFACTS (backup downloads)
+      # -------------------------
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DogerDager-jar
+          path: lwjgl3/build/libs/DogerDager.jar
+
+      - name: Package Windows executable ZIP
+        run: |
+          python - <<'PY'
+          import zipfile
+          import os
+
+          root = 'dist'
+          archive_name = os.path.join(root, 'DogerDager-windows.zip')
+          folder = os.path.join(root, 'DogerDager')
+
+          with zipfile.ZipFile(archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
+              for dirpath, dirnames, filenames in os.walk(folder):
+                  for filename in filenames:
+                      filepath = os.path.join(dirpath, filename)
+                      archive.write(filepath, os.path.relpath(filepath, root))
+          print(f'Created {archive_name}')
+          PY
+
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DogerDager-windows
+          path: dist/DogerDager-windows.zip
+
+      - name: Create next GitHub release
+        if: startsWith(github.ref, 'refs/heads/') || github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          python - <<'PY'
+          import os, re, json, urllib.request, urllib.parse
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GITHUB_TOKEN']
+          api = f'https://api.github.com/repos/{repo}'
+          headers = {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': f'Bearer {token}',
+              'User-Agent': 'github-actions'
+          }
+
+          def request(url, data=None, method='GET', extra_headers=None):
+              hdrs = {**headers}
+              if extra_headers:
+                  hdrs.update(extra_headers)
+              if data is not None:
+                  data = data.encode('utf-8')
+              req = urllib.request.Request(url, data=data, headers=hdrs, method=method)
+              with urllib.request.urlopen(req) as resp:
+                  return json.load(resp)
+
+          releases = request(f'{api}/releases?per_page=100')
+          semver = re.compile(r'^v(\d+)\.(\d+)\.(\d+)$')
+          versions = []
+          for r in releases:
+              tag = r.get('tag_name', '')
+              m = semver.match(tag)
+              if m:
+                  versions.append((int(m.group(1)), int(m.group(2)), int(m.group(3)), r))
+
+          if not versions:
+              raise SystemExit('No existing release with a vMAJOR.MINOR.PATCH tag found')
+
+          latest = max(versions)
+          new_tag = f'v{latest[0]}.{latest[1]}.{latest[2] + 1}'
+          print('Latest release:', latest[3]['tag_name'])
+          print('Creating release:', new_tag)
+
+          payload = {
+              'tag_name': new_tag,
+              'name': new_tag,
+              'body': '',
+              'draft': False,
+              'prerelease': False,
+              'target_commitish': os.environ['GITHUB_SHA'],
+          }
+          release = request(f'{api}/releases', data=json.dumps(payload), method='POST')
+          upload_url = release['upload_url'].split('{')[0]
+
+          assets = [
+              ('lwjgl3/build/libs/DogerDager.jar', 'application/java-archive'),
+              ('dist/DogerDager-windows.zip', 'application/zip'),
+          ]
+          for path, content_type in assets:
+              with open(path, 'rb') as f:
+                  data = f.read()
+              url = f"{upload_url}?name={urllib.parse.quote(os.path.basename(path))}"
+              req = urllib.request.Request(url, data=data, headers={**headers, 'Content-Type': content_type}, method='POST')
+              with urllib.request.urlopen(req) as resp:
+                  print('Uploaded', os.path.basename(path), resp.status)
+          PY
+
+      # -------------------------
+      # GITHUB RELEASE (tags only)
+      # -------------------------
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: |
+            lwjgl3/build/libs/DogerDager.jar
+
