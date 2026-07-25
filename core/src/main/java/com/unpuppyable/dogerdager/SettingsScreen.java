@@ -49,17 +49,18 @@ public final class SettingsScreen extends ScreenAdapter {
             dispose();
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) index = (index + 4) % 5;
-        if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN)) index = (index + 1) % 5;
+        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) index = (index + 5) % 6;
+        if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN)) index = (index + 1) % 6;
 
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)
                 || Gdx.input.isKeyJustPressed(Keys.LEFT) || Gdx.input.isKeyJustPressed(Keys.RIGHT)) {
             switch (index) {
                 case 0 -> settings.setVsync(!settings.vsync());
                 case 1 -> settings.setFullscreen(!settings.fullscreen());
-                case 2 -> settings.setFps(nextFps(settings.fps()));
-                case 3 -> settings.setGlitch(!settings.glitch());
-                case 4 -> settings.setBingo(!Settings.bingo());
+                case 2 -> settings.setMusic(!settings.music());
+                case 3 -> settings.setFps(nextFps(settings.fps()));
+                case 4 -> settings.setGlitch(!settings.glitch());
+                case 5 -> settings.setBingo(!Settings.bingo());
             }
             settings.apply(game);
         }
@@ -77,14 +78,17 @@ public final class SettingsScreen extends ScreenAdapter {
         viewport.apply();
         batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
-        title("SETTINGS", 300);
-        line(0, "VSync", settings.vsync() ? "ON" : "OFF", 240);
-        line(1, "Fullscreen", settings.fullscreen() ? "ON" : "OFF", 212);
-        line(2, "FPS", settings.fps() == 0 ? "uncapped" : String.valueOf(settings.fps()), 184);
-        line(3, "Glitch", settings.glitch() ? "ON" : "OFF", 156);
-        line(4, "bingo heeler mode\n(needs restart)", Settings.bingo() ? "ON" : "OFF", 124);
+        title("SETTINGS", 320);
+
+        line(0, "VSync", settings.vsync() ? "ON" : "OFF", 278);
+        line(1, "Fullscreen", settings.fullscreen() ? "ON" : "OFF", 240);
+        line(2, "In Game Music", settings.music() ? "ON" : "OFF", 212);
+        line(3, "FPS", settings.fps() == 0 ? "uncapped" : String.valueOf(settings.fps()), 184);
+        line(4, "Glitch", settings.glitch() ? "ON" : "OFF", 156);
+        line(5, "bingo heeler mode\n(needs restart)", Settings.bingo() ? "ON" : "OFF", 124);
+
         font.setColor(Color.GRAY);
-        centered("up/down select    left/right change    Esc back", 60);
+        centered("up/down select    left/right change    Esc back", 50);
         batch.end();
     }
 

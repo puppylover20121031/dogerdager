@@ -61,6 +61,7 @@ public abstract class Entity {
 
     public boolean glitches() {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'glitches'");
+        return false;
+        //throw new UnsupportedOperationException("Unimplemented method 'glitches'");
     }
 }

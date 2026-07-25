@@ -24,6 +24,8 @@ public final class Settings {
         return prefs.getBoolean("set.glitch", false);
     }
 
+    public boolean music() { return prefs.getBoolean("set.music", true); }
+
     public void setVsync(boolean value) {
         prefs.putBoolean("set.vsync", value);
         prefs.flush();
@@ -41,6 +43,11 @@ public final class Settings {
 
     public void setGlitch(boolean value) {
         prefs.putBoolean("set.glitch", value);
+        prefs.flush();
+    }
+
+    public void setMusic(Boolean value) {
+        prefs.putBoolean("set.music", value);
         prefs.flush();
     }
 

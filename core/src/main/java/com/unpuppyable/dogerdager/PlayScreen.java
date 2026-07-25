@@ -95,7 +95,7 @@ public final class PlayScreen implements Screen {
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
         bingo = Settings.bingo();
-        if (prefs.getBoolean("music", true)) {
+        if (prefs.getBoolean("set.music", true)) {
             if (bingo) {
                 this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
             } else {
@@ -104,7 +104,7 @@ public final class PlayScreen implements Screen {
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
             this.bgm.play();
-            prefs.putBoolean("music", false);
+            prefs.putBoolean("set.music", false);
         }
         reset();
         if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
@@ -477,7 +477,7 @@ public final class PlayScreen implements Screen {
 
     @Override
     public void dispose() {
-        prefs.putBoolean("music", true);
+        prefs.putBoolean("set.music", true);
         if (bgm != null) {
             bgm.stop();
             bgm.dispose();

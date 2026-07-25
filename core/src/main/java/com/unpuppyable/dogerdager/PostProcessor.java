@@ -14,6 +14,7 @@ public final class PostProcessor implements Disposable {
     private FrameBuffer fbo;
     private float time;
     private boolean glitch;
+    private static TextureRegion region;
 
     public PostProcessor() {
         ShaderProgram.pedantic = false;
@@ -26,6 +27,8 @@ public final class PostProcessor implements Disposable {
     public void resize(int width, int height) {
         if (fbo != null) fbo.dispose();
         fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+        region = new TextureRegion(fbo.getColorBufferTexture()); // added these two lines to create TextureRegion on resize when fbo is declared/changed
+        region.flip(false, true);
     }
 
     public void setGlitch(boolean glitch) {
@@ -44,10 +47,7 @@ public final class PostProcessor implements Disposable {
         if (fbo == null) return;
         fbo.end();
         time += delta;
-
-        var region = new TextureRegion(fbo.getColorBufferTexture());
-        region.flip(false, true);
-
+        // deleted creating TextureRegion from here because doing that 60 times/s when region doesn't change 60 times/s is suboptimal
         batch.getProjectionMatrix().setToOrtho2D(0, 0, fbo.getWidth(), fbo.getHeight());
         batch.setShader(shader);
         batch.begin();

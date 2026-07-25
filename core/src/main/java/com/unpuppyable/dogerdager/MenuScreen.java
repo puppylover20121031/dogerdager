@@ -40,7 +40,7 @@ public final class MenuScreen extends ScreenAdapter {
                 this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu.mp3"));
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
-            //this.bgm.play();
+            //this.bgm.play(); //menu music
         var root = new VisTable();
         root.setFillParent(true);
 
@@ -220,7 +220,7 @@ public final class MenuScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
-        bgm.stop();
+        if (bgm != null) bgm.stop();
         stage.dispose();
     }
 }
