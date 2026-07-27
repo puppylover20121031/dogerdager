@@ -5,7 +5,8 @@ timed floors, weave through enemies and bullet patterns, and outlast multi-phase
 on five hearts. Built with libGDX, rendered entirely from primitives.
 
 ▶ **Play:** [https://puppylover20121031.itch.io/thedodger](https://unpuppyable.itch.io/the-doger-dager-2)
-'you can also play the dev versions in releases( RECOMMENDED
+
+you can also play the dev versions in releases( RECOMMENDED )
 
 ## Controls
 
