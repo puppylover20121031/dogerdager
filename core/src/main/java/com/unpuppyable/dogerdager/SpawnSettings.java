@@ -146,12 +146,12 @@ public final class SpawnSettings {
 
     public SpawnSchedule defaultSchedule() {
         SpawnSchedule schedule = new SpawnSchedule();
-        schedule.rules.add(new SpawnRule(1, 50, SpawnRule.Type.NORMAL));
-        schedule.rules.add(new SpawnRule(1, 30, SpawnRule.Type.FAST));
-        schedule.rules.add(new SpawnRule(3, 25, SpawnRule.Type.SMART));
-        schedule.rules.add(new SpawnRule(5, 15, SpawnRule.Type.CENTIPEDE));
-        schedule.rules.add(new SpawnRule(1, 10, SpawnRule.Type.POTION));
-        schedule.rules.add(new SpawnRule(1, 6, SpawnRule.Type.Powerup1));
+        schedule.rules.add(new SpawnRule(1, 16, SpawnRule.Type.NORMAL));
+        schedule.rules.add(new SpawnRule(1, 8, SpawnRule.Type.FAST));
+        schedule.rules.add(new SpawnRule(3, 6, SpawnRule.Type.SMART));
+        schedule.rules.add(new SpawnRule(5, 4, SpawnRule.Type.CENTIPEDE));
+        schedule.rules.add(new SpawnRule(1, 3, SpawnRule.Type.POTION));
+        schedule.rules.add(new SpawnRule(10, 2, SpawnRule.Type.Powerup1));
         return schedule;
     }
 
