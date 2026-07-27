@@ -39,6 +39,10 @@ public final class PostProcessor implements Disposable {
         glitch = !glitch;
     }
 
+    public Boolean getGlitch() {
+        return this.glitch;
+    }
+
     public void capture() {
         if (fbo != null) fbo.begin();
     }

@@ -91,7 +91,7 @@ public final class PlayScreen implements Screen {
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
-        player = new Player(ARENA_W, PLAY_TOP);
+        player = new Player(ARENA_W, PLAY_TOP, post);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
@@ -108,8 +108,7 @@ public final class PlayScreen implements Screen {
             prefs.putBoolean("set.music", false);
         }
         reset();
-        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
-            playerShootingEnabled = true;
+        playerShootingEnabled = true;
     }
 
     private void reset() {
@@ -327,6 +326,7 @@ public final class PlayScreen implements Screen {
                     e.kill();
             } if (e.glitches()) {
                 post.setGlitch(true);
+                progress.unlock(Achievement.GET_GLITCHED);
                 e.kill();
             }
         }

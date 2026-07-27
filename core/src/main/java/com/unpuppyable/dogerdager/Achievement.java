@@ -9,7 +9,9 @@ public enum Achievement {
     CLEAR_NORMAL("Survivor", "Clear Normal"),
     CLEAR_HARD("Hardened", "Clear Hard"),
     CLEAR_HARDCORE("Untouchable", "Clear Hardcore"),
-    CLEAR_ALL("God Climer", "Clear ALL of them");
+    CLEAR_ALL("God Climer", "Clear ALL of them"),
+    GET_GLITCHED("Well thats weird..", "Secret Achievment");
+    
 
     public final String title;
     public final String desc;

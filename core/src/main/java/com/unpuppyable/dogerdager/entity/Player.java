@@ -3,6 +3,7 @@ package com.unpuppyable.dogerdager.entity;
 import com.badlogic.gdx.Gdx;
 import com.unpuppyable.dogerdager.KeyBind;
 import com.unpuppyable.dogerdager.Pad;
+import com.unpuppyable.dogerdager.PostProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -11,7 +12,7 @@ public final class Player extends Entity {
 
     public static final float SIZE = 16;
     private static float SPEED = 300;
-    private static final float STRAFE_DIST = 110;
+    private static float STRAFE_DIST = 110;
     private static final float STRAFE_INVULN = 0.2f;
     private static final float STRAFE_CD = 1.2f;
 
@@ -32,17 +33,25 @@ public final class Player extends Entity {
     private float kbY;
     private float stamina;
 
-    public Player(float worldW, float playTop) {
+    private PostProcessor post;
+
+    public Player(float worldW, float playTop, PostProcessor post) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
         maxX = worldW - SIZE;
         maxY = playTop - SIZE;
+        this.post = post;
     }
-
+ 
     @Override
     public void update(float delta) {
         anim += delta;
         if (strafeInvuln > 0) strafeInvuln -= delta;
         if (strafeCd > 0) strafeCd -= delta;
+
+        if(this.post.getGlitch()) {
+            STRAFE_DIST = 320;
+            SPEED = 400;
+        }
 
         if (stun > 0) {
             stun -= delta;
@@ -136,4 +145,5 @@ public final class Player extends Entity {
         shapes.setColor(body);
         shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, (SIZE - 4) * stamina);
     }
+
 }
