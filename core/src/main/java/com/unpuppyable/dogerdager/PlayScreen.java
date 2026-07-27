@@ -91,7 +91,7 @@ public final class PlayScreen implements Screen {
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
-        player = new Player(ARENA_W, PLAY_TOP, post);
+        player = new Player(ARENA_W, PLAY_TOP, post, progress);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);

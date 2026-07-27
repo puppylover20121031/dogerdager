@@ -10,7 +10,9 @@ public enum Achievement {
     CLEAR_HARD("Hardened", "Clear Hard"),
     CLEAR_HARDCORE("Untouchable", "Clear Hardcore"),
     CLEAR_ALL("God Climer", "Clear ALL of them"),
-    GET_GLITCHED("Well thats weird..", "Secret Achievment");
+    NINJA("Like a ninja", "Clear ANY Difficulty and using the STRAFING feature 120 times"),
+    GET_GLITCHED("Well thats weird..", "get a glitch powerup."),
+    USE_GLITCH("Ninja Glitcher", "Use the glitch to \"Glitch\" like a Ninja Glitcher.");
     
 
     public final String title;

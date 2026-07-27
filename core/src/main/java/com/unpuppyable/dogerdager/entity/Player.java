@@ -1,9 +1,11 @@
 package com.unpuppyable.dogerdager.entity;
 
 import com.badlogic.gdx.Gdx;
+import com.unpuppyable.dogerdager.Achievement;
 import com.unpuppyable.dogerdager.KeyBind;
 import com.unpuppyable.dogerdager.Pad;
 import com.unpuppyable.dogerdager.PostProcessor;
+import com.unpuppyable.dogerdager.Progress;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -32,14 +34,17 @@ public final class Player extends Entity {
     private float kbX;
     private float kbY;
     private float stamina;
+    private int StrafeC = 0;
 
     private PostProcessor post;
+    private Progress progress;
 
-    public Player(float worldW, float playTop, PostProcessor post) {
+    public Player(float worldW, float playTop, PostProcessor post, Progress progress) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
         maxX = worldW - SIZE;
         maxY = playTop - SIZE;
         this.post = post;
+        this.progress = progress;
     }
  
     @Override
@@ -77,6 +82,10 @@ public final class Player extends Entity {
 
         if ((keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA()) && strafeCd <= 0) {
             strafe();
+            StrafeC += 1;
+            if (StrafeC >= 120) {
+                progress.unlock(Achievement.NINJA);
+            }
         }
     }
 
