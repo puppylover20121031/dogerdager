@@ -67,6 +67,7 @@ public final class PlayScreen implements Screen {
     private final List<Entity> pending = new ArrayList<>();
 
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final KeyBind keyBind = new KeyBind();
 
     private Player player;
     private Hud hud;
@@ -246,7 +247,7 @@ public final class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE) || Pad.justStart()) {
+        if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
             if (state == State.PLAYING) {
                 state = State.PAUSED;
             } else if (state == State.PAUSED) {

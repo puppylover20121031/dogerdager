@@ -1,8 +1,8 @@
 package com.unpuppyable.dogerdager.entity;
 
 import com.badlogic.gdx.Gdx;
+import com.unpuppyable.dogerdager.KeyBind;
 import com.unpuppyable.dogerdager.Pad;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -17,6 +17,7 @@ public final class Player extends Entity {
 
     private final float maxX;
     private final float maxY;
+    private final KeyBind keyBind = new KeyBind();
     private boolean shielded;
     private boolean invulnerable;
     private float anim;
@@ -52,10 +53,10 @@ public final class Player extends Entity {
 
 
         float vx = 0, vy = 0;
-        if (Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT))  vx -= SPEED;
-        if (Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)) vx += SPEED;
-        if (Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.UP))    vy += SPEED;
-        if (Gdx.input.isKeyPressed(Keys.S) || Gdx.input.isKeyPressed(Keys.DOWN))  vy -= SPEED;
+        if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) vx -= SPEED;
+        if (keyBind.isPressed(KeyBind.Action.MOVE_RIGHT)) vx += SPEED;
+        if (keyBind.isPressed(KeyBind.Action.MOVE_UP)) vy += SPEED;
+        if (keyBind.isPressed(KeyBind.Action.MOVE_DOWN)) vy -= SPEED;
         vx = MathUtils.clamp(vx + Pad.moveX() * SPEED, -SPEED, SPEED);
         vy = MathUtils.clamp(vy + Pad.moveY() * SPEED, -SPEED, SPEED);
         if (vx != 0 || vy != 0) {
@@ -65,11 +66,9 @@ public final class Player extends Entity {
         bounds.x = MathUtils.clamp(bounds.x + vx * delta, 0, maxX);
         bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
 
-        if ((Gdx.input.isKeyJustPressed(Keys.TAB) || Pad.justA()) && strafeCd <= 0) {
+        if ((keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA()) && strafeCd <= 0) {
             strafe();
         }
-
-
     }
 
     private void strafe() {
