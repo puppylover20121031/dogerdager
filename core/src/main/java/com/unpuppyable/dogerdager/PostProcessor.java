@@ -1,5 +1,6 @@
 package com.unpuppyable.dogerdager;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -25,9 +26,13 @@ public final class PostProcessor implements Disposable {
     }
 
     public void resize(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            Gdx.app.error("PostProcessor", "Ignoring resize with invalid dimensions: " + width + "x" + height);
+            return;
+        }
         if (fbo != null) fbo.dispose();
         fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
-        region = new TextureRegion(fbo.getColorBufferTexture()); // added these two lines to create TextureRegion on resize when fbo is declared/changed
+        region = new TextureRegion(fbo.getColorBufferTexture());
         region.flip(false, true);
     }
 
