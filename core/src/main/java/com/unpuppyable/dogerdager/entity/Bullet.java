@@ -10,9 +10,9 @@ public final class Bullet extends Entity {
 
     private static final float ROCKET_SPEED = 200f;
     private static final float ROCKET_TURN = 2.2f;
-    private static final int TRAIL = 6;
+    public static final int TRAIL = 6;
 
-    private final Kind kind;
+    public final Kind kind;
     private final int damage;
     private final float worldW;
     private final Player target;
@@ -29,6 +29,7 @@ public final class Bullet extends Entity {
         this.kind = kind;
         this.worldW = worldW;
         this.target = target;
+        this.name = "Bullet";
         this.damage = switch (kind) {
             case FALLING -> 1;
             case HOMING -> 1;
@@ -56,6 +57,7 @@ public final class Bullet extends Entity {
         this.kind = Kind.SHARD;
         this.worldW = worldW;
         this.target = null;
+        this.name = "Bullet";
         this.damage = 1;
         this.vx = vx;
         this.vy = vy;

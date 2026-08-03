@@ -3,11 +3,14 @@ package com.unpuppyable.dogerdager.entity;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 
+import java.util.UUID;
+
 public abstract class Entity {
 
     protected final Rectangle bounds;
     protected boolean dead;
-
+    public String id = UUID.randomUUID().toString();
+    public String name;
     protected Entity(float x, float y, float size) {
         bounds = new Rectangle(x, y, size, size);
     }

@@ -1,0 +1,93 @@
+All websockets are sent in JSON, where t = type
+client at the beginning has to "authorize" putting their name in, and they have 60 sec for that
+Client -> Server
+AUTHORIZE:
+{
+"t":"0",
+"user":String username
+}
+
+keys being pressed:
+{
+"t":"1",
+"keys":[]
+}
+
+keys being let go:
+{
+"t":"2",
+"keys":[]
+}
+
+shoot Arrow:
+{
+"t":"3",
+"x": int x,
+"y": int y,
+"pressing":boolean pressing
+}
+PING:
+{
+"t":"5"
+}
+
+Server -> Client
+
+AUTHORIZE:
+{
+"t":"200",
+"success": boolean success,
+"message":String message,
+"users": List<String> users
+}
+
+new User Joined
+{
+"t":"201",
+"user":String username
+}
+
+user left
+{
+"t":"202",
+"user":String username
+}
+
+PONG:
+{
+"t":"205"
+}
+
+gameStarted:
+{
+"t":"210"
+}
+
+EntityStates
+{
+"t":"250",
+"UUID": {
+    "type":entity.name,
+    "x":float x,
+    "y":float y
+    },
+"UUID": {
+    "type":"Player",
+    "x":float x,
+    "y":float y,
+    "username":String username,
+    "isdead":boolean player.dead()
+    }
+}
+
+hurt:
+{
+"t":"251",
+"dmg":int amount
+}
+
+ERROR:
+{
+"t":"400",
+"error":String errorMessage
+}

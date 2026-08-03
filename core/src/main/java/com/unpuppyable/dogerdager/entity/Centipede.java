@@ -12,24 +12,24 @@ import com.badlogic.gdx.math.Vector2;
 // is no cutting, that hook waits for an offense mechanic.
 public final class Centipede extends Entity {
 
-    private static final int SEGMENTS = 11;
-    private static final float SPACING = 13f;
-    private static final float HEAD_R = 9f;
-    private static final float TAIL_R = 5f;
-    private static final float SPEED = 130f;
-    private static final float TURN = 2.6f;
-    private static final float LIFE = 14f;
+    public static final int SEGMENTS = 11;
+    public static final float SPACING = 13f;
+    public static final float HEAD_R = 9f;
+    public static final float TAIL_R = 5f;
+    public static final float SPEED = 130f;
+    public static final float TURN = 2.6f;
+    public static final float LIFE = 14f;
 
-    private static final Color HEAD = Color.SCARLET;
-    private static final Color BAND_A = new Color(0.88f, 0.42f, 0.12f, 1f);
-    private static final Color BAND_B = new Color(0.55f, 0.20f, 0.06f, 1f);
-    private static final Color LEG = new Color(0.32f, 0.12f, 0.05f, 1f);
+    public static final Color HEAD = Color.SCARLET;
+    public static final Color BAND_A = new Color(0.88f, 0.42f, 0.12f, 1f);
+    public static final Color BAND_B = new Color(0.55f, 0.20f, 0.06f, 1f);
+    public static final Color LEG = new Color(0.32f, 0.12f, 0.05f, 1f);
 
-    private final Vector2[] seg = new Vector2[SEGMENTS];
+    public final Vector2[] seg = new Vector2[SEGMENTS];
     private final Player target;
     private final float arenaW;
     private final float playTop;
-    private float heading;
+    public float heading;
     private float anim;
     private float life = LIFE;
 
@@ -42,6 +42,7 @@ public final class Centipede extends Entity {
         for (int i = 0; i < SEGMENTS; i++) {
             seg[i] = new Vector2(x - i * SPACING, y);
         }
+        this.name = "Centipede";
     }
 
     private float radius(int i) {

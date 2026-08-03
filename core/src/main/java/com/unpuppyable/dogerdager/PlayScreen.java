@@ -30,58 +30,58 @@ import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.math.Vector3;
 
-public final class PlayScreen implements Screen {
+public class PlayScreen implements Screen {
 
-    static final float WORLD_W = 640 * 3;
-    static final float WORLD_H = 360 * 3;
+    protected static final float WORLD_W = 640 * 3;
+    protected static final float WORLD_H = 360 * 3;
     static final float ARENA_W = WORLD_W;
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
-    private static final int INSTANT_KILL = 100_000;
-    private static final float MAX_STEP = 0.05f;
+    protected static final int INSTANT_KILL = 100_000;
+    protected static final float MAX_STEP = 0.05f;
     public static boolean playerShootingEnabled = false;
-    private static final float PLAYER_SHOOT_SPEED = 380f;
-    private static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
+    protected static final float PLAYER_SHOOT_SPEED = 380f;
+    protected static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
-    private enum State {
+    protected enum State {
         PLAYING, PAUSED, GAME_OVER, WON
     }
 
-    private final DogerDager game;
-    private final Difficulty difficulty;
+    protected DogerDager game;
+    protected Difficulty difficulty;
     public Difficulty curDifficulty;
 
     private boolean mute = false;
 
-    private final Viewport viewport;
-    private final ShapeRenderer shapes = new ShapeRenderer();
-    private final SpriteBatch batch = new SpriteBatch();
-    private final BitmapFont font = new BitmapFont();
-    private final GlyphLayout layout = new GlyphLayout();
-    private final Progress progress = new Progress();
-    private final String endingText = "THE END\n\nYOU WON\n\nRIP Honey Bun\n\nIn loving memory\n\nCredits\nHoney Bun\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
-    private float endingScroll;
+    protected Viewport viewport;
+    protected final ShapeRenderer shapes = new ShapeRenderer();
+    protected final SpriteBatch batch = new SpriteBatch();
+    protected final BitmapFont font = new BitmapFont();
+    protected final GlyphLayout layout = new GlyphLayout();
+    protected final Progress progress = new Progress();
+    protected final String endingText = "THE END\n\nYOU WON\n\nRIP Honey Bun\n\nIn loving memory\n\nCredits\nHoney Bun\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
+    protected float endingScroll;
 
-    private final List<Entity> entities = new ArrayList<>();
-    private final List<Entity> pending = new ArrayList<>();
+    protected final List<Entity> entities = new ArrayList<>();
+    protected final List<Entity> pending = new ArrayList<>();
 
-    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    protected final Preferences prefs = Gdx.app.getPreferences("doger-dager");
 
-    private Player player;
-    private Hud hud;
-    private Spawner spawner;
-    private State state;
-    boolean bingo = false;
-    private float shake;
+    protected Player player;
+    protected Hud hud;
+    protected Spawner spawner;
+    protected State state;
+    protected boolean bingo = false;
+    protected float shake;
     //private float camX = ARENA_W / 2f;
-    private float camX = ARENA_W;
-    private float shootCooldown;
-    private Music bgm;
-    private boolean playedMusic = false;
+    protected float camX = ARENA_W;
+    protected float shootCooldown;
+    protected Music bgm;
+    protected boolean playedMusic = false;
 
     public boolean Easy_unlocked = false;
-    private PostProcessor post;
+    protected PostProcessor post;
 
     public PlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
         this.game = game;
@@ -90,7 +90,7 @@ public final class PlayScreen implements Screen {
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
-        player = new Player(ARENA_W, PLAY_TOP);
+        player = new Player(ARENA_W, PLAY_TOP, prefs.getString("user.name"), curDifficulty, true);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
@@ -104,14 +104,13 @@ public final class PlayScreen implements Screen {
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
             this.bgm.play();
-            prefs.putBoolean("set.music", false);
         }
         reset();
         if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
             playerShootingEnabled = true;
     }
 
-    private void reset() {
+    protected void reset() {
         playedMusic = true;
         entities.clear();
         pending.clear();
@@ -173,7 +172,7 @@ public final class PlayScreen implements Screen {
         return false;
     }
 
-    private void clearHazards() {
+    protected void clearHazards() {
         entities.clear();
         pending.clear();
     }
@@ -200,7 +199,7 @@ public final class PlayScreen implements Screen {
         }
     }
 
-    private void shootPlayer() {
+    protected void shootPlayer() {
         Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(aim);
         float px = player.bounds().x + Player.SIZE / 2f;
@@ -222,7 +221,7 @@ public final class PlayScreen implements Screen {
         float len = (float) Math.sqrt(dx * dx + dy * dy);
         float vx = dx / len * PLAYER_SHOOT_SPEED;
         float vy = dy / len * PLAYER_SHOOT_SPEED;
-        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP));
+        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, player));
     }
 
     public void win() {
@@ -269,13 +268,13 @@ public final class PlayScreen implements Screen {
         draw(delta);
     }
 
-    private void toMenu() {
+    protected void toMenu() {
         reset();
         game.setScreen(new MenuScreen(game, post));
         dispose();
     }
 
-    private void update(float delta, PostProcessor post) {
+    protected void update(float delta, PostProcessor post) {
         if (shake > 0)
             shake -= delta;
         boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
@@ -357,7 +356,7 @@ public final class PlayScreen implements Screen {
 
     }
 
-    private void hurt(int amount) {
+    protected void hurt(int amount) {
         if (player.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
@@ -366,7 +365,7 @@ public final class PlayScreen implements Screen {
         }
     }
 
-    private void draw(float delta) {
+    protected void draw(float delta) {
         ScreenUtils.clear(Color.BLACK);
         viewport.apply();
         var cam = viewport.getCamera();
@@ -422,7 +421,7 @@ public final class PlayScreen implements Screen {
 
     // World-space backdrop -- gives the panning camera something to scroll over so
     // motion reads.
-    private void drawBackground(ShapeRenderer shapes) {
+    protected void drawBackground(ShapeRenderer shapes) {
         shapes.setColor(0.05f, 0.05f, 0.08f, 1f);
         shapes.rect(0, 0, ARENA_W, PLAY_TOP);
         shapes.setColor(0.11f, 0.11f, 0.16f, 1f);
@@ -437,13 +436,13 @@ public final class PlayScreen implements Screen {
         shapes.rect(ARENA_W - 2f, 0, 2f, PLAY_TOP);
     }
 
-    private void drawCentered(String text) {
+    protected void drawCentered(String text) {
         font.setColor(Color.WHITE);
         layout.setText(font, text);
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
     }
 
-    private void drawMovieEnding(String text, float delta) {
+    protected void drawMovieEnding(String text, float delta) {
         if (state != State.PAUSED) {
             endingScroll += delta * 50f;
         }

@@ -44,6 +44,7 @@ public final class Boss extends Entity {
         this.worldW = worldW;
         this.screen = screen;
         this.target = target;
+        this.name = "Boss";
     }
 
     public boolean arm() {

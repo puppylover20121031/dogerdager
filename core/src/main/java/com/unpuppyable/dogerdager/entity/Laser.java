@@ -7,11 +7,12 @@ public final class Laser extends Entity {
     private static final float TELEGRAPH = 1.2f;
     private static final float ACTIVE = 1.0f;
 
-    private float telegraph = TELEGRAPH;
+    public float telegraph = TELEGRAPH;
     private float active = ACTIVE;
 
     public Laser(float x, float width, float playTop) {
         super(x, 0, width, playTop);
+        this.name = "Laser";
     }
 
     private boolean firing() {

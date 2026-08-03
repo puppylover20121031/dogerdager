@@ -14,6 +14,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
 
 public final class MenuScreen extends ScreenAdapter {
 
@@ -25,7 +26,7 @@ public final class MenuScreen extends ScreenAdapter {
     private final Progress progress = new Progress();
     private final VisTextButton[] buttons = new VisTextButton[CHOICES.length];
     private VisTextButton creditsButton;
-
+    private VisTextButton multiplayerButton;
     private int index = Difficulty.NORMAL.ordinal();
     private boolean switching;
 
@@ -37,10 +38,13 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void build(PostProcessor post) {
-                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu.mp3"));
+        if (Settings.prefs.getBoolean("set.music", true)) {
+            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu.mp3"));
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
-            //this.bgm.play(); //menu music
+            this.bgm.play(); //menu music
+        }
+
         var root = new VisTable();
         root.setFillParent(true);
 
@@ -63,6 +67,17 @@ public final class MenuScreen extends ScreenAdapter {
             });
             buttons[i] = button;
             root.add(button).width(220).height(34).pad(3).row();
+        }
+
+        if (!DogerDager.multiplayer) {
+            multiplayerButton = new VisTextButton("Open To LAN");
+            multiplayerButton.addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    openMultiplayer();
+                }
+            });
+            root.add(multiplayerButton).width(220).height(34).padTop(8).row();
         }
 
         creditsButton = new VisTextButton("CREDITS");
@@ -89,7 +104,7 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void start(Difficulty difficulty, float delta, PostProcessor post) {
-        bgm.stop();
+        musicStop();
         
         if (switching) return;
         if (difficulty == Difficulty.HARDCORE && !progress.hardcoreUnlocked()) {
@@ -99,16 +114,19 @@ public final class MenuScreen extends ScreenAdapter {
         switching = true;
         game.menuConfirm();
         Gdx.input.setInputProcessor(null);
-        if (difficulty != Difficulty.CUSTOM) {
-        game.setScreen(new PlayScreen(game, difficulty, delta, post));
-        } else {
+        if (DogerDager.getMultiplayer()) {
+            game.setScreen(new HostPlayScreen(game, difficulty, delta, post));
+
+        } else if (difficulty == Difficulty.CUSTOM) {
             game.setScreen(new CustomScreen(game));
+        } else {
+            game.setScreen(new PlayScreen(game, difficulty, delta, post));
         }
         dispose();
     }
 
     private void openStats() {
-        bgm.stop();
+        musicStop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -118,7 +136,7 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void openSettings() {
-        bgm.stop();
+        musicStop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -128,7 +146,7 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void openAchievements() {
-        bgm.stop();
+        musicStop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -137,8 +155,18 @@ public final class MenuScreen extends ScreenAdapter {
         dispose();
     }
 
+    private void openMultiplayer() {
+        musicStop();
+        if (switching) return;
+        switching = true;
+        game.menuMove();
+        Gdx.input.setInputProcessor(null);
+        game.setScreen(new MultiplayerScreen(game, post));
+        dispose();
+    }
+
     private void openCredits() {
-        bgm.stop();
+        musicStop();
         if (switching) return;
         switching = true;
         game.menuMove();
@@ -212,7 +240,9 @@ public final class MenuScreen extends ScreenAdapter {
             creditsButton.setColor(index == CHOICES.length ? Color.YELLOW : Color.WHITE);
         }
     }
-
+    private void musicStop() {
+        if (bgm != null) bgm.stop();
+    }
     @Override
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);

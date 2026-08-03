@@ -5,16 +5,20 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.audio.Sound;
 import com.kotcrab.vis.ui.VisUI;
+import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
 
 public class DogerDager extends Game {
-
+    public static boolean multiplayer = false;
+    public static boolean multiplayerGameStarted = false;
+    public static DogerDager instance;
     private Icons icons;
-    private PostProcessor post;
+    public PostProcessor post;
     private Sound menuMove;
     private Sound menuConfirm;
 
     @Override
     public void create() {
+        instance = this;
         VisUI.load();
         icons = new Icons(26);
         post = new PostProcessor();
@@ -77,4 +81,18 @@ public class DogerDager extends Game {
     public void setBingo(boolean bingo) {
         
     }
+
+    public static PostProcessor getPost() {
+        return instance.post;
+    }
+
+    public static boolean getMultiplayer() {
+        return multiplayer;
+    }
+
+    public static void setMultiplayer(boolean Bool) {
+        multiplayer = Bool;
+    }
+
+    public static DogerDager getGameInstance() { return instance; }
 }
