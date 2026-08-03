@@ -53,3 +53,4 @@ Want to help? Open an issue. The wiki documents how the code works.
 ## Credits
 
 Made by **unpuppyable**. Thanks to [@Kitty-Hivens](https://github.com/Kitty-Hivens) and **jackmann**.
+rip gypsy and honey bun. 2 animals from unpuppyable's friends that sadly passed
