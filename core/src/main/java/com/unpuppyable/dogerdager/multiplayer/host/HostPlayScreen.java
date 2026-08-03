@@ -2,6 +2,7 @@ package com.unpuppyable.dogerdager.multiplayer.host;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 
 public class HostPlayScreen extends PlayScreen {
 
+    private final KeyBind keyBind = new KeyBind();
     static final float ARENA_W = WORLD_W;
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
@@ -26,6 +28,7 @@ public class HostPlayScreen extends PlayScreen {
     private float timeDelta;
     private static HostPlayScreen instance;
     private Websocket wsInstance = Websocket.getInstance();
+    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
     private static HashMap<String, Player> players = new HashMap<String, Player>();
     private Player host;
 
@@ -41,7 +44,7 @@ public class HostPlayScreen extends PlayScreen {
                 players.put(playerName, host);
                 continue;
             }
-            players.put(playerName, new Player(ARENA_W, PLAY_TOP, playerName, curDifficulty, false));
+            players.put(playerName, new Player(ARENA_W, PLAY_TOP, post, progress, playerName, curDifficulty, false));
         }
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);

@@ -34,6 +34,7 @@ public class ClientPlayScreen implements Screen {
     public static boolean playerShootingEnabled = false;
     protected static final float PLAYER_SHOOT_SPEED = 380f;
     protected static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
+    private final KeyBind keyBind = new KeyBind();
 
     protected float shake;
     //private float camX = ARENA_W / 2f;
@@ -75,23 +76,23 @@ public class ClientPlayScreen implements Screen {
             return;
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_UP)) {
             keysDown.add("W");
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_DOWN)) {
             keysDown.add("S");
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) {
             keysDown.add("A");
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_RIGHT)) {
             keysDown.add("D");
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.TAB) || Pad.justA()) {
+        if (keyBind.isPressed(KeyBind.Action.STRAFE) || Pad.justA()) {
             keysDown.add("TAB");
         }
 
@@ -106,6 +107,10 @@ public class ClientPlayScreen implements Screen {
             if (!keysDown.contains(key)) {
                 keysUp.add(key);
             }
+        }
+        if (previousKeysDown==keysDown) {
+            keysDown.clear();
+            return;
         }
         ClientMessages.keysUp(keysUp);
         previousKeysDown = new HashSet<>(keysDown);

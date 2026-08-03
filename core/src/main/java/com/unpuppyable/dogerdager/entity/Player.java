@@ -1,9 +1,7 @@
 package com.unpuppyable.dogerdager.entity;
 
 import com.badlogic.gdx.Gdx;
-import com.unpuppyable.dogerdager.Difficulty;
-import com.unpuppyable.dogerdager.DogerDager;
-import com.unpuppyable.dogerdager.Pad;
+import com.unpuppyable.dogerdager.*;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -19,15 +17,17 @@ public final class Player extends Entity {
     private static final float HIT_GRACE = 0.7f;
     private static final float BAND = 72;
 
+
     public static final float SIZE = 16;
     private static float SPEED = 300;
-    private static final float STRAFE_DIST = 110;
+    private static float STRAFE_DIST = 110;
     private static final float STRAFE_INVULN = 0.2f;
     private static final float STRAFE_CD = 1.2f;
 
-    public final String username;
+    public String username;
     private final float maxX;
     private final float maxY;
+    private final KeyBind keyBind = new KeyBind();
     private boolean shielded;
     public boolean invulnerable;
     private float anim;
@@ -48,14 +48,19 @@ public final class Player extends Entity {
     private boolean isYou;
     private HashSet<String> multiplayerKeysDown = new HashSet<String>();
 
-    public Player(float worldW, float playTop, String uname, Difficulty difficulty, boolean isHost) {
+    private PostProcessor post;
+    private Progress progress;
+
+    public Player(float worldW, float playTop, PostProcessor post, Progress progress, String username, Difficulty difficulty, boolean isHost) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
         maxX = worldW - SIZE;
         maxY = playTop - SIZE;
-        maxHealth = difficulty.maxHealth;
-        health = difficulty.maxHealth;
-        isYou = isHost;
-        username = uname;
+        this.post = post;
+        this.progress = progress;
+        this.maxHealth = difficulty.maxHealth;
+        this.health = difficulty.maxHealth;
+        this.isYou = isHost;
+        this.username = username;
         this.name = "Player";
     }
 
@@ -67,8 +72,14 @@ public final class Player extends Entity {
         } else {
             setInvulnerable(false);
         }
+
         if (strafeInvuln > 0) strafeInvuln -= delta;
         if (strafeCd > 0) strafeCd -= delta;
+
+        if(this.post.getGlitch() && !DogerDager.multiplayer) {
+            STRAFE_DIST = 320;
+            SPEED = 400;
+        }
 
         if (stun > 0) {
             stun -= delta;
@@ -77,12 +88,13 @@ public final class Player extends Entity {
             return;
         }
 
+
         if (isYou) {
             float vx = 0, vy = 0;
-            if (Gdx.input.isKeyPressed(Keys.A) || Gdx.input.isKeyPressed(Keys.LEFT)) vx -= SPEED;
-            if (Gdx.input.isKeyPressed(Keys.D) || Gdx.input.isKeyPressed(Keys.RIGHT)) vx += SPEED;
-            if (Gdx.input.isKeyPressed(Keys.W) || Gdx.input.isKeyPressed(Keys.UP)) vy += SPEED;
-            if (Gdx.input.isKeyPressed(Keys.S) || Gdx.input.isKeyPressed(Keys.DOWN)) vy -= SPEED;
+            if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) vx -= SPEED;
+            if (keyBind.isPressed(KeyBind.Action.MOVE_RIGHT)) vx += SPEED;
+            if (keyBind.isPressed(KeyBind.Action.MOVE_UP)) vy += SPEED;
+            if (keyBind.isPressed(KeyBind.Action.MOVE_DOWN)) vy -= SPEED;
             vx = MathUtils.clamp(vx + Pad.moveX() * SPEED, -SPEED, SPEED);
             vy = MathUtils.clamp(vy + Pad.moveY() * SPEED, -SPEED, SPEED);
             if (vx != 0 || vy != 0) {
@@ -91,7 +103,7 @@ public final class Player extends Entity {
             }
             bounds.x = MathUtils.clamp(bounds.x + vx * delta, 0, maxX);
             bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
-            if ((Gdx.input.isKeyJustPressed(Keys.TAB) || Pad.justA())) {
+            if ((keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA())) {
                 if (strafeCd > 0) return;
                 strafe();
             }

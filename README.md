@@ -1,10 +1,12 @@
 # Doger Dager
 
-A fast little arcade dodge-'em-up: you have no weapon — you survive. Descend through
+A fast little arcade dodge-'em-up: Descend through
 timed floors, weave through enemies and bullet patterns, and outlast multi-phase bosses
 on five hearts. Built with libGDX, rendered entirely from primitives.
 
 ▶ **Play:** [https://puppylover20121031.itch.io/thedodger](https://unpuppyable.itch.io/the-doger-dager-2)
+
+you can also play the dev versions in releases( RECOMMENDED )
 
 ## Controls
 
@@ -51,3 +53,4 @@ Want to help? Open an issue. The wiki documents how the code works.
 ## Credits
 
 Made by **unpuppyable**. Thanks to [@Kitty-Hivens](https://github.com/Kitty-Hivens) and **jackmann**.
+rip gypsy and honey bun. 2 animals from unpuppyable's friends that sadly passed

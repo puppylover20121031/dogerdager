@@ -66,7 +66,8 @@ public class PlayScreen implements Screen {
     protected final List<Entity> entities = new ArrayList<>();
     protected final List<Entity> pending = new ArrayList<>();
 
-    protected final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private final KeyBind keyBind = new KeyBind();
 
     protected Player player;
     protected Hud hud;
@@ -90,7 +91,7 @@ public class PlayScreen implements Screen {
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
-        player = new Player(ARENA_W, PLAY_TOP, prefs.getString("user.name"), curDifficulty, true);
+        player = new Player(ARENA_W, PLAY_TOP, post, progress, prefs.getString("user.name"), curDifficulty, true);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
@@ -104,10 +105,10 @@ public class PlayScreen implements Screen {
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
             this.bgm.play();
+            prefs.putBoolean("set.music", false);
         }
         reset();
-        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
-            playerShootingEnabled = true;
+        playerShootingEnabled = true;
     }
 
     protected void reset() {
@@ -245,7 +246,7 @@ public class PlayScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE) || Pad.justStart()) {
+        if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
             if (state == State.PLAYING) {
                 state = State.PAUSED;
             } else if (state == State.PAUSED) {

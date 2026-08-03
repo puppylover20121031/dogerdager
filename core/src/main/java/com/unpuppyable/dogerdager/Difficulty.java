@@ -3,8 +3,8 @@ package com.unpuppyable.dogerdager;
 public enum Difficulty {
     EASY(220f, 6, 12, -1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
     NORMAL(300f, 5, 15, 0, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
-    HARD(430f, 4, 18, 1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
-    HARDCORE(520f, 3, 18, 0, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
+    HARD(470f, 3, 20, 2, 4, 2, 3.4f, 0.25f, 1.0f, 0.28f, 0.50f, 0.75f, 0.08f),
+    HARDCORE(560f, 2, 22, 2, 3, 2, 3.0f, 0.30f, 0.9f, 0.35f, 0.55f, 0.80f, 0.06f),
     CUSTOM(220f, 6, 12, -1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f);
 
     public float enemySpeed;
@@ -43,13 +43,12 @@ public enum Difficulty {
 
     private static SpawnSchedule defaultSchedule() {
         SpawnSchedule schedule = new SpawnSchedule();
-        schedule.rules.add(new SpawnRule(1, 50, SpawnRule.Type.NORMAL));
-        schedule.rules.add(new SpawnRule(1, 30, SpawnRule.Type.FAST));
-        schedule.rules.add(new SpawnRule(3, 25, SpawnRule.Type.SMART));
-        schedule.rules.add(new SpawnRule(5, 15, SpawnRule.Type.CENTIPEDE));
-        schedule.rules.add(new SpawnRule(1, 100, SpawnRule.Type.LongGuy));
-        schedule.rules.add(new SpawnRule(1, 10, SpawnRule.Type.POTION));
-        schedule.rules.add(new SpawnRule(1, 6, SpawnRule.Type.Powerup1));
+        schedule.rules.add(new SpawnRule(1, 16, SpawnRule.Type.NORMAL));
+        schedule.rules.add(new SpawnRule(1, 8, SpawnRule.Type.FAST));
+        schedule.rules.add(new SpawnRule(3, 6, SpawnRule.Type.SMART));
+        schedule.rules.add(new SpawnRule(5, 4, SpawnRule.Type.CENTIPEDE));
+        schedule.rules.add(new SpawnRule(1, 3, SpawnRule.Type.POTION));
+        schedule.rules.add(new SpawnRule(10, 2, SpawnRule.Type.Powerup1));
         return schedule;
     }
 
