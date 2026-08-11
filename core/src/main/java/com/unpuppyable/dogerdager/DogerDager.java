@@ -5,10 +5,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.audio.Sound;
 import com.kotcrab.vis.ui.VisUI;
+import com.unpuppyable.dogerdager.multiplayer.client.WebsocketClient;
 import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
 
 public class DogerDager extends Game {
-    public static boolean multiplayer = false;
+    private static boolean multiplayer = false;
     public static boolean multiplayerGameStarted = false;
     public static DogerDager instance;
     private Icons icons;
@@ -70,12 +71,15 @@ public class DogerDager extends Game {
 
     @Override
     public void dispose() {
+        Websocket.dispose();
+        WebsocketClient.dispose();
         if (getScreen() != null) getScreen().dispose();
         post.dispose();
         icons.dispose();
         menuMove.dispose();
         menuConfirm.dispose();
         VisUI.dispose();
+        System.exit(0);
     }
 
     public void setBingo(boolean bingo) {

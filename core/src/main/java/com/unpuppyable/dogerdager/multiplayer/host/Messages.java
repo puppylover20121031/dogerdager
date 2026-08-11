@@ -3,11 +3,10 @@ package com.unpuppyable.dogerdager.multiplayer.host;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.math.Vector2;
+import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
-import com.unpuppyable.dogerdager.entity.Centipede;
-import com.unpuppyable.dogerdager.entity.Entity;
-import com.unpuppyable.dogerdager.entity.Player;
+import com.unpuppyable.dogerdager.entity.*;
 import org.java_websocket.WebSocket;
 
 import java.util.HashMap;
@@ -86,11 +85,11 @@ public class Messages {
     public static void shoot(WebSocket conn, Map<String, Object> msg) {
         String name = users.get(conn);
         if (!msg.containsKey("x") || !msg.containsKey("y") || !msg.containsKey("pressing")) return;
-        if (!(msg.get("x") instanceof Integer x)) return;
-        if (!(msg.get("y") instanceof Integer y)) return;
+        if (!(msg.get("x") instanceof Double x)) return;
+        if (!(msg.get("y") instanceof Double y)) return;
         if (!(msg.get("pressing") instanceof Boolean pressing)) return;
         Player player = HostPlayScreen.getPlayerByName(name);
-        HostPlayScreen.getInstance().shootPlayer(player, x, y, pressing);
+        HostPlayScreen.getInstance().shootPlayer(player, x.intValue(), y.intValue(), pressing);
     }
 
     public static void ping(WebSocket conn) {
@@ -108,20 +107,48 @@ public class Messages {
             float x = entity.bounds().x;
             float y = entity.bounds().y;
             if (entity instanceof Centipede e) {
-                stateUpdate.put(id, new EntityValues(
+                stateUpdate.put(id, new CentipedeValues(
                         e.name,
                         x,
                         y,
                         e.seg,
                         e.heading
                 ));
+            } else if (entity instanceof Enemy e) {
+                stateUpdate.put(id, new EnemyValues(
+                        e.name,
+                        x,
+                        y,
+                        e.kind.toString()
+                ));
+            } else if (entity instanceof Boss e) {
+                stateUpdate.put(id, new BossValues(
+                        e.name,
+                        x,
+                        y,
+                        e.kind.toString()
+                        //more thingies
+                ));
+            } else if (entity instanceof Bullet e) {
+                stateUpdate.put(id, new BulletValues(
+                        e.name,
+                        x,
+                        y,
+                        e.kind.toString(),
+                        e.ang
+                ));
+            } else if (entity instanceof Laser e) {
+                stateUpdate.put(id, new LaserValues(
+                        e.name,
+                        x,
+                        y,
+                        e.telegraph
+                ));
             } else {
                 stateUpdate.put(id, new EntityValues(
                         entity.name,
                         x,
-                        y,
-                        null,
-                        null
+                        y
                 ));
             }
 
@@ -135,7 +162,8 @@ public class Messages {
                     y,
                     p.username,
                     p.dead(),
-                    p.stamina,
+                    p.health,
+                    p.staminaFraction(),
                     p.getShielded(),
                     p.invulnerable,
                     p.strafeInvuln,
@@ -146,18 +174,23 @@ public class Messages {
         wsInstance.deleteNotVerified();
     }
 
-    public static void gameStarted() {
+    public static void gameStarted(Difficulty difficulty, float tickrate) {
+        String diff;
+        switch (difficulty) {
+            case EASY -> diff = "EASY";
+            case NORMAL -> diff = "NORMAL";
+            case HARD -> diff = "HARD";
+            case HARDCORE -> diff = "HARDCORE";
+            case CUSTOM -> diff = "CUSTOM";
+            default -> {
+                return;
+            }
+        }
         HashMap<String, Object> response = new HashMap<String, Object>();
+        response.put("diff", diff);
+        response.put("tps", tickrate);
         wsInstance.broadcastWS("210", response);
     }
-
-    public static void playerHurt(String name, float amount) {
-        HashMap<String, Object> response = new HashMap<String, Object>();
-        WebSocket conn = wsInstance.nameToConn(name);
-        response.put("dmg", amount);
-        wsInstance.sendWS(conn, "251", response);
-    }
-
 
     // help
     private static Boolean isNameLegal(String name) {
@@ -170,9 +203,45 @@ public class Messages {
     public record EntityValues(
             String type,
             float x,
+            float y
+    ) {}
+
+    public record CentipedeValues(
+            String type,
+            float x,
             float y,
             Vector2[] seg,
             Float heading
+    ) {}
+
+    public record EnemyValues(
+            String type,
+            float x,
+            float y,
+            String kind
+    ) {}
+
+    public record BossValues(
+            String type,
+            float x,
+            float y,
+            String kind
+            // more thingies
+    ) {}
+
+    public record BulletValues(
+            String type,
+            float x,
+            float y,
+            String kind,
+            Float ang
+    ) {}
+
+    public record LaserValues(
+            String type,
+            float x,
+            float y,
+            Float tele
     ) {}
 
     public record PlayerValues(
@@ -181,6 +250,7 @@ public class Messages {
             float y,
             String username,
             boolean isdead,
+            float hp,
             float stam,
             boolean shield,
             boolean inv,

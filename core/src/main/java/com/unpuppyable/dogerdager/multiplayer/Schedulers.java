@@ -15,7 +15,11 @@ public class Schedulers {
     private static WebsocketClient clientInstance = WebsocketClient.getClientInstance();
 
     public static void pingStateScheduler(int timeToPing) {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
         scheduler.scheduleAtFixedRate(() -> {
             if (wsInstance.lastPing.isEmpty()) return;
             for (WebSocket conn : wsInstance.lastPing.keySet()) {
@@ -23,10 +27,14 @@ public class Schedulers {
                     wsInstance.logOff(conn, 1006, "timed out");
                 }
             }
-        }, 0,5, TimeUnit.SECONDS );
+        }, 0,15, TimeUnit.SECONDS );
     }
     public static void notVerifiedScheduler(int timeToVerify) {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
         scheduler.scheduleAtFixedRate(() -> {
             if (wsInstance.notVerified.isEmpty()) return;
             for (WebSocket conn : wsInstance.notVerified.keySet()) {
@@ -37,8 +45,14 @@ public class Schedulers {
         }, 0,5, TimeUnit.SECONDS );
     }
 
+
+    //client
     public static void sendOutPingMessage(int period) {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
         scheduler.scheduleAtFixedRate(() -> {
             if (!clientInstance.verified) return;
             ClientMessages.sendPing();

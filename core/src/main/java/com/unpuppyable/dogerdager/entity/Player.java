@@ -28,8 +28,6 @@ public final class Player extends Entity {
     private final float maxX;
     private final float maxY;
     private final KeyBind keyBind = new KeyBind();
-    private boolean shielded;
-    public boolean invulnerable;
     private float anim;
     private float lastDx = 1;
     private float lastDy = 0;
@@ -41,8 +39,12 @@ public final class Player extends Entity {
     private float kbX;
     private float kbY;
 
+    private boolean shielded;
+    public boolean invulnerable;
+    private boolean staminaLocked;
     private float invulnerableFor = 0;
     public float stamina;
+
     public float health;
     public float maxHealth;
     private boolean isYou;
@@ -59,6 +61,7 @@ public final class Player extends Entity {
         this.progress = progress;
         this.maxHealth = difficulty.maxHealth;
         this.health = difficulty.maxHealth;
+        this.stamina = MAX_STAMINA;
         this.isYou = isHost;
         this.username = username;
         this.name = "Player";
@@ -66,6 +69,7 @@ public final class Player extends Entity {
 
     @Override
     public void update(float delta) {
+        if (dead) return;
         anim += delta;
         if (invulnerableFor > 0) {
             invulnerableFor -= delta;
@@ -76,7 +80,7 @@ public final class Player extends Entity {
         if (strafeInvuln > 0) strafeInvuln -= delta;
         if (strafeCd > 0) strafeCd -= delta;
 
-        if(this.post.getGlitch() && !DogerDager.multiplayer) {
+        if(this.post.getGlitch() && !DogerDager.getMultiplayer()) {
             STRAFE_DIST = 320;
             SPEED = 400;
         }
@@ -88,7 +92,7 @@ public final class Player extends Entity {
             return;
         }
 
-
+        shield(delta);
         if (isYou) {
             float vx = 0, vy = 0;
             if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) vx -= SPEED;
@@ -103,10 +107,8 @@ public final class Player extends Entity {
             }
             bounds.x = MathUtils.clamp(bounds.x + vx * delta, 0, maxX);
             bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
-            if ((keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA())) {
-                if (strafeCd > 0) return;
-                strafe();
-            }
+            if ((keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA()))
+                if (strafeCd <= 0) strafe();
             //multiplayer:
         } else {
             float vx = 0, vy = 0;
@@ -123,14 +125,15 @@ public final class Player extends Entity {
             }
             bounds.x = MathUtils.clamp(bounds.x + vx * delta, 0, maxX);
             bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
-            if (multiplayerKeysDown.contains("TAB")) {
-                if (strafeCd > 0) return;
+            if (multiplayerKeysDown.contains("TAB"))
                 strafe();
-            }
         }
+        if (shielded) stamina = Math.max(0, stamina - DRAIN * delta);
+        else if (stamina < MAX_STAMINA) stamina = Math.min(MAX_STAMINA, stamina + REGEN * delta);
     }
 
     private void strafe() {
+        if (strafeCd > 0) return;
         fromX = bounds.x;
         fromY = bounds.y;
         float len = (float) Math.sqrt(lastDx * lastDx + lastDy * lastDy);
@@ -142,10 +145,6 @@ public final class Player extends Entity {
 
     public boolean strafing() {
         return strafeInvuln > 0;
-    }
-
-    public void setStamina(float fraction) {
-        this.stamina = fraction;
     }
 
     public float aimX() {
@@ -171,8 +170,53 @@ public final class Player extends Entity {
         stun = 1.5f;
     }
 
-    public void setShielded(boolean shielded) {
-        this.shielded = shielded;
+    public boolean damage(int amount) {
+        if (this.dead) return false;
+        if (shielded || invulnerableFor > 0) return false;
+        health = Math.max(0, health - amount);
+        invulnerableFor = HIT_GRACE;
+        setInvulnerable(true);
+        if (health <= 0) this.kill();
+        return true;
+    }
+
+    public void heal(int amount) {
+        health = Math.min(maxHealth, health + amount);
+    }
+
+    public void healFull() {
+        health = maxHealth;
+    }
+
+    public float staminaFraction() {
+        return stamina / MAX_STAMINA;
+    }
+
+
+    public void refillStamina() {
+        stamina = MAX_STAMINA;
+        staminaLocked = false;
+    }
+
+    private void shield(float delta) {
+        //if (difficulty == Difficulty.HARDCORE || difficulty == Difficulty.HARD) stamina = 1200;
+        if (!isYou) {
+            if (multiplayerKeysDown.contains("SHIFT_LEFT")) {
+                if (stamina <=0) staminaLocked = true;
+                else if (stamina >= 300) staminaLocked = false;
+                shielded = !staminaLocked && stamina > 0;
+            } else {
+                shielded = false;
+            }
+        } else {
+            if (Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)||Gdx.input.isKeyPressed(Keys.SHIFT_RIGHT)) {
+                if (stamina <=0) staminaLocked = true;
+                else if (stamina >= 300) staminaLocked = false;
+                shielded = !staminaLocked && stamina > 0;
+            } else {
+                shielded = false;
+            }
+        }
     }
 
     public Boolean getShielded() { return this.shielded; }
@@ -180,6 +224,8 @@ public final class Player extends Entity {
     public void setInvulnerable(boolean invulnerable) {
         this.invulnerable = invulnerable;
     }
+
+
 
     @Override
     public void draw(ShapeRenderer shapes) {
@@ -195,23 +241,7 @@ public final class Player extends Entity {
         shapes.setColor(Color.BLACK);
         shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, SIZE - 4);
         shapes.setColor(body);
-        shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, (SIZE - 4) * stamina);
-    }
-
-    //multiplayer:
-
-    //player entity health update
-    public boolean damage(int amount) {
-        if (this.dead) return false;
-        if (shielded || invulnerableFor > 0) return false;
-        health = Math.max(0, health - amount);
-        invulnerableFor = HIT_GRACE;
-        setInvulnerable(true);
-        if (health <= 0) this.kill();
-        return true;
-    }
-    public void heal(int amount) {
-        health = Math.min(maxHealth, health + amount);
+        shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, (SIZE - 4) * staminaFraction());
     }
 
     //inputs

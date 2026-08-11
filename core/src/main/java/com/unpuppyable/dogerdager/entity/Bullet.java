@@ -18,6 +18,7 @@ public final class Bullet extends Entity {
     private final Player target;
     private final float[] tx = new float[TRAIL];
     private final float[] ty = new float[TRAIL];
+    public float ang;
     private int head;
     private int filled;
     private float vx;
@@ -131,7 +132,7 @@ public final class Bullet extends Entity {
             }
             float cx = bounds.x + bounds.width / 2f;
             float cy = bounds.y + bounds.height / 2f;
-            float ang = MathUtils.atan2(vy, vx) * MathUtils.radDeg - 90f;
+            ang = MathUtils.atan2(vy, vx) * MathUtils.radDeg - 90f;
             float w = 6, h = 20;
             shapes.setColor(Color.GOLD);
             shapes.rect(cx - w / 2f, cy - h / 2f, w / 2f, h / 2f, w, h, 1f, 1f, ang);

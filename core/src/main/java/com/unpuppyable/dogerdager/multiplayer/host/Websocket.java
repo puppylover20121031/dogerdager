@@ -25,15 +25,18 @@ public class Websocket extends WebSocketServer {
         super(address); //address ws
         instance = this;
         gson = new Gson();
+        onAppStop();
     }
     public static Websocket startServer(int port) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        new Thread(() ->
+        Thread t = new Thread(() ->
         {
             WebSocketServer server = new Websocket(new InetSocketAddress(port));
             latch.countDown();
             server.run();
-        }).start();
+        });
+        t.setDaemon(true);
+        t.start();
         latch.await();
         Schedulers.pingStateScheduler(30000);
         Schedulers.notVerifiedScheduler(60000);
@@ -51,8 +54,6 @@ public class Websocket extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        System.out.println("check out this userlist "+users);
-        System.out.println("and thats him: "+conn);
         notVerified.remove(conn);
         //broadcast
         if (!users.containsKey(conn)) return;
@@ -114,6 +115,14 @@ public class Websocket extends WebSocketServer {
     public void onStart() {
         ServerLogs.write("WS Server Started");
     }
+
+    public void onAppStop() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("HOOK FIRED");
+            Websocket.stopServer();
+        }));
+    }
+
     public void sendWS(WebSocket conn, String type, Map<String, Object> data) {
         Map<String, Object> json = new HashMap<>(data);
         json.put("t", type);
@@ -134,6 +143,17 @@ public class Websocket extends WebSocketServer {
 
     public static Websocket getInstance() {
         return instance;
+    }
+
+    public static void stopServer() {
+        System.out.println("closing host "+instance);
+        DogerDager.setMultiplayer(false);
+        if (instance == null) return;
+        try {
+            instance.stop();
+        } catch (InterruptedException ex) {
+            System.out.println("Exception in Websocket: "+ex);
+        }
     }
 
     public WebSocket nameToConn(String name) {
@@ -158,5 +178,8 @@ public class Websocket extends WebSocketServer {
         notVerified.remove(conn);
         users.remove(conn);
         conn.close(code, message);
+    }
+    public static void dispose() {
+        stopServer();
     }
 }

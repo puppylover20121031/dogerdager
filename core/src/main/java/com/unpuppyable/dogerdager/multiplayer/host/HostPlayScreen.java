@@ -24,6 +24,7 @@ public class HostPlayScreen extends PlayScreen {
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
     private final Progress progress = new Progress();
+    private float tickrate = 30f;
     private float netTimer;
     private float timeDelta;
     private static HostPlayScreen instance;
@@ -31,6 +32,12 @@ public class HostPlayScreen extends PlayScreen {
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
     private static HashMap<String, Player> players = new HashMap<String, Player>();
     private Player host;
+
+    protected State state;
+
+    protected enum State {
+        PLAYING, PAUSED, DEAD, GAME_OVER, WON
+    }
 
     public HostPlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
         super(game, difficulty, delta, post);
@@ -46,7 +53,8 @@ public class HostPlayScreen extends PlayScreen {
             }
             players.put(playerName, new Player(ARENA_W, PLAY_TOP, post, progress, playerName, curDifficulty, false));
         }
-        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
+        if (host == null) return;
+        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H, host);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
         bingo = Settings.bingo();
@@ -59,12 +67,19 @@ public class HostPlayScreen extends PlayScreen {
         reset();
         if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
             playerShootingEnabled = true;
-        Messages.gameStarted();
+        Messages.gameStarted(curDifficulty, tickrate);
         DogerDager.multiplayerGameStarted = true;
+        state = State.PLAYING;
     }
-    @Override
-    public void render(float delta) {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Pad.justStart()) {
+
+    @Override public void render(float delta) {
+        int playersDead = 0;
+        for (Player p : players.values()) {
+            if (p.dead()) playersDead++;
+        }
+        if (playersDead>=players.size()) state = State.GAME_OVER;
+
+        if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
             if (state == State.PLAYING) {
                 state = State.PAUSED;
             } else if (state == State.PAUSED) {
@@ -74,10 +89,11 @@ public class HostPlayScreen extends PlayScreen {
                 return;
             }
         }
-        if (state == State.PLAYING) {
+        if (state == State.PLAYING || state == State.DEAD) {
             update(Math.min(delta, MAX_STEP), post);
         } else if (state == State.PAUSED) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
+                DogerDager.multiplayerGameStarted = false;
                 toMenu();
                 return;
             }
@@ -87,7 +103,7 @@ public class HostPlayScreen extends PlayScreen {
         draw(delta);
         //networking
         netTimer += delta;
-        if (netTimer < 1f/30f) return;
+        if (netTimer < 1f/tickrate) return;
         netTimer = 0;
         Messages.stateUpdate(players, entities);
     }
@@ -97,9 +113,7 @@ public class HostPlayScreen extends PlayScreen {
         if (host==null) return;
         if (shake > 0)
             shake -= delta;
-        boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT));
-        host.setShielded(shield);
-        host.setStamina(hud.staminaFraction());
+        hud.update(delta);
         for (Player player : players.values()) {
             player.update(delta);
         }
@@ -107,7 +121,7 @@ public class HostPlayScreen extends PlayScreen {
         if (shootCooldown > 0)
             shootCooldown -= delta;
         if (playerShootingEnabled && shootCooldown <= 0
-                && (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Pad.justB())) {
+                && (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB())) {
             shootPlayer();
             shootCooldown = PLAYER_SHOOT_COOLDOWN;
         }
@@ -155,11 +169,11 @@ public class HostPlayScreen extends PlayScreen {
             if (e.dead() || !e.hits(host.bounds()))
                 continue;
             if (e.heals()) {
-                hud.heal(2);
+                host.heal(2);
                 progress.unlock(Achievement.POTIONER);
                 e.kill();
             } else if (e.contactDamage() > 0) {
-                if (e.knocksBack() && !host.strafing() && !hud.invulnerable()) {
+                if (e.knocksBack() && !host.strafing() && !host.invulnerable) {
                     host.knockback(ARENA_W, PLAY_TOP);
                 }
                 hurt(e.contactDamage());
@@ -173,11 +187,9 @@ public class HostPlayScreen extends PlayScreen {
 
         entities.removeIf(Entity::dead);
 
-        host.setInvulnerable(hud.invulnerable());
-
-        if (hud.dead()) {
+        if (host.dead()) {
             progress.unlock(Achievement.FIRST_DEATH);
-            state = State.GAME_OVER;
+            state = State.DEAD;
             progress.recordRun(difficulty, hud.highScore(), false);
         }
     }
@@ -230,6 +242,8 @@ public class HostPlayScreen extends PlayScreen {
         hud.drawText(batch, font);
         if (state == State.PAUSED) {
             drawCentered("PAUSED   -   Esc resume   Q menu");
+        } else if (state == State.DEAD){
+            drawCentered("You Died!"); //respawn
         } else if (state == State.WON) {
             drawMovieEnding(endingText.replace("YOU WON", "YOU WON"), delta);
         } else if (state == State.GAME_OVER) {
@@ -243,7 +257,7 @@ public class HostPlayScreen extends PlayScreen {
         if (host.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (hud.damage(dmg)) {
+        if (host.damage(dmg)) {
             host.health -= dmg;
             shake = 0.22f;
         }
@@ -252,11 +266,12 @@ public class HostPlayScreen extends PlayScreen {
         if (player.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (player.damage(dmg)) Messages.playerHurt(player.username, dmg);
+        player.damage(dmg);
     }
 
     @Override
     protected void shootPlayer() {
+        if (host.dead()) return;
         Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(aim);
         float px = host.bounds().x + Player.SIZE / 2f;
@@ -282,9 +297,10 @@ public class HostPlayScreen extends PlayScreen {
     }
 
     protected void shootPlayer(Player player, int worldX, int worldY, boolean pressed) {
+        if (player.dead()) return;
         if (shootCooldown > 0)
             shootCooldown -= timeDelta;
-        if (playerShootingEnabled && shootCooldown > 0) return;
+        if (!playerShootingEnabled || shootCooldown > 0) return;
 
         Vector3 aim = new Vector3(worldX, worldY, 0);
         float px = player.bounds().x + Player.SIZE / 2f;
@@ -308,6 +324,30 @@ public class HostPlayScreen extends PlayScreen {
         float vy = dy / len * PLAYER_SHOOT_SPEED;
         add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, player));
         shootCooldown = PLAYER_SHOOT_COOLDOWN;
+    }
+
+    // Floor transition: heal, wipe the arena, then either win or stage the next
+    // floor.
+    public void nextFloor() {
+        int floor = hud.advanceFloor();
+        if (floor >= 5)
+            progress.unlock(Achievement.FLOOR_5);
+        if (floor >= 10)
+            progress.unlock(Achievement.FLOOR_10);
+        clearHazards();
+        for (Player p : players.values()) {
+            p.healFull();
+        }
+        if (floor >= difficulty.winFloor) {
+            win();
+            return;
+        }
+        if (floor == difficulty.centipedeFloor) {
+            //spawnBoss(Boss.Kind.CENTIPEDE);
+        } else if (floor % 4 == 0) {
+            Boss.Kind k = floor >= 12 ? Boss.Kind.THREE : floor >= 8 ? Boss.Kind.TWO : Boss.Kind.ONE;
+            spawnBoss(k);
+        }
     }
 
     public static Player getPlayerByName(String name) {

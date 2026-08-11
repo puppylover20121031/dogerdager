@@ -40,7 +40,7 @@ public class PlayScreen implements Screen {
 
     protected static final int INSTANT_KILL = 100_000;
     protected static final float MAX_STEP = 0.05f;
-    public static boolean playerShootingEnabled = false;
+    public boolean playerShootingEnabled = false;
     protected static final float PLAYER_SHOOT_SPEED = 380f;
     protected static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
@@ -92,7 +92,7 @@ public class PlayScreen implements Screen {
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
         player = new Player(ARENA_W, PLAY_TOP, post, progress, prefs.getString("user.name"), curDifficulty, true);
-        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
+        hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H, player);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
         bingo = Settings.bingo();
@@ -108,7 +108,7 @@ public class PlayScreen implements Screen {
             prefs.putBoolean("set.music", false);
         }
         reset();
-        playerShootingEnabled = true;
+        if (difficulty == Difficulty.HARD || difficulty == Difficulty.HARDCORE) playerShootingEnabled = true;
     }
 
     protected void reset() {
@@ -187,7 +187,7 @@ public class PlayScreen implements Screen {
         if (floor >= 10)
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
-        hud.healFull();
+        player.healFull();
         if (floor >= difficulty.winFloor) {
             win();
             return;
@@ -259,7 +259,7 @@ public class PlayScreen implements Screen {
         if (state == State.PLAYING) {
             update(Math.min(delta, MAX_STEP), post);
         } else if (state == State.PAUSED) {
-            if (Gdx.input.isKeyJustPressed(Keys.Q)) {
+            if (Gdx.input.isKeyJustPressed(Keys.Q) || Pad.justStart()) {
                 toMenu();
                 return;
             }
@@ -278,15 +278,13 @@ public class PlayScreen implements Screen {
     protected void update(float delta, PostProcessor post) {
         if (shake > 0)
             shake -= delta;
-        boolean shield = hud.update(delta, Gdx.input.isKeyPressed(Keys.SHIFT_LEFT));
-        player.setShielded(shield);
-        player.setStamina(hud.staminaFraction());
+        hud.update(delta);
         player.update(delta);
         spawner.update(delta);
         if (shootCooldown > 0)
             shootCooldown -= delta;
         if (playerShootingEnabled && shootCooldown <= 0
-                && (Gdx.input.isKeyJustPressed(Keys.SPACE) || Pad.justB())) {
+                && (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB())) {
             shootPlayer();
             shootCooldown = PLAYER_SHOOT_COOLDOWN;
         }
@@ -314,11 +312,11 @@ public class PlayScreen implements Screen {
             if (e.dead() || !e.hits(player.bounds()))
                 continue;
             if (e.heals()) {
-                hud.heal(2);
+                player.heal(2);
                 progress.unlock(Achievement.POTIONER);
                 e.kill();
             } else if (e.contactDamage() > 0) {
-                if (e.knocksBack() && !player.strafing() && !hud.invulnerable()) {
+                if (e.knocksBack() && !player.strafing() && !player.invulnerable) {
                     player.knockback(ARENA_W, PLAY_TOP);
                 }
                 hurt(e.contactDamage());
@@ -332,9 +330,7 @@ public class PlayScreen implements Screen {
 
         entities.removeIf(Entity::dead);
 
-        player.setInvulnerable(hud.invulnerable());
-
-        if (hud.dead()) {
+        if (player.dead()) {
             progress.unlock(Achievement.FIRST_DEATH);
             state = State.GAME_OVER;
             progress.recordRun(difficulty, hud.highScore(), false);
@@ -361,7 +357,7 @@ public class PlayScreen implements Screen {
         if (player.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (hud.damage(dmg)) {
+        if (player.damage(dmg)) {
             shake = 0.22f;
         }
     }
@@ -477,7 +473,6 @@ public class PlayScreen implements Screen {
 
     @Override
     public void dispose() {
-        prefs.putBoolean("set.music", true);
         if (bgm != null) {
             bgm.stop();
             bgm.dispose();

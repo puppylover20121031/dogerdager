@@ -3,6 +3,7 @@ package com.unpuppyable.dogerdager.multiplayer.client;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
+import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 
@@ -47,11 +48,33 @@ public class ClientMessages {
         MultiplayerScreen.deleteFromUserList(loggedOut);
     }
 
-    public static void gameStarted() {
+    public static void gameStarted(Map<String, Object> message) {
+        if (!(message.get("diff") instanceof String diff)) return;
+        Difficulty difficulty;
+        switch (diff) {
+            case "EASY" -> {
+                difficulty = Difficulty.EASY;
+            }
+            case "NORMAL" -> {
+                difficulty = Difficulty.NORMAL;
+            }
+            case "HARD" -> {
+                difficulty = Difficulty.HARD;
+            }
+            case "HARDCORE" -> {
+                difficulty = Difficulty.HARDCORE;
+            }
+            case "CUSTOM" -> {
+                difficulty = Difficulty.CUSTOM;
+            }
+            default -> {
+                return;
+            }
+        }
         Gdx.app.postRunnable(() -> {
             DogerDager game = DogerDager.getGameInstance();
             DogerDager.multiplayerGameStarted = true;
-            DogerDager.instance.setScreen(new ClientPlayScreen(game, game.post, instance.playerName));
+            DogerDager.instance.setScreen(new ClientPlayScreen(game, game.post, difficulty, instance.playerName));
             screenInstance = ClientPlayScreen.getInstance();
         });
 
@@ -70,6 +93,7 @@ public class ClientMessages {
                 //player
                 String username = entityMap.get("username") instanceof String u ? u : null;
                 boolean isDead = entityMap.get("isdead") instanceof Boolean b ? b : false;
+                Float health = entityMap.get("hp") instanceof Double d ? d.floatValue() : null;
                 Float stamina = entityMap.get("stam") instanceof Double d ? d.floatValue() : null;
                 boolean shielded = entityMap.get("shield") instanceof Boolean b ? b : false;
                 boolean invulnerable = entityMap.get("inv") instanceof Boolean b ? b : false;
@@ -87,6 +111,10 @@ public class ClientMessages {
                     }
                 }
                 Float heading = entityMap.get("heading") instanceof Double d ? d.floatValue() : null;
+                //
+                String kind = entityMap.get("kind") instanceof String u ? u : null;
+                Float ang = entityMap.get("ang") instanceof Double d ? d.floatValue() : null;
+                Float telegraph = entityMap.get("tele") instanceof Double d ? d.floatValue() : null;
 
                 entities.add(new ClientPlayScreen.EntityState(
                         key,
@@ -101,7 +129,11 @@ public class ClientMessages {
                         strafeInvuln,
                         stun,
                         seg,
-                        heading
+                        heading,
+                        kind,
+                        ang,
+                        telegraph
+                        //oof
                 ));
             }
             if (screenInstance == null) {
@@ -114,15 +146,11 @@ public class ClientMessages {
         }
     }
 
-    public static void playerHurt(Map<String, Object> message) {
-
-    }
-
     // Client -> server
 
     //type 0
     public static void authorize(String name) {
-        if (instance.verified) return;
+        if (instance.verified || !instance.isOpen()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("user", name);
         instance.sendWS("0", message);
@@ -130,7 +158,7 @@ public class ClientMessages {
 
     //type 1
     public static void keysDown(HashSet<String> keys) {
-        if (!instance.verified) return;
+        if (!instance.verified || !instance.isOpen()) return;
         if (!DogerDager.multiplayerGameStarted) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("keys", keys);
@@ -139,7 +167,7 @@ public class ClientMessages {
 
     //type 2
     public static void keysUp(HashSet<String> keys) {
-        if (!instance.verified) return;
+        if (!instance.verified || !instance.isOpen()) return;
         if (!DogerDager.multiplayerGameStarted) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("keys", keys);
@@ -148,7 +176,7 @@ public class ClientMessages {
 
     //type 3
     public static void shoot(int x, int y, boolean isPressed) {
-        if (!instance.verified) return;
+        if (!instance.verified || !instance.isOpen()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("x", x);
         message.put("y", y);
@@ -158,7 +186,7 @@ public class ClientMessages {
 
     //type 5
     public static void sendPing() {
-        if (!instance.verified) return;
+        if (!instance.verified || !instance.isOpen()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         instance.sendWS("5", message);
     }

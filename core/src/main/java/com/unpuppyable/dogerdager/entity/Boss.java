@@ -18,7 +18,7 @@ public final class Boss extends Entity {
     private static final Color TWO_COL = new Color(0.78f, 0.24f, 1f, 1f);
     private static final Color CENTIPEDE_COL = new Color(0.84f, 0.38f, 0.08f, 1f);
 
-    private final Kind kind;
+    public final Kind kind;
     private final PlayScreen screen;
     private final Player target;
     private final float worldW;

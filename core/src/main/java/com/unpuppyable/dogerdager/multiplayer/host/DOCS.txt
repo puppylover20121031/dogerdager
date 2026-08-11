@@ -22,8 +22,8 @@ keys being let go:
 shoot Arrow:
 {
 "t":"3",
-"x": int x,
-"y": int y,
+"x":int x,
+"y":int y,
 "pressing":boolean pressing
 }
 PING:
@@ -36,9 +36,9 @@ Server -> Client
 AUTHORIZE:
 {
 "t":"200",
-"success": boolean success,
+"success":boolean success,
 "message":String message,
-"users": List<String> users
+"users":List<String> users
 }
 
 new User Joined
@@ -60,16 +60,50 @@ PONG:
 
 gameStarted:
 {
-"t":"210"
+"t":"210",
+"diff":String difficulty,
+"tps"float tickrate
 }
 
 EntityStates
 {
 "t":"250",
 "UUID": {
-    "type":entity.name,
+    "type":"Entity",
     "x":float x,
     "y":float y
+    },
+"UUID": {
+    "type":"Centipede",
+    "x":float x,
+    "y":float y,
+    "segs":some list with x and y values
+    "heading":float heading
+    },
+"UUID": {
+    "type":"Enemy",
+    "x":float x,
+    "y":float y,
+    "kind":String kind
+    },
+"UUID": {
+    "type":"Boss", !NOT FINISHED!
+    "x":float x,
+    "y":float y,
+    "kind":String kind
+    },
+"UUID": {
+    "type":"Bullet",
+    "x":float x,
+    "y":float y,
+    "kind":String kind,
+    "ang":float ang
+    },
+"UUID": {
+    "type":"Laser",
+    "x":float x,
+    "y":float y,
+    "tele":float telegraph
     },
 "UUID": {
     "type":"Player",
@@ -78,12 +112,6 @@ EntityStates
     "username":String username,
     "isdead":boolean player.dead()
     }
-}
-
-hurt:
-{
-"t":"251",
-"dmg":int amount
 }
 
 ERROR:

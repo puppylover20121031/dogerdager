@@ -4,13 +4,19 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.kotcrab.vis.ui.widget.VisDialog;
 import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
 
@@ -18,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.badlogic.gdx.graphics.g3d.particles.ParticleShader.AlignMode.Screen;
 
@@ -29,11 +36,6 @@ public class ClientPlayScreen implements Screen {
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
-    protected static final int INSTANT_KILL = 100_000;
-    protected static final float MAX_STEP = 0.05f;
-    public static boolean playerShootingEnabled = false;
-    protected static final float PLAYER_SHOOT_SPEED = 380f;
-    protected static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
     private final KeyBind keyBind = new KeyBind();
 
     protected float shake;
@@ -41,19 +43,25 @@ public class ClientPlayScreen implements Screen {
     protected float camX = ARENA_W;
     protected Viewport viewport;
     protected final ShapeRenderer shapes = new ShapeRenderer();
+    private final SpriteBatch batch = new SpriteBatch();
+    private final BitmapFont font = new BitmapFont();
+    private final GlyphLayout layout = new GlyphLayout();
+    private boolean waitingForExitConfirm = false;
+    private DogerDager game = DogerDager.getGameInstance();
 
     private HashSet<String> keysDown = new HashSet<String>();
     private HashSet<String> previousKeysDown = new HashSet<String>();
-    private HashMap<String, EntityState> entities = new HashMap<String, EntityState>();
-    private HashMap<String, EntityState> previousEntities = new HashMap<String, EntityState>();
-    private HashMap<String, EntityState> players = new HashMap<String, EntityState>();
+    private ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<String, EntityState>();
+    private ConcurrentHashMap<String, EntityState> previousEntities = new ConcurrentHashMap<String, EntityState>();
+    private ConcurrentHashMap<String, EntityState> players = new ConcurrentHashMap<String, EntityState>();
     private static ClientPlayScreen instance;
     private String yourName;
     private EntityState player;
     private float anim = 0;
 
+    private float timer = 0;
 
-    public ClientPlayScreen(DogerDager game, PostProcessor post, String name) {
+    public ClientPlayScreen(DogerDager game, PostProcessor post, Difficulty difficulty, String name) {
         this.yourName = name;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         instance = this;
@@ -62,33 +70,47 @@ public class ClientPlayScreen implements Screen {
     @Override
     public void render(float delta) {
         anim+=delta;
-        handleKeys();
+        handleKeys(delta);
         draw(delta);
     }
 
-    private void handleKeys() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            //are you sure you want to leave popup
+    private void handleKeys(float delta) {
+        if (waitingForExitConfirm && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Pad.justA())) {
+            game.setScreen(new MenuScreen(game, game.post));
+            dispose();
+        }
+
+        if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
+            if (waitingForExitConfirm) {
+                waitingForExitConfirm = false;
+                return;
+            }
+            waitingForExitConfirm = true;
         }
 
         if (!WebsocketClient.getClientInstance().verified) {
-            //error and in 5 seconds redirect to menu
+            drawCentered("Encountered a connection issue, redirecting to menu...");
+            timer += delta;
+            if (timer >= 3) {
+                game.setScreen(new MenuScreen(game, game.post));
+                dispose();
+            }
             return;
         }
 
-        if (keyBind.isPressed(KeyBind.Action.MOVE_UP)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_UP) || Pad.justUp()) {
             keysDown.add("W");
         }
 
-        if (keyBind.isPressed(KeyBind.Action.MOVE_DOWN)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_DOWN) || Pad.justDown()) {
             keysDown.add("S");
         }
 
-        if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT) || Pad.justLeft()) {
             keysDown.add("A");
         }
 
-        if (keyBind.isPressed(KeyBind.Action.MOVE_RIGHT)) {
+        if (keyBind.isPressed(KeyBind.Action.MOVE_RIGHT) || Pad.justDown()) {
             keysDown.add("D");
         }
 
@@ -96,7 +118,12 @@ public class ClientPlayScreen implements Screen {
             keysDown.add("TAB");
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT)
+            || Pad.shield()) {
+            keysDown.add("SHIFT_LEFT");
+        }
+
+        if (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB()) {
             shoot();
         }
 
@@ -118,14 +145,14 @@ public class ClientPlayScreen implements Screen {
     }
 
     protected void shoot() {
-        int x = Gdx.input.getX();
-        int y = Gdx.input.getY();
+        Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        viewport.unproject(aim);
         boolean isPressed = Gdx.input.isTouched() || Gdx.input.isButtonPressed(Input.Buttons.LEFT);
-        ClientMessages.shoot(x, y, isPressed);
+        ClientMessages.shoot((int)aim.x, (int)aim.y, isPressed);
     }
 
     public void updateStates(HashSet<Object> entitySet) {
-        previousEntities = new HashMap<>(entities);
+        previousEntities = new ConcurrentHashMap<>(entities);
         for (EntityState oldEnt : previousEntities.values()) {
             if (entityDied(oldEnt.id, entitySet)) entities.remove(oldEnt.id);
         }
@@ -177,7 +204,21 @@ public class ClientPlayScreen implements Screen {
         for (EntityState e : entities.values()) {
             drawEntity(e, shapes);
         }
+
+        if (waitingForExitConfirm) {
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            shapes.setColor(0f, 0f, 0f, 0.6f);
+            shapes.rect(0, 0, WORLD_W, WORLD_H);
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
         shapes.end();
+
+        if (waitingForExitConfirm) {
+            batch.begin();
+            drawCentered("Are you sure you want to leave? (press enter or a on pad)");
+            batch.end();
+        }
+
     }
 
     private void drawEntity(EntityState entity, ShapeRenderer shapes) {
@@ -231,14 +272,13 @@ public class ClientPlayScreen implements Screen {
                 shapes.circle(h.x + fx * 3f - sx * 3f, h.y + fy * 3f - sy * 3f, 1.8f);
             }
             case "Enemy" -> {
-                /*shapes.setColor(switch (entity.kind) {
+                shapes.setColor(switch (entity.kind) {
                     case "NORMAL" -> Color.RED;
                     case "FAST" -> Color.GRAY;
                     case "SMART" -> Color.GREEN;
+                    default -> Color.RED;
                 });
-                shapes.rect(entity.x, entity.y, entity.width, entity.height);*/
-                shapes.setColor(Color.ORANGE);
-                shapes.rect(entity.x, entity.y, Player.SIZE, Player.SIZE);
+                shapes.rect(entity.x, entity.y, Enemy.SIZE, Enemy.SIZE);
             }
             case "Boss" -> {
                 /*if (entity.kind == "THREE" && entity.settled && entity.fireTimer < 0.3f) {
@@ -269,40 +309,30 @@ public class ClientPlayScreen implements Screen {
                 shapes.rect(entity.x, entity.y, Boss.SIZE, Boss.SIZE);
             }
             case "Bullet" -> {
-                /*if (entity.kind == "ROCKET") {
-                    for (int i = 0; i < entity.filled; i++) {
-                        int idx = (entity.head - 1 - i + 2 * Bullet.TRAIL) % Bullet.TRAIL;
-                        float t = 1f - (float) i / Bullet.TRAIL;
-                        float s = 7f * t;
-                        shapes.setColor(0.9f * t, 0.7f * t, 0.1f * t, 1f);
-                    }
-                    float cx = entity.x + entity.width / 2f;
-                    float cy = entity.y + entity.height / 2f;
+                int size = entity.kind.equals("FALLING") ? 32 : entity.kind.equals("ROCKET") ? 18 : entity.kind.equals("SHARD") ? 12 : 16;
+                if (entity.kind.equals("ROCKET")) {
+                    float cx = entity.x + size / 2f;
+                    float cy = entity.y + size / 2f;
                     float w = 6, h = 20;
                     shapes.setColor(Color.GOLD);
-                    shapes.rect(cx - w / 2f, cy - h / 2f, w / 2f, h / 2f, w, h, 1f, 1f, ang);
+                    shapes.rect(cx - w / 2f, cy - h / 2f, w / 2f, h / 2f, w, h, 1f, 1f, entity.ang);
                     return;
                 }
-                shapes.setColor(kind == Bullet.Kind.HOMING ? Color.ROYAL : kind == Bullet.Kind.SHARD ? Color.ORANGE : Color.RED);
-                shapes.rect(entity.x, entity.y, entity.width, bounds.height);*/
-                shapes.setColor(Color.ORANGE);
-                //int size = entity.kind.equals("FALLING") ? 32 : entity.kind.equals("ROCKET") ? 18 : entity.kind.equals("SHARD") ? 12 : 16;
-                shapes.rect(entity.x, entity.y, 16, 16);
+                shapes.setColor(entity.kind.equals("HOMING") ? Color.ROYAL : entity.kind.equals("SHARD") ? Color.ORANGE : Color.RED);
+                shapes.rect(entity.x, entity.y, size, size);
             }
             case "Laser" -> {
                 int slots = 5;
                 float slotW = ARENA_W / slots;
                 float laserW = slotW * 0.78f;
-                /*if (entity.telegraph > 0) {
+                if (entity.telegraph > 0) {
                     shapes.setColor(0.6f, 0.05f, 0.05f, 1f);
                     float cx = entity.x + laserW / 2f;
                     shapes.rect(cx - 1.5f, entity.y, 3, laserW);
                 } else {
                     shapes.setColor(1f, 0.25f, 0.2f, 1f);
                     shapes.rect(entity.x, entity.y, laserW, laserW);
-                }*/
-                shapes.setColor(Color.RED);
-                shapes.rect(entity.x, entity.y, laserW, laserW);
+                }
             }
             case "PlayerArrow" -> {
                 shapes.setColor(Color.GOLD);
@@ -333,11 +363,19 @@ public class ClientPlayScreen implements Screen {
         shapes.rect(0, PLAY_TOP - 2f, ARENA_W, 2f);
         shapes.rect(0, 0, 2f, PLAY_TOP);
         shapes.rect(ARENA_W - 2f, 0, 2f, PLAY_TOP);
-    }
-    //centipede
+        }
+        //centipede
     private static float radius(int i) {
-    return MathUtils.lerp(Centipede.HEAD_R, Centipede.TAIL_R, i / (float) (Centipede.SEGMENTS - 1));
-}
+        return MathUtils.lerp(Centipede.HEAD_R, Centipede.TAIL_R, i / (float) (Centipede.SEGMENTS - 1));
+    }
+
+    protected void drawCentered(String text) {
+        font.setColor(Color.WHITE);
+        layout.setText(font, text);
+        font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
+    }
+
+
 
     @Override
     public void show() {
@@ -367,7 +405,7 @@ public class ClientPlayScreen implements Screen {
 
     @Override
     public void dispose() {
-
+        WebsocketClient.closeClient();
     }
 
     public static ClientPlayScreen getInstance() {
@@ -389,6 +427,12 @@ public class ClientPlayScreen implements Screen {
             Float stun,
             //centipede
             Vector2[] seg,
-            Float heading
+            Float heading,
+            //boss, bullet, enemy
+            String kind,
+            //bullet special
+            Float ang,
+            //laser
+            Float telegraph
     ) {}
 }

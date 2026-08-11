@@ -8,9 +8,9 @@ public final class Enemy extends Entity {
 
     public enum Kind { NORMAL, FAST, SMART }
 
-    private static final float SIZE = 24;
+    public static final float SIZE = 24;
 
-    private final Kind kind;
+    public final Kind kind;
     private final float speed;
     private final int damage;
     private final float worldW;

@@ -27,12 +27,14 @@ public class WebsocketClient extends WebSocketClient {
             return null;
         }
         CountDownLatch latch = new CountDownLatch(1);
-        new Thread(() ->
+        Thread t = new Thread(() ->
         {
             WebSocketClient client = new WebsocketClient(uri, yourName);
             latch.countDown();
             client.run();
-        }).start();
+        });
+        t.setDaemon(true);
+        t.start();
         latch.await();
         Schedulers.sendOutPingMessage(5000);
         return getClientInstance();
@@ -44,7 +46,6 @@ public class WebsocketClient extends WebSocketClient {
         this.playerName = yourName;
         instance = this;
         verified = false;
-
     }
 
     @Override
@@ -81,7 +82,7 @@ public class WebsocketClient extends WebSocketClient {
         }
         //game started
         if (msg.get("t").equals("210")) {
-            ClientMessages.gameStarted();
+            ClientMessages.gameStarted(msg);
             return;
         }
         if (!DogerDager.multiplayerGameStarted) return;
@@ -90,18 +91,12 @@ public class WebsocketClient extends WebSocketClient {
             ClientMessages.updateStates(msg);
             return;
         }
-        //hurted
-        if (msg.get("t").equals("251")) {
-            ClientMessages.playerHurt(msg);
-            return;
-        }
-        //
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
         verified = false;
-
+        DogerDager.setMultiplayer(false);
     }
 
     @Override
@@ -115,5 +110,14 @@ public class WebsocketClient extends WebSocketClient {
     }
     public static WebsocketClient getClientInstance() {
         return instance;
+    }
+
+    public static void closeClient() {
+        if (instance == null || instance.isClosed() || instance.isClosing()) return;
+        instance.close();
+    }
+
+    public static void dispose() {
+        closeClient();
     }
 }

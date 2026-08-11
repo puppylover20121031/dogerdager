@@ -14,7 +14,9 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.unpuppyable.dogerdager.multiplayer.client.WebsocketClient;
 import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
+import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
 
 public final class MenuScreen extends ScreenAdapter {
 
@@ -69,16 +71,16 @@ public final class MenuScreen extends ScreenAdapter {
             root.add(button).width(220).height(34).pad(3).row();
         }
 
-        if (!DogerDager.multiplayer) {
-            multiplayerButton = new VisTextButton("Open To LAN");
-            multiplayerButton.addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    openMultiplayer();
-                }
-            });
-            root.add(multiplayerButton).width(220).height(34).padTop(8).row();
-        }
+
+        multiplayerButton = new VisTextButton("Multiplayer");
+        multiplayerButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                openMultiplayer();
+            }
+        });
+        root.add(multiplayerButton).width(220).height(34).padTop(8).row();
+
 
         creditsButton = new VisTextButton("CREDITS");
         creditsButton.addListener(new ChangeListener() {
@@ -201,16 +203,18 @@ public final class MenuScreen extends ScreenAdapter {
             return;
         }
         if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP) || Pad.justUp()) {
-            index = (index - 1 + CHOICES.length + 1) % (CHOICES.length + 1);
+            index = (index - 1 + CHOICES.length + 2) % (CHOICES.length + 2);
             game.menuMove();
         }
         if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN) || Pad.justDown()) {
-            index = (index + 1) % (CHOICES.length + 1);
+            index = (index + 1) % (CHOICES.length + 2);
             game.menuMove();
         }
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE) || Pad.justA()) {
             if (index < CHOICES.length) {
                 start(CHOICES[index], 0f, post);
+            } else if (index == 5) {
+                openMultiplayer();
             } else {
                 openCredits();
             }
@@ -236,8 +240,11 @@ public final class MenuScreen extends ScreenAdapter {
             if (buttons[i].isDisabled()) continue;
             buttons[i].setColor(i == index ? Color.YELLOW : Color.WHITE);
         }
+        if (multiplayerButton != null) {
+            multiplayerButton.setColor(index == 5 ? Color.YELLOW : Color.WHITE);
+        }
         if (creditsButton != null) {
-            creditsButton.setColor(index == CHOICES.length ? Color.YELLOW : Color.WHITE);
+            creditsButton.setColor(index == 6 ? Color.YELLOW : Color.WHITE);
         }
     }
     private void musicStop() {

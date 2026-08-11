@@ -71,23 +71,24 @@ public final class KeyBindScreen extends ScreenAdapter {
 
     private void handleKeys(PostProcessor post) {
         if (waitingForInput) {
-            if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
+            if (Gdx.input.isKeyJustPressed(Keys.ESCAPE) || Pad.justB()) {
                 waitingForInput = false;
                 pendingAction = null;
             }
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
+        if (Gdx.input.isKeyJustPressed(Keys.ESCAPE) || Pad.justB()) {
             switching = true;
             game.setScreen(new SettingsScreen(game, post));
             dispose();
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP)) index = (index + actions.length - 1) % actions.length;
-        if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN)) index = (index + 1) % actions.length;
+        if (Gdx.input.isKeyJustPressed(Keys.W) || Gdx.input.isKeyJustPressed(Keys.UP) || Pad.justUp()) index = (index + actions.length - 1) % actions.length;
+        if (Gdx.input.isKeyJustPressed(Keys.S) || Gdx.input.isKeyJustPressed(Keys.DOWN) || Pad.justDown()) index = (index + 1) % actions.length;
 
         if (Gdx.input.isKeyJustPressed(Keys.ENTER) || Gdx.input.isKeyJustPressed(Keys.SPACE)
-                || Gdx.input.isKeyJustPressed(Keys.LEFT) || Gdx.input.isKeyJustPressed(Keys.RIGHT)) {
+                || Gdx.input.isKeyJustPressed(Keys.LEFT) || Gdx.input.isKeyJustPressed(Keys.RIGHT)
+                || Pad.justA() || Pad.justLeft() || Pad.justRight()) {
             pendingAction = actions[index];
             waitingForInput = true;
         }
@@ -116,6 +117,7 @@ public final class KeyBindScreen extends ScreenAdapter {
             case MOVE_LEFT -> "Move Left";
             case MOVE_RIGHT -> "Move Right";
             case STRAFE -> "Strafe";
+            case SHOOT -> "Shoot";
             case PAUSE -> "Pause";
         };
     }
