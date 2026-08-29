@@ -83,6 +83,7 @@ public final class Player extends Entity {
         if(this.post.getGlitch() && !DogerDager.getMultiplayer()) {
             STRAFE_DIST = 320;
             SPEED = 400;
+            progress.unlock(Achievement.GET_GLITCHED);
         }
 
         if (stun > 0) {

@@ -302,6 +302,7 @@ public class PlayScreen implements Screen {
                     if ((target instanceof Enemy || target instanceof Centipede) && arrow.hits(target.bounds())) {
                         arrow.kill();
                         target.kill();
+                        progress.unlock(Achievement.TAKE_THAT);
                         break;
                     }
                 }
@@ -344,11 +345,15 @@ public class PlayScreen implements Screen {
         // bgm.play();
         // mute = true;
         // }
-        // }
+        // } 
 
         if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
                 && Gdx.input.isKeyPressed(Keys.W)) {
             win();
+        }
+
+        if(player.strafing() && this.post.getGlitch()) {
+            progress.unlock(Achievement.USE_GLITCH);
         }
 
     }

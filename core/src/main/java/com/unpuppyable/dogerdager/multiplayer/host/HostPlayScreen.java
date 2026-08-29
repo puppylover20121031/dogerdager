@@ -139,6 +139,7 @@ public class HostPlayScreen extends PlayScreen {
                     if ((target instanceof Enemy || target instanceof Centipede) && arrow.hits(target.bounds())) {
                         arrow.kill();
                         target.kill();
+                        progress.unlock(Achievement.TAKE_THAT);
                         break;
                     }
                 }
