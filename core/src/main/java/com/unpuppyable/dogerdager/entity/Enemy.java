@@ -15,7 +15,6 @@ public final class Enemy extends Entity {
     private final int damage;
     private final float worldW;
     private final float playTop;
-    private final Player target;
     private float vx;
     private float vy;
 

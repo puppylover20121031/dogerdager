@@ -80,12 +80,13 @@ public class ClientMessages {
 
     }
 
-    public static void updateStates(Map<String, Object> message) {
+    public static void newEntityStates(Map<String, Object> message) {
         try {
             HashSet<Object> entities = new HashSet<Object>();
             for (String key : message.keySet()) {
                 if (key.equals("t")) continue;
                 Object value = message.get(key);
+
                 if (!(value instanceof Map<?, ?> entityMap)) continue;
                 if (!(entityMap.get("x") instanceof Double dx)) continue;
                 if (!(entityMap.get("y") instanceof Double dy)) continue;
@@ -115,6 +116,13 @@ public class ClientMessages {
                 String kind = entityMap.get("kind") instanceof String u ? u : null;
                 Float ang = entityMap.get("ang") instanceof Double d ? d.floatValue() : null;
                 Float telegraph = entityMap.get("tele") instanceof Double d ? d.floatValue() : null;
+                //boss
+                Float targetX = entityMap.get("tx") instanceof Double d ? d.floatValue() : null;
+                Float targetY = entityMap.get("ty") instanceof Double d ? d.floatValue() : null;
+                boolean settled = entityMap.get("s") instanceof Boolean b ? b : false;
+                Float fireTimer = entityMap.get("ft") instanceof Double d ? d.floatValue() : null;
+                Integer phase = entityMap.get("ph") instanceof Integer i ? i : null;
+                Float atkTimer = entityMap.get("at") instanceof Double d ? d.floatValue() : null;
 
                 entities.add(new ClientPlayScreen.EntityState(
                         key,
@@ -128,19 +136,105 @@ public class ClientMessages {
                         invulnerable,
                         strafeInvuln,
                         stun,
+                        health,
                         seg,
                         heading,
                         kind,
                         ang,
-                        telegraph
-                        //oof
+                        telegraph,
+                        targetX,
+                        targetY,
+                        settled,
+                        fireTimer,
+                        phase,
+                        atkTimer
+               ));
+            }
+            if (screenInstance == null) {
+                screenInstance = ClientPlayScreen.getInstance();
+                return;
+            }
+            screenInstance.newEntityStates(entities);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateEntityStates(Map<String, Object> message) {
+        try {
+            HashSet<Object> entities = new HashSet<Object>();
+            for (String key : message.keySet()) {
+                if (key.equals("t")) continue;
+                Object value = message.get(key);
+
+                if (!(value instanceof Map<?, ?> entityMap)) continue;
+                Float x = entityMap.get("x") instanceof Double d ? d.floatValue() : null;
+                Float y = entityMap.get("y") instanceof Double d ? d.floatValue() : null;
+                String type = entityMap.get("type") instanceof String u ? u : null;
+                //player
+                String username = entityMap.get("username") instanceof String u ? u : null;
+                boolean isDead = entityMap.get("isdead") instanceof Boolean b ? b : false;
+                Float health = entityMap.get("hp") instanceof Double d ? d.floatValue() : null;
+                Float stamina = entityMap.get("stam") instanceof Double d ? d.floatValue() : null;
+                boolean shielded = entityMap.get("shield") instanceof Boolean b ? b : false;
+                boolean invulnerable = entityMap.get("inv") instanceof Boolean b ? b : false;
+                Float strafeInvuln = entityMap.get("sinv") instanceof Double d ? d.floatValue() : null;
+                Float stun = entityMap.get("stun") instanceof Double d ? d.floatValue() : null;
+                //centipede
+                Vector2[] seg;
+                if (entityMap.get("seg") == null) {
+                    seg = null;
+                } else {
+                    List<Map<String, Double>>segs = (List<Map<String, Double>>) entityMap.get("seg");
+                    seg = new Vector2[segs.size()];
+                    for (int i = 0; i < segs.size(); i++) {
+                        seg[i] = new Vector2(segs.get(i).get("x").floatValue(), segs.get(i).get("y").floatValue());
+                    }
+                }
+                Float heading = entityMap.get("heading") instanceof Double d ? d.floatValue() : null;
+                //
+                String kind = entityMap.get("kind") instanceof String u ? u : null;
+                Float ang = entityMap.get("ang") instanceof Double d ? d.floatValue() : null;
+                Float telegraph = entityMap.get("tele") instanceof Double d ? d.floatValue() : null;
+                //boss
+                Float targetX = entityMap.get("tx") instanceof Double d ? d.floatValue() : null;
+                Float targetY = entityMap.get("ty") instanceof Double d ? d.floatValue() : null;
+                boolean settled = entityMap.get("s") instanceof Boolean b ? b : false;
+                Float fireTimer = entityMap.get("ft") instanceof Double d ? d.floatValue() : null;
+                Integer phase = entityMap.get("ph") instanceof Integer i ? i : null;
+                Float atkTimer = entityMap.get("at") instanceof Double d ? d.floatValue() : null;
+
+                entities.add(new ClientPlayScreen.EntityState(
+                        key,
+                        type,
+                        x,
+                        y,
+                        username,
+                        isDead,
+                        stamina,
+                        shielded,
+                        invulnerable,
+                        strafeInvuln,
+                        stun,
+                        health,
+                        seg,
+                        heading,
+                        kind,
+                        ang,
+                        telegraph,
+                        targetX,
+                        targetY,
+                        settled,
+                        fireTimer,
+                        phase,
+                        atkTimer
                 ));
             }
             if (screenInstance == null) {
                 screenInstance = ClientPlayScreen.getInstance();
                 return;
             }
-            screenInstance.updateStates(entities);
+            screenInstance.updateEntityStates(entities);
         } catch (Exception e) {
             e.printStackTrace();
         }

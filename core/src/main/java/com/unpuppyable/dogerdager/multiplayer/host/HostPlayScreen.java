@@ -77,7 +77,10 @@ public class HostPlayScreen extends PlayScreen {
         for (Player p : players.values()) {
             if (p.dead()) playersDead++;
         }
-        if (playersDead>=players.size()) state = State.GAME_OVER;
+        if (playersDead>=players.size()) {
+            state = State.GAME_OVER;
+            //broadcast new gamestate
+        }
 
         if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
             if (state == State.PLAYING) {
@@ -105,7 +108,7 @@ public class HostPlayScreen extends PlayScreen {
         netTimer += delta;
         if (netTimer < 1f/tickrate) return;
         netTimer = 0;
-        Messages.stateUpdate(players, entities);
+        Messages.renderTick(players, entities);
     }
 
     protected void update(float delta, PostProcessor post) {
@@ -126,8 +129,21 @@ public class HostPlayScreen extends PlayScreen {
             shootCooldown = PLAYER_SHOOT_COOLDOWN;
         }
 
-        for (var e : entities)
+        for (var e : entities) {
             e.update(delta);
+
+            if (!(e instanceof Boss || e instanceof Centipede || e instanceof Bullet || e instanceof Enemy)) continue;
+            if (e instanceof Bullet bullet) {
+                if (bullet.kind != Bullet.Kind.HOMING) continue;
+            }
+            if (e instanceof Enemy enemy) {
+                if (enemy.kind != Enemy.Kind.SMART) continue;
+            }
+            if (!e.getTarget().dead()) continue;
+            for (Player p : players.values()) {
+                if (!p.dead()) e.setTarget(p);
+            }
+        }
         entities.addAll(pending);
         pending.clear();
 
@@ -337,6 +353,7 @@ public class HostPlayScreen extends PlayScreen {
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         for (Player p : players.values()) {
+            if (player.dead()) continue;
             p.healFull();
         }
         if (floor >= difficulty.winFloor) {
@@ -357,6 +374,15 @@ public class HostPlayScreen extends PlayScreen {
 
     public static HostPlayScreen getInstance() {
         return instance;
+    }
+
+    @Override
+    protected void reset() {
+        super.reset();
+        for (Player p : players.values()) {
+            p.revive();
+            p.healFull();
+        }
     }
 
 }

@@ -15,7 +15,6 @@ public final class Bullet extends Entity {
     public final Kind kind;
     private final int damage;
     private final float worldW;
-    private final Player target;
     private final float[] tx = new float[TRAIL];
     private final float[] ty = new float[TRAIL];
     public float ang;

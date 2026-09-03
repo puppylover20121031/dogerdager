@@ -20,6 +20,7 @@ import com.unpuppyable.dogerdager.multiplayer.client.WebsocketClient;
 import com.unpuppyable.dogerdager.multiplayer.host.Messages;
 import com.unpuppyable.dogerdager.multiplayer.host.ServerLogs;
 import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
+import org.java_websocket.server.WebSocketServer;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -31,18 +32,17 @@ public class MultiplayerScreen extends ScreenAdapter {
     private final DogerDager game;
     private final PostProcessor post;
     private final Stage stage = new Stage(new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H));
-    private static VisTable root = new VisTable();
+    private static final VisTable root = new VisTable();
     private boolean switching;
     private static String myIp;
     private static int port = 9090;
     private static Websocket wsInstance;
     private static WebsocketClient clientInstance;
-    private static Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private static final Preferences prefs = Gdx.app.getPreferences("doger-dager");
     private static Collection<String> players;
 
     private static final LinkedHashMap<String, VisLabel> userList = new LinkedHashMap<>();
     private static final VisTable userListTable = new VisTable();
-    private static VisLabel userListTitle;
     private static VisLabel error;
     private static VisTextButton joinButton;
     private static VisTextButton connectButton;
@@ -51,10 +51,8 @@ public class MultiplayerScreen extends ScreenAdapter {
     private static VisTextField promptName;
     private static VisTextField promptUri;
 
-    private KeyBind keyBind = new KeyBind();
-
     private static int index = 0;
-    private static List<Actor> choices = new ArrayList<>();
+    private static final List<Actor> choices = new ArrayList<>();
     private boolean waitingForInput = false;
     private Actor pendingAction;
     private Music bgm;
@@ -125,7 +123,7 @@ public class MultiplayerScreen extends ScreenAdapter {
         } else {
             promptName = new VisTextField(prefs.getString("user.name"));
         }
-        root.add(promptName);
+        root.add(promptName).row();
         choices.add(promptName);
     }
 
@@ -140,6 +138,8 @@ public class MultiplayerScreen extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Pad.justB()) {
             switching = true;
             DogerDager.setMultiplayer(false);
+            Websocket.dispose();
+            WebsocketClient.dispose();
             game.setScreen(new MenuScreen(game, post));
             dispose();
             return;
@@ -216,12 +216,9 @@ public class MultiplayerScreen extends ScreenAdapter {
         }
         DogerDager.setMultiplayer(true);
         //removing join, prompt and host:
-        root.removeActor(joinButton);
-        choices.remove(joinButton);
-        root.removeActor(hostButton);
-        choices.remove(hostButton);
-        root.removeActor(promptName);
-        choices.remove(promptName);
+        hideActor(joinButton);
+        hideActor(hostButton);
+        hideActor(promptName);
         //adding pool with your port
         VisLabel ipTextPool = new VisLabel("Server open on port: "+port);
         root.add(ipTextPool).padBottom(9).row();
@@ -251,10 +248,8 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     private void rollOutJoin() {
         index = 0;
-        root.removeActor(joinButton);
-        choices.remove(joinButton);
-        root.removeActor(hostButton);
-        choices.remove(hostButton);
+        hideActor(joinButton);
+        hideActor(hostButton);
         //making prompt for serverAddress
         promptUri = new VisTextField("Insert Server Address");
         root.add(promptUri).row();
@@ -301,12 +296,9 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     public static void onClientVerified() {
         Gdx.app.postRunnable(() -> {
-            root.removeActor(promptName);
-            choices.remove(promptName);
-            root.removeActor(promptUri);
-            choices.remove(promptUri);
-            root.removeActor(connectButton);
-            choices.remove(connectButton);
+            hideActor(promptName);
+            hideActor(promptUri);
+            hideActor(connectButton);
             root.removeActor(error);  // clear any previous error
             players = new HashSet<>(clientInstance.players);
             createUserList();
@@ -323,7 +315,7 @@ public class MultiplayerScreen extends ScreenAdapter {
     }
 
     private static void createUserList() {
-        userListTitle = new VisLabel("Players");
+        VisLabel userListTitle = new VisLabel("Players");
         userListTitle.setFontScale(2f);
         root.add(userListTitle).width(220).height(34).padTop(10).row();
         root.add(userListTable).row();
@@ -354,7 +346,10 @@ public class MultiplayerScreen extends ScreenAdapter {
             refreshUserList();
         });
     }
-
+    private static void hideActor(Actor actor) {
+        root.removeActor(actor);
+        choices.remove(actor);
+    }
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);

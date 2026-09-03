@@ -26,7 +26,6 @@ public final class Centipede extends Entity {
     public static final Color LEG = new Color(0.32f, 0.12f, 0.05f, 1f);
 
     public final Vector2[] seg = new Vector2[SEGMENTS];
-    private final Player target;
     private final float arenaW;
     private final float playTop;
     public float heading;

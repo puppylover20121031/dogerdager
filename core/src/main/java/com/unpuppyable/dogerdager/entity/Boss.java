@@ -14,26 +14,25 @@ public final class Boss extends Entity {
     public static final float SIZE = 96;
     private static final float DESCEND = 180;
     private static final float PATROL = 150;
-    private static final Color ONE_COL = new Color(1f, 0.48f, 0.2f, 1f);
-    private static final Color TWO_COL = new Color(0.78f, 0.24f, 1f, 1f);
-    private static final Color CENTIPEDE_COL = new Color(0.84f, 0.38f, 0.08f, 1f);
+    public static final Color ONE_COL = new Color(1f, 0.48f, 0.2f, 1f);
+    public static final Color TWO_COL = new Color(0.78f, 0.24f, 1f, 1f);
+    public static final Color CENTIPEDE_COL = new Color(0.84f, 0.38f, 0.08f, 1f);
 
     public final Kind kind;
     private final PlayScreen screen;
-    private final Player target;
     private final float worldW;
     private final float restY;
 
     private float vx = PATROL;
-    private boolean settled;
-    private float atkTimer;
+    public boolean settled;
+    public float atkTimer;
     private boolean altAttack;
     private float minionTimer = 4f;
-    private float fireTimer;
+    public float fireTimer;
     private int rocketsInBurst;
     private boolean armsSpawned;
     private float phaseTimer;
-    private int phase = 1;
+    public int phase = 1;
     private float laserTimer = 4f;
     private float centipedeAttackTimer = 3.5f;
 

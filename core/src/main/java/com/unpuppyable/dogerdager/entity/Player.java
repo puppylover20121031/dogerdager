@@ -47,11 +47,11 @@ public final class Player extends Entity {
 
     public float health;
     public float maxHealth;
-    private boolean isYou;
-    private HashSet<String> multiplayerKeysDown = new HashSet<String>();
+    private final boolean isYou;
+    private final HashSet<String> multiplayerKeysDown = new HashSet<String>();
 
-    private PostProcessor post;
-    private Progress progress;
+    private final PostProcessor post;
+    private final Progress progress;
 
     public Player(float worldW, float playTop, PostProcessor post, Progress progress, String username, Difficulty difficulty, boolean isHost) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
@@ -186,6 +186,7 @@ public final class Player extends Entity {
     }
 
     public void healFull() {
+        if (this.dead()) return;
         health = maxHealth;
     }
 

@@ -11,6 +11,7 @@ public abstract class Entity {
     protected boolean dead;
     public String id = UUID.randomUUID().toString();
     public String name;
+
     protected Entity(float x, float y, float size) {
         bounds = new Rectangle(x, y, size, size);
     }
@@ -35,6 +36,8 @@ public abstract class Entity {
         dead = true;
     }
 
+    public void revive() { dead = false; }
+
     // Hazard contract — defaults are inert; subclasses opt in.
     public int contactDamage() {
         return 0;
@@ -47,6 +50,10 @@ public abstract class Entity {
     public boolean diesOnPlayerHit() {
         return false;
     }
+
+    protected Player target;
+    public Player getTarget() { return target; }
+    public void setTarget(Player target) { this.target = target; }
 
     public boolean isBoss() {
         return false;

@@ -16,11 +16,12 @@ import java.util.concurrent.CountDownLatch;
 
 public class Websocket extends WebSocketServer {
     private static Websocket instance;
+    private static Gson gson;
+
     public final HashMap<WebSocket, String> users = new HashMap<WebSocket, String>(); //logged-in users map;
     public final HashMap<WebSocket, Long> notVerified = new HashMap<WebSocket, Long>();
     public final HashMap<WebSocket, Long> lastPing = new HashMap<WebSocket, Long>();
 
-    private static Gson gson;
     public Websocket(InetSocketAddress address) {
         super(address); //address ws
         instance = this;
@@ -118,8 +119,7 @@ public class Websocket extends WebSocketServer {
 
     public void onAppStop() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("HOOK FIRED");
-            Websocket.stopServer();
+            dispose();
         }));
     }
 
@@ -146,8 +146,9 @@ public class Websocket extends WebSocketServer {
     }
 
     public static void stopServer() {
-        System.out.println("closing host "+instance);
         DogerDager.setMultiplayer(false);
+        DogerDager.multiplayerGameStarted = false;
+
         if (instance == null) return;
         try {
             instance.stop();
@@ -171,8 +172,6 @@ public class Websocket extends WebSocketServer {
 
     public void logOff(WebSocket conn, Integer code, String message) {
         String name = users.get(conn);
-        //some actions to delete player off a map
-
         //deleting connection
         lastPing.remove(conn);
         notVerified.remove(conn);

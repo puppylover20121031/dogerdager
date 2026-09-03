@@ -88,15 +88,18 @@ public class WebsocketClient extends WebSocketClient {
         if (!DogerDager.multiplayerGameStarted) return;
         //entity states
         if (msg.get("t").equals("250")) {
-            ClientMessages.updateStates(msg);
+            ClientMessages.newEntityStates(msg);
+            return;
+        }
+        if (msg.get("t").equals("251")) {
+            ClientMessages.updateEntityStates(msg);
             return;
         }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        verified = false;
-        DogerDager.setMultiplayer(false);
+
     }
 
     @Override
@@ -119,5 +122,8 @@ public class WebsocketClient extends WebSocketClient {
 
     public static void dispose() {
         closeClient();
+        if (instance != null) instance.verified = false;
+        DogerDager.setMultiplayer(false);
+        Schedulers.stopSchedulers();
     }
 }

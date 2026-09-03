@@ -12,58 +12,61 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.kotcrab.vis.ui.widget.VisDialog;
 import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.badlogic.gdx.graphics.g3d.particles.ParticleShader.AlignMode.Screen;
 
 
 public class ClientPlayScreen implements Screen {
+
+    private static final float FLOOR_TIME = 30f;
     protected static final float WORLD_W = 640 * 3;
     protected static final float WORLD_H = 360 * 3;
     static final float ARENA_W = WORLD_W;
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
 
-    private final KeyBind keyBind = new KeyBind();
+    private static ClientPlayScreen instance;
 
-    protected float shake;
-    //private float camX = ARENA_W / 2f;
-    protected float camX = ARENA_W;
+    private DogerDager game = DogerDager.getGameInstance();
+    private final KeyBind keyBind = new KeyBind();
+    private final Difficulty difficulty;
+    protected final Progress progress = new Progress();
+
     protected Viewport viewport;
     protected final ShapeRenderer shapes = new ShapeRenderer();
     private final SpriteBatch batch = new SpriteBatch();
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
+    private final RecieverHud hud;
+
+    protected float shake;
+    protected float camX = ARENA_W;
+
     private boolean waitingForExitConfirm = false;
-    private DogerDager game = DogerDager.getGameInstance();
-
-    private HashSet<String> keysDown = new HashSet<String>();
-    private HashSet<String> previousKeysDown = new HashSet<String>();
-    private ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<String, EntityState>();
-    private ConcurrentHashMap<String, EntityState> previousEntities = new ConcurrentHashMap<String, EntityState>();
-    private ConcurrentHashMap<String, EntityState> players = new ConcurrentHashMap<String, EntityState>();
-    private static ClientPlayScreen instance;
-    private String yourName;
-    private EntityState player;
     private float anim = 0;
-
     private float timer = 0;
+    private float floorTimer = 0;
+
+    private final HashSet<String> keysDown = new HashSet<String>();
+    private HashSet<String> previousKeysDown = new HashSet<String>();
+
+    private final ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, EntityState> previousEntities = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> players = new ConcurrentHashMap<>();
+    private final String yourName;
+    private EntityState player;
 
     public ClientPlayScreen(DogerDager game, PostProcessor post, Difficulty difficulty, String name) {
         this.yourName = name;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
+        this.difficulty = difficulty;
+        hud = new RecieverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         instance = this;
     }
 
@@ -72,6 +75,18 @@ public class ClientPlayScreen implements Screen {
         anim+=delta;
         handleKeys(delta);
         draw(delta);
+
+        update(delta);
+        hud.update(delta);
+    }
+
+    public void update(float delta) {
+        floorTimer += delta;
+        hud.setFloorProgress(floorTimer / FLOOR_TIME);
+        if (floorTimer >= FLOOR_TIME) {
+            floorTimer = 0;
+            hud.advanceFloor();
+        }
     }
 
     private void handleKeys(float delta) {
@@ -151,7 +166,7 @@ public class ClientPlayScreen implements Screen {
         ClientMessages.shoot((int)aim.x, (int)aim.y, isPressed);
     }
 
-    public void updateStates(HashSet<Object> entitySet) {
+    public void newEntityStates(HashSet<Object> entitySet) {
         previousEntities = new ConcurrentHashMap<>(entities);
         for (EntityState oldEnt : previousEntities.values()) {
             if (entityDied(oldEnt.id, entitySet)) entities.remove(oldEnt.id);
@@ -162,6 +177,43 @@ public class ClientPlayScreen implements Screen {
             entities.put(newEnt.id, newEnt);
             if (newEnt.name == null) continue;
             players.put(newEnt.name, newEnt);
+        }
+    }
+
+    public void updateEntityStates(HashSet<Object> entitySet) {
+        previousEntities = new ConcurrentHashMap<>(entities);
+
+        for (var newEntity : entitySet) {
+            if (!(newEntity instanceof EntityState newEnt)) continue;
+            EntityState old = previousEntities.get(newEnt.id);
+            EntityState e = new EntityState(
+                    newEnt.id,
+                    newEnt.type == null ? old.type : newEnt.type,
+                    newEnt.x == null ? old.x : newEnt.x,
+                    newEnt.y == null ? old.y : newEnt.y,
+                    newEnt.name == null ? old.name : newEnt.name,
+                    newEnt.dead == null ? old.dead : newEnt.dead,
+                    newEnt.stamina == null ? old.stamina : newEnt.stamina,
+                    newEnt.shielded == null ? old.shielded : newEnt.shielded,
+                    newEnt.invulnerable == null ? old.invulnerable : newEnt.invulnerable,
+                    newEnt.strafeinvuln == null ? old.strafeinvuln : newEnt.strafeinvuln,
+                    newEnt.stun == null ? old.stun : newEnt.stun,
+                    newEnt.hp == null ? old.hp : newEnt.hp,
+                    newEnt.seg == null ? old.seg : newEnt.seg,
+                    newEnt.heading == null ? old.heading : newEnt.heading,
+                    newEnt.kind == null ? old.kind : newEnt.kind,
+                    newEnt.ang == null ? old.ang : newEnt.ang,
+                    newEnt.telegraph == null ? old.telegraph : newEnt.telegraph,
+                    newEnt.targetX == null ? old.targetX : newEnt.targetX,
+                    newEnt.targetY == null ? old.targetY : newEnt.targetY,
+                    newEnt.settled == null ? old.settled : newEnt.settled,
+                    newEnt.fireTimer == null ? old.fireTimer : newEnt.fireTimer,
+                    newEnt.phase == null ? old.phase : newEnt.phase,
+                    newEnt.atkTimer == null ? old.atkTimer : newEnt.atkTimer
+            );
+            entities.put(e.id, e);
+            if (e.name == null) continue;
+            players.put(e.name, e);
         }
     }
 
@@ -198,6 +250,7 @@ public class ClientPlayScreen implements Screen {
         }
         cam.position.set(drawX, drawY, 0);
         cam.update();
+        batch.setProjectionMatrix(cam.combined);
         shapes.setProjectionMatrix(cam.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawBackground(shapes);
@@ -211,14 +264,15 @@ public class ClientPlayScreen implements Screen {
             shapes.rect(0, 0, WORLD_W, WORLD_H);
             Gdx.gl.glDisable(GL20.GL_BLEND);
         }
+        hud.drawBars(shapes);
         shapes.end();
 
+        batch.begin();
+        hud.drawText(batch, font);
         if (waitingForExitConfirm) {
-            batch.begin();
             drawCentered("Are you sure you want to leave? (press enter or a on pad)");
-            batch.end();
         }
-
+        batch.end();
     }
 
     private void drawEntity(EntityState entity, ShapeRenderer shapes) {
@@ -281,32 +335,31 @@ public class ClientPlayScreen implements Screen {
                 shapes.rect(entity.x, entity.y, Enemy.SIZE, Enemy.SIZE);
             }
             case "Boss" -> {
-                /*if (entity.kind == "THREE" && entity.settled && entity.fireTimer < 0.3f) {
+                if (entity.kind.equals("THREE") && entity.settled && entity.fireTimer < 0.3f) {
                     float intensity = 1f - entity.fireTimer / 0.3f;
                     shapes.setColor(1f, 0.25f * intensity, 0.1f, 1f);
-                    shapes.rectLine(entity.x + Boss.SIZE / 2f, entity.y, target.bounds().x + 8f, target.bounds().y + 8f, 1.5f);
+                    shapes.rectLine(entity.x + Boss.SIZE / 2f, entity.y, entity.targetX + 8f, entity.targetY + 8f, 1.5f);
                 }
-                Color body = switch (kind) {
-                    case ARM -> Color.MAROON;
-                    case ONE -> ONE_COL;
-                    case TWO -> TWO_COL;
-                    case THREE -> phase <= 1 ? Color.FIREBRICK : phase == 2 ? Color.ORANGE : phase == 3 ? Color.SCARLET : Color.VIOLET;
-                    case CENTIPEDE -> CENTIPEDE_COL;
+                Color body = switch (entity.kind) {
+                    case "ARM" -> Color.MAROON;
+                    case "ONE" -> Boss.ONE_COL;
+                    case "TWO" -> Boss.TWO_COL;
+                    case "THREE" -> entity.phase <= 1 ? Color.FIREBRICK : entity.phase == 2 ? Color.ORANGE : entity.phase == 3 ? Color.SCARLET : Color.VIOLET;
+                    case "CENTIPEDE" -> Boss.CENTIPEDE_COL;
+                    default -> Color.MAGENTA;
                 };
-                if ((kind == Boss.Kind.ONE || kind == Boss.Kind.TWO || kind == Boss.Kind.CENTIPEDE) && settled && atkTimer < 0.25f) {
-                    body = body.cpy().lerp(Color.WHITE, 1f - atkTimer / 0.25f);
+                if ((entity.kind.equals("ONE") || entity.kind.equals("TWO") || entity.kind.equals("CENTIPEDE")) && entity.settled && entity.atkTimer < 0.25f) {
+                    body = body.cpy().lerp(Color.WHITE, 1f - entity.atkTimer / 0.25f);
                 }
                 shapes.setColor(body);
-                shapes.rect(bounds.x, bounds.y, SIZE, SIZE);
+                shapes.rect(entity.x, entity.y, Boss.SIZE, Boss.SIZE);
 
-                if (kind == Boss.Kind.CENTIPEDE) {
+                if (entity.kind.equals("CENTIPEDE")) {
                     shapes.setColor(Color.GOLD);
                     for (int i = 0; i < 4; i++) {
-                        shapes.rect(bounds.x + 12 + i * 18, bounds.y + SIZE / 3f, 10, SIZE / 3f);
+                        shapes.rect(entity.x + 12 + i * 18, entity.y + Boss.SIZE / 3f, 10, Boss.SIZE / 3f);
                     }
-                }*/
-                shapes.setColor(Color.ORANGE);
-                shapes.rect(entity.x, entity.y, Boss.SIZE, Boss.SIZE);
+                }
             }
             case "Bullet" -> {
                 int size = entity.kind.equals("FALLING") ? 32 : entity.kind.equals("ROCKET") ? 18 : entity.kind.equals("SHARD") ? 12 : 16;
@@ -412,19 +465,24 @@ public class ClientPlayScreen implements Screen {
         return instance;
     }
 
+    public EntityState getPlayer() {
+        return player;
+    }
+
     public record EntityState(
             String id,
             String type,
-            float x,
-            float y,
+            Float x,
+            Float y,
             String name,
             //player
-            boolean dead,
+            Boolean dead,
             Float stamina,
-            boolean shielded,
-            boolean invulnerable,
+            Boolean shielded,
+            Boolean invulnerable,
             Float strafeinvuln,
             Float stun,
+            Float hp,
             //centipede
             Vector2[] seg,
             Float heading,
@@ -433,6 +491,13 @@ public class ClientPlayScreen implements Screen {
             //bullet special
             Float ang,
             //laser
-            Float telegraph
+            Float telegraph,
+            //boss
+            Float targetX,
+            Float targetY,
+            Boolean settled,
+            Float fireTimer,
+            Integer phase,
+            Float atkTimer
     ) {}
 }
