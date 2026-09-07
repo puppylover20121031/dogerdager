@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
+import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 
 import java.util.*;
@@ -23,7 +24,7 @@ public class ClientMessages {
         if (!(response.get("users") instanceof List<?> users)) return;
         //logic
         if (!success) {
-            MultiplayerScreen.notifyError(message);
+            ErrorNotifier.show(message);
             return;
         }
         instance.verified = true;
@@ -121,7 +122,7 @@ public class ClientMessages {
                 Float targetY = entityMap.get("ty") instanceof Double d ? d.floatValue() : null;
                 boolean settled = entityMap.get("s") instanceof Boolean b ? b : false;
                 Float fireTimer = entityMap.get("ft") instanceof Double d ? d.floatValue() : null;
-                Integer phase = entityMap.get("ph") instanceof Integer i ? i : null;
+                Integer phase = entityMap.get("ph") instanceof Double d ? d.intValue() : null;
                 Float atkTimer = entityMap.get("at") instanceof Double d ? d.floatValue() : null;
 
                 entities.add(new ClientPlayScreen.EntityState(
@@ -176,8 +177,8 @@ public class ClientMessages {
                 boolean isDead = entityMap.get("isdead") instanceof Boolean b ? b : false;
                 Float health = entityMap.get("hp") instanceof Double d ? d.floatValue() : null;
                 Float stamina = entityMap.get("stam") instanceof Double d ? d.floatValue() : null;
-                boolean shielded = entityMap.get("shield") instanceof Boolean b ? b : false;
-                boolean invulnerable = entityMap.get("inv") instanceof Boolean b ? b : false;
+                Boolean shielded = entityMap.get("shield") instanceof Boolean b ? b : null;
+                Boolean invulnerable = entityMap.get("inv") instanceof Boolean b ? b : null;
                 Float strafeInvuln = entityMap.get("sinv") instanceof Double d ? d.floatValue() : null;
                 Float stun = entityMap.get("stun") instanceof Double d ? d.floatValue() : null;
                 //centipede
@@ -201,7 +202,7 @@ public class ClientMessages {
                 Float targetY = entityMap.get("ty") instanceof Double d ? d.floatValue() : null;
                 boolean settled = entityMap.get("s") instanceof Boolean b ? b : false;
                 Float fireTimer = entityMap.get("ft") instanceof Double d ? d.floatValue() : null;
-                Integer phase = entityMap.get("ph") instanceof Integer i ? i : null;
+                Integer phase = entityMap.get("ph") instanceof Double d ? d.intValue() : null;
                 Float atkTimer = entityMap.get("at") instanceof Double d ? d.floatValue() : null;
 
                 entities.add(new ClientPlayScreen.EntityState(

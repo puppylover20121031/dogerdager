@@ -5,6 +5,7 @@ import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.math.Vector2;
 import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
+import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 import com.unpuppyable.dogerdager.entity.*;
 import org.java_websocket.WebSocket;
@@ -48,7 +49,6 @@ public class Messages {
         //broadcast user joined
         response.put("user", name);
         wsInstance.broadcastWS("201", response);
-        //some listing bs
         wsInstance.notVerified.remove(conn);
         users.put(conn, name);
         MultiplayerScreen.addToUserList(name);
@@ -118,7 +118,10 @@ public class Messages {
             Float y = entity.bounds().y;
             switch (entity) {
                 case Centipede e -> {
-                    if (!(prevVal instanceof CentipedeValues previousValues)) return;
+                    if (!(prevVal instanceof CentipedeValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Centipede");
+                        continue;
+                    }
                     CentipedeValues infoSet = new CentipedeValues(
                             null,
                             !x.equals(previousValues.x) ? x : null,
@@ -130,7 +133,10 @@ public class Messages {
                     updatePreviousEntity(infoSet, e);
                 }
                 case Enemy e -> {
-                    if (!(prevVal instanceof EnemyValues previousValues)) return;
+                    if (!(prevVal instanceof EnemyValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Enemy");
+                        continue;
+                    }
                     EnemyValues infoSet = new EnemyValues(
                             null,
                             !x.equals(previousValues.x) ? x : null,
@@ -141,7 +147,10 @@ public class Messages {
                     updatePreviousEntity(infoSet, e);
                 }
                 case Boss e -> {
-                    if (!(prevVal instanceof BossValues previousValues)) return;
+                    if (!(prevVal instanceof BossValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Boss");
+                        continue;
+                    }
                     BossValues infoSet = new BossValues(
                             null,
                             !x.equals(previousValues.x) ? x : null,
@@ -158,7 +167,10 @@ public class Messages {
                     updatePreviousEntity(infoSet, e);
                 }
                 case Bullet e -> {
-                    if (!(prevVal instanceof BulletValues previousValues)) return;
+                    if (!(prevVal instanceof BulletValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Bullet");
+                        continue;
+                    };
                     BulletValues infoSet = new BulletValues(
                             null,
                             !x.equals(previousValues.x) ? x : null,
@@ -170,7 +182,10 @@ public class Messages {
                     updatePreviousEntity(infoSet, e);
                 }
                 case Laser e -> {
-                    if (!(prevVal instanceof LaserValues previousValues)) return;
+                    if (!(prevVal instanceof LaserValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Laser");
+                        continue;
+                    };
                     LaserValues infoSet = new LaserValues(
                             null,
                             !x.equals(previousValues.x) ? x : null,
@@ -181,7 +196,10 @@ public class Messages {
                     updatePreviousEntity(infoSet, e);
                 }
                 default -> {
-                    if (!(prevVal instanceof EntityValues previousValues)) return;
+                    if (!(prevVal instanceof EntityValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity");
+                        continue;
+                    }
                     EntityValues infoSet = new EntityValues(
                             null,
                             !x.equals(previousValues.x) ? x : null,

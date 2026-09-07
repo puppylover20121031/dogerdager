@@ -43,7 +43,7 @@ public class ClientPlayScreen implements Screen {
     private final SpriteBatch batch = new SpriteBatch();
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
-    private final RecieverHud hud;
+    private final ReceiverHud hud;
 
     protected float shake;
     protected float camX = ARENA_W;
@@ -66,7 +66,7 @@ public class ClientPlayScreen implements Screen {
         this.yourName = name;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.difficulty = difficulty;
-        hud = new RecieverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
+        hud = new ReceiverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         instance = this;
     }
 
@@ -104,7 +104,9 @@ public class ClientPlayScreen implements Screen {
         }
 
         if (!WebsocketClient.getClientInstance().verified) {
+            batch.begin();
             drawCentered("Encountered a connection issue, redirecting to menu...");
+            batch.end();
             timer += delta;
             if (timer >= 3) {
                 game.setScreen(new MenuScreen(game, game.post));
@@ -278,6 +280,8 @@ public class ClientPlayScreen implements Screen {
     private void drawEntity(EntityState entity, ShapeRenderer shapes) {
         switch (entity.type()) {
             case "Player" -> {
+                if (entity.invulnerable == null) return;
+
                 if (entity.strafeinvuln > 0) {
                     EntityState prevPlayer = previousEntities.get(entity.id);
                     shapes.setColor(0.4f, 0.7f, 1f, 1f);

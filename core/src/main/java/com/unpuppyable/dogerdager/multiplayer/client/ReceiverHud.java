@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.unpuppyable.dogerdager.Difficulty;
 
-public final class RecieverHud {
+public final class ReceiverHud {
     private static final float BAND = 72;
 
     private static final Color HEART_ON = Color.SCARLET;
@@ -27,7 +27,7 @@ public final class RecieverHud {
 
     private ClientPlayScreen.EntityState player;
 
-    public RecieverHud(Difficulty difficulty, int bestFloor, float worldW, float worldH) {
+    public ReceiverHud(Difficulty difficulty, int bestFloor, float worldW, float worldH) {
         this.worldW = worldW;
         this.worldH = worldH;
         this.maxHealth = difficulty.maxHealth;

@@ -37,6 +37,7 @@ public class Schedulers {
                 }
             }
         }, 0,15, TimeUnit.SECONDS );
+        schedulers.add(scheduler);
     }
     public static void notVerifiedScheduler(int timeToVerify) {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, r -> {
@@ -52,6 +53,7 @@ public class Schedulers {
                 }
             }
         }, 0,5, TimeUnit.SECONDS );
+        schedulers.add(scheduler);
     }
 
 
@@ -66,5 +68,6 @@ public class Schedulers {
             if (!clientInstance.verified) return;
             ClientMessages.sendPing();
             }, 0,5, TimeUnit.SECONDS );
+        schedulers.add(scheduler);
     }
 }
