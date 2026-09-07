@@ -141,7 +141,10 @@ public class HostPlayScreen extends PlayScreen {
             }
             if (!e.getTarget().dead()) continue;
             for (Player p : players.values()) {
-                if (!p.dead()) e.setTarget(p);
+                if (!p.dead()) {
+                    e.setTarget(p);
+                    break;
+                }
             }
         }
         entities.addAll(pending);
@@ -313,8 +316,8 @@ public class HostPlayScreen extends PlayScreen {
         add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, host));
     }
 
-    protected void shootPlayer(Player player, int worldX, int worldY, boolean pressed) {
-        if (player.dead()) return;
+    protected void shootPlayer(Player p, int worldX, int worldY, boolean pressed) {
+        if (p.dead()) return;
         if (shootCooldown > 0)
             shootCooldown -= timeDelta;
         if (!playerShootingEnabled || shootCooldown > 0) return;
@@ -353,7 +356,7 @@ public class HostPlayScreen extends PlayScreen {
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         for (Player p : players.values()) {
-            if (player.dead()) continue;
+            if (p.dead()) continue;
             p.healFull();
         }
         if (floor >= difficulty.winFloor) {

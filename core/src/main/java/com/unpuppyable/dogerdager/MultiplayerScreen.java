@@ -10,121 +10,197 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisTextField;
-import com.unpuppyable.dogerdager.multiplayer.client.ClientMessages;
 import com.unpuppyable.dogerdager.multiplayer.client.WebsocketClient;
-import com.unpuppyable.dogerdager.multiplayer.host.Messages;
 import com.unpuppyable.dogerdager.multiplayer.host.ServerLogs;
 import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
-import org.java_websocket.server.WebSocketServer;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import java.util.*;
 
 public class MultiplayerScreen extends ScreenAdapter {
 
+    private static final float BUTTON_WIDTH = 220f;
+    private static final float BUTTON_HEIGHT = 34f;
+    private static final int PORT = 9090;
+
+    private static MultiplayerScreen instance;
+
+    // Every "screen" this lobby can show. setState(...) is the only place allowed to move
+    // between them - nothing else should manually add/remove widgets from `content`.
+    private enum LobbyState { IDLE, HOST_LOBBY, JOIN_FORM, CLIENT_LOBBY }
+
+    // --- screen infra ---
     private final DogerDager game;
     private final PostProcessor post;
     private final Stage stage = new Stage(new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H));
-    private static final VisTable root = new VisTable();
+    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private Music bgm;
     private boolean switching;
-    private static String myIp;
-    private static int port = 9090;
-    private static Websocket wsInstance;
-    private static WebsocketClient clientInstance;
-    private static final Preferences prefs = Gdx.app.getPreferences("doger-dager");
-    private static Collection<String> players;
+    private LobbyState state;
 
-    private static final LinkedHashMap<String, VisLabel> userList = new LinkedHashMap<>();
-    private static final VisTable userListTable = new VisTable();
-    private static VisLabel error;
-    private static VisTextButton joinButton;
-    private static VisTextButton connectButton;
-    private static VisTextButton hostButton;
-    private static VisTextButton startGame;
-    private static VisTextField promptName;
-    private static VisTextField promptUri;
+    // --- lobby / networking state ---
+    private Websocket wsInstance;
+    private WebsocketClient clientInstance;
+    private Collection<String> players;
 
-    private static int index = 0;
-    private static final List<Actor> choices = new ArrayList<>();
+    // --- UI widgets ---
+    // `root` holds the title + error label, which never disappear. `content` holds whatever
+    // is specific to the current LobbyState, and gets torn down and rebuilt by setState(...).
+    private final VisTable root = new VisTable();
+    private final VisTable content = new VisTable();
+    private final VisLabel error = new VisLabel("");
+    private final LinkedHashMap<String, VisLabel> userList = new LinkedHashMap<>();
+    private final VisTable userListTable = new VisTable();
+    private VisTextButton joinButton;
+    private VisTextButton connectButton;
+    private VisTextButton hostButton;
+    private VisTextButton startGame;
+    private VisTextField promptName;
+    private VisTextField promptUri;
+
+    // --- keyboard/pad navigation ---
+    private final List<Actor> choices = new ArrayList<>();
+    private int index = 0;
     private boolean waitingForInput = false;
     private Actor pendingAction;
-    private Music bgm;
 
     public MultiplayerScreen(DogerDager game, PostProcessor post) {
         this.game = game;
         this.post = post;
-        build(post);
-    }
+        instance = this;
 
-    private void build(PostProcessor post) {
-        root.clear();
-        stage.addActor(root);
         if (Settings.prefs.getBoolean("set.music", true)) {
             this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu.mp3"));
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
             this.bgm.play(); //menu music
         }
+        stage.addActor(root);
         root.setFillParent(true);
 
         var title = new VisLabel("MULTIPLAYER");
         title.setFontScale(3f);
-        root.add(title).padBottom(8).row();
+        root.add(title).padBottom(20).row();
+
+        root.add(content).row();
+
+        // reopening this screen while already hosting/joined (e.g. navigated back into it)
+        // should land straight in the matching lobby instead of the idle Host/Join menu.
         if (DogerDager.getMultiplayer()) {
             wsInstance = Websocket.getInstance();
             clientInstance = WebsocketClient.getClientInstance();
-            if (clientInstance != null) players = clientInstance.players;
             if (wsInstance != null) {
                 players = wsInstance.users.values();
-                startGame = new VisTextButton("Start");
-                startGame.addListener(new ChangeListener() {
-                    @Override
-                    public void changed(ChangeEvent event, Actor actor) {
-                        start();
-                    }
-                });
-                root.add(startGame).width(220).height(34).padTop(15).row();
-                choices.add(startGame);
+                setState(LobbyState.HOST_LOBBY);
+            } else if (clientInstance != null) {
+                players = clientInstance.players;
+                setState(LobbyState.CLIENT_LOBBY);
+            } else {
+                setState(LobbyState.IDLE);
             }
-            createUserList();
-            return;
+        } else {
+            setState(LobbyState.IDLE);
         }
-        //HOST BUTTON
-        hostButton = new VisTextButton("HOST");
-        hostButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                rollOutHost();
-            }
-        });
-        root.add(hostButton).width(220).height(34).padTop(8).row();
-        choices.add(hostButton);
+    }
 
-        //JOIN button
-        joinButton = new VisTextButton("JOIN");
-        joinButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                rollOutJoin();
-            }
-        });
-        root.add(joinButton).width(220).height(34).padTop(8).row();
-        choices.add(joinButton);
-        //name prompt
-        if (prefs.getString("user.name", null)==null) {
+    /** The single place that tears down the old screen and builds the new one. */
+    private void setState(LobbyState newState) {
+        content.clearChildren();
+        choices.clear();
+        index = 0;
+        state = newState;
+        switch (state) {
+            case IDLE -> buildIdle();
+            case HOST_LOBBY -> buildHostLobby();
+            case JOIN_FORM -> buildJoinForm();
+            case CLIENT_LOBBY -> buildClientLobby();
+        }
+    }
+
+    private void buildIdle() {
+        // name goes first - you need it before either Host or Join makes sense
+        if (prefs.getString("user.name", null) == null) {
             promptName = new VisTextField("Insert Name");
         } else {
             promptName = new VisTextField(prefs.getString("user.name"));
         }
-        root.add(promptName).row();
+        content.add(promptName).width(BUTTON_WIDTH).padBottom(15).row();
         choices.add(promptName);
+
+        hostButton = new VisTextButton("HOST");
+        hostButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                onHostClicked();
+            }
+        });
+        content.add(hostButton).width(BUTTON_WIDTH).height(BUTTON_HEIGHT).padBottom(8).row();
+        choices.add(hostButton);
+
+        joinButton = new VisTextButton("JOIN");
+        joinButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                setState(LobbyState.JOIN_FORM);
+            }
+        });
+        content.add(joinButton).width(BUTTON_WIDTH).height(BUTTON_HEIGHT).row();
+        choices.add(joinButton);
+    }
+
+    private void buildHostLobby() {
+        VisLabel portLabel = new VisLabel("Server open on port: " + PORT);
+        portLabel.setColor(Color.GRAY);
+        content.add(portLabel).padBottom(15).row();
+
+        startGame = new VisTextButton("Start");
+        startGame.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                start();
+            }
+        });
+        content.add(startGame).width(BUTTON_WIDTH).height(BUTTON_HEIGHT).padBottom(20).row();
+        choices.add(startGame);
+
+        buildUserList();
+    }
+
+    private void buildJoinForm() {
+        // keep the name field around - you can still fix a typo before connecting
+        content.add(promptName).width(BUTTON_WIDTH).padBottom(15).row();
+        choices.add(promptName);
+
+        promptUri = new VisTextField("Insert Server Address");
+        content.add(promptUri).width(BUTTON_WIDTH).padBottom(8).row();
+        choices.add(promptUri);
+
+        connectButton = new VisTextButton("Connect");
+        connectButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                connect();
+            }
+        });
+        content.add(connectButton).width(BUTTON_WIDTH).height(BUTTON_HEIGHT).row();
+        choices.add(connectButton);
+    }
+
+    private void buildClientLobby() {
+        buildUserList();
+    }
+
+    private void buildUserList() {
+        VisLabel userListTitle = new VisLabel("Players");
+        userListTitle.setFontScale(2f);
+        content.add(userListTitle).width(BUTTON_WIDTH).padTop(20).row();
+        content.add(userListTable).row();
+        userList.clear();
+        for (String name : players) userList.put(name, new VisLabel(name));
+        refreshUserList();
     }
 
     private void handleKeys(PostProcessor post) {
@@ -166,11 +242,11 @@ public class MultiplayerScreen extends ScreenAdapter {
             }
             if (choice == joinButton) {
                 if (joinButton.isDisabled()) return;
-                rollOutJoin();
+                setState(LobbyState.JOIN_FORM);
                 return;
             } else if (choice == hostButton) {
                 if (hostButton.isDisabled()) return;
-                rollOutHost();
+                onHostClicked();
                 return;
             } else if (choice == connectButton) {
                 if (connectButton.isDisabled()) return;
@@ -187,7 +263,7 @@ public class MultiplayerScreen extends ScreenAdapter {
                 //implement keyboard widget (for now only physical keyboard)
                 return;
             } else {
-                notifyError("no action found.");
+                ErrorNotifier.show("no action found.");
                 return;
             }
         }
@@ -196,48 +272,29 @@ public class MultiplayerScreen extends ScreenAdapter {
         }
     }
 
-    private void rollOutHost() {
-        index = 0;
+    private void onHostClicked() {
         //getting player name
         if (!promptName.isEmpty() || !promptName.getText().equals("Insert Name")) {
             prefs.putString("user.name", promptName.getText());
         } else {
             if (prefs.getString("user.name", null) == null || prefs.getString("user.name").equals("Insert Name")) {
-                notifyError("Please insert your name.");
+                ErrorNotifier.show("Please insert your name.");
                 return;
             }
         }
         try {
-            wsInstance = Websocket.startServer(port);
+            wsInstance = Websocket.startServer(PORT);
         } catch (InterruptedException e) {
             ServerLogs.write("Start was interrupted: "+e);
             //show error
             return;
         }
         DogerDager.setMultiplayer(true);
-        //removing join, prompt and host:
-        hideActor(joinButton);
-        hideActor(hostButton);
-        hideActor(promptName);
-        //adding pool with your port
-        VisLabel ipTextPool = new VisLabel("Server open on port: "+port);
-        root.add(ipTextPool).padBottom(9).row();
         //describing your name to put into users
         String host = prefs.getString("user.name");
         wsInstance.users.put(null, host);
         players = wsInstance.users.values();
-        //start game button
-        startGame = new VisTextButton("Start");
-        startGame.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                start();
-            }
-        });
-        root.add(startGame).width(220).height(34).padTop(15).row();
-        choices.add(startGame);
-        //userlist
-        createUserList();
+        setState(LobbyState.HOST_LOBBY);
     }
 
     private void start() {
@@ -246,34 +303,13 @@ public class MultiplayerScreen extends ScreenAdapter {
         dispose();
     }
 
-    private void rollOutJoin() {
-        index = 0;
-        hideActor(joinButton);
-        hideActor(hostButton);
-        //making prompt for serverAddress
-        promptUri = new VisTextField("Insert Server Address");
-        root.add(promptUri).row();
-        choices.add(promptUri);
-        // connect button
-        connectButton = new VisTextButton("Connect");
-        connectButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                connect();
-            }
-        });
-        root.add(connectButton).width(220).height(34).padTop(8).row();
-        choices.add(connectButton);
-    }
-
-    private static void connect() {
-        index = 0;
+    private void connect() {
         if (promptUri.isEmpty() || promptUri.getText().equals("Insert Server Address")) {
-            notifyError("Server Address cannot be empty");
+            ErrorNotifier.show("Server Address cannot be empty");
             return;
         }
         if (promptName.isEmpty() || promptName.getText().equals("Insert Name")) {
-            notifyError("Name cannot be empty");
+            ErrorNotifier.show("Name cannot be empty");
             return;
         }
         // Prevent double-clicking
@@ -283,12 +319,12 @@ public class MultiplayerScreen extends ScreenAdapter {
             clientInstance = WebsocketClient.startClient(
                     promptUri.getText(), promptName.getText());
             if (clientInstance == null) {
-                notifyError("Invalid address");
+                ErrorNotifier.show("Invalid address");
                 connectButton.setDisabled(false);
                 connectButton.setText("Connect");
             }
         } catch (InterruptedException e) {
-            notifyError("Something went wrong, please try again");
+            ErrorNotifier.show("Something went wrong, please try again");
             connectButton.setDisabled(false);
             connectButton.setText("Connect");
         }
@@ -296,35 +332,16 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     public static void onClientVerified() {
         Gdx.app.postRunnable(() -> {
-            hideActor(promptName);
-            hideActor(promptUri);
-            hideActor(connectButton);
-            root.removeActor(error);  // clear any previous error
-            players = new HashSet<>(clientInstance.players);
-            createUserList();
+            if (instance != null) instance.handleClientVerified();
         });
     }
 
-    public static void notifyError(String message) {
-        Gdx.app.postRunnable(() -> {
-                root.removeActor(error);
-                error = new VisLabel(message);
-                root.add(error).row();
-                root.invalidate();
-        });
+    private void handleClientVerified() {
+        players = new HashSet<>(clientInstance.players);
+        setState(LobbyState.CLIENT_LOBBY);
     }
 
-    private static void createUserList() {
-        VisLabel userListTitle = new VisLabel("Players");
-        userListTitle.setFontScale(2f);
-        root.add(userListTitle).width(220).height(34).padTop(10).row();
-        root.add(userListTable).row();
-        userList.clear();
-        for (String name : players) userList.put(name, new VisLabel(name));
-        refreshUserList();
-    }
-
-    private static void refreshUserList() {
+    private void refreshUserList() {
         userListTable.clearChildren();
         for (VisLabel l : userList.values()) userListTable.add(l).row();
         userListTable.invalidateHierarchy();
@@ -332,24 +349,29 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     public static void addToUserList(String name) {
         Gdx.app.postRunnable(() -> {
-            userList.put(name, new VisLabel(name));
-            refreshUserList();
+            if (instance != null) instance.addPlayer(name);
         });
+    }
+
+    private void addPlayer(String name) {
+        userList.put(name, new VisLabel(name));
+        refreshUserList();
     }
 
     public static void deleteFromUserList(String name) {
         Gdx.app.postRunnable(() -> {
-            if (userList.remove(name) == null) {
-                ServerLogs.write("deleteFromUserList: no such player '" + name + "'");
-                return;
-            }
-            refreshUserList();
+            if (instance != null) instance.removePlayer(name);
         });
     }
-    private static void hideActor(Actor actor) {
-        root.removeActor(actor);
-        choices.remove(actor);
+
+    private void removePlayer(String name) {
+        if (userList.remove(name) == null) {
+            ServerLogs.write("deleteFromUserList: no such player '" + name + "'");
+            return;
+        }
+        refreshUserList();
     }
+
     @Override
     public void show() {
         Gdx.input.setInputProcessor(stage);
@@ -381,5 +403,6 @@ public class MultiplayerScreen extends ScreenAdapter {
         if (bgm != null) bgm.stop();
         choices.clear();
         stage.dispose();
+        if (instance == this) instance = null;
     }
 }

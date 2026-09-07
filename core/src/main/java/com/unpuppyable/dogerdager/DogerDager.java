@@ -49,6 +49,7 @@ public class DogerDager extends Game {
         post.capture();
         super.render();
         post.render(Gdx.graphics.getDeltaTime());
+        ErrorNotifier.render(Gdx.graphics.getDeltaTime());
     }
 
     private void toggleFullscreen() {
@@ -75,6 +76,7 @@ public class DogerDager extends Game {
         WebsocketClient.dispose();
         if (getScreen() != null) getScreen().dispose();
         post.dispose();
+        ErrorNotifier.dispose();
         icons.dispose();
         menuMove.dispose();
         menuConfirm.dispose();

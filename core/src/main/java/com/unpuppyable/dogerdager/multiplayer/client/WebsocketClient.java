@@ -3,6 +3,7 @@ package com.unpuppyable.dogerdager.multiplayer.client;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.unpuppyable.dogerdager.DogerDager;
+import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.multiplayer.Schedulers;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -99,7 +100,10 @@ public class WebsocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-
+        verified = false;
+        DogerDager.setMultiplayer(false);
+        ErrorNotifier.show("Websocket client closed, error code: "+code);
+        Schedulers.stopSchedulers();
     }
 
     @Override
