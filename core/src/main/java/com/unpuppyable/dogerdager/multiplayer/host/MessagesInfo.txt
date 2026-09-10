@@ -1,0 +1,185 @@
+All websockets are sent in JSON, where t = type
+client at the beginning has to "authorize" putting their name in, and they have 60 sec for that
+Client -> Server
+AUTHORIZE:
+{
+"t":"0",
+"user":String username
+}
+
+keys being pressed:
+{
+"t":"1",
+"keys":[]
+}
+
+keys being let go:
+{
+"t":"2",
+"keys":[]
+}
+
+shoot Arrow:
+{
+"t":"3",
+"x":int x,
+"y":int y,
+"pressing":boolean pressing
+}
+PING:
+{
+"t":"5"
+}
+
+Server -> Client
+
+AUTHORIZE:
+{
+"t":"200",
+"success":boolean success,
+"message":String message,
+"users":List<String> users
+}
+
+new User Joined
+{
+"t":"201",
+"user":String username
+}
+
+user left
+{
+"t":"202",
+"user":String username
+}
+
+PONG:
+{
+"t":"205"
+}
+
+gameStarted:
+{
+"t":"210",
+"diff":String difficulty,
+"tps":float tickrate
+}
+
+EntityStates - full snapshot (see "delta compression" below)
+Sent once whenever the number of tracked entities/players changes (someone
+spawns, dies, joins, etc.) - every field is always present so the client can
+build a complete picture from scratch.
+{
+"t":"250",
+"UUID": {
+    "type":"Entity",
+    "x":float x,
+    "y":float y
+    },
+"UUID": {
+    "type":"Centipede",
+    "x":float x,
+    "y":float y,
+    "seg":some list with x and y values,
+    "heading":float heading
+    },
+"UUID": {
+    "type":"Enemy",
+    "x":float x,
+    "y":float y,
+    "kind":String kind
+    },
+"UUID": {
+    "type":"Boss",
+    "x":float x,
+    "y":float y,
+    "kind":String kind,
+    "tx":float targetX,
+    "ty":float targetY,
+    "s":boolean settled,
+    "ft":float fireTimer,
+    "ph":int phase,
+    "at":float atkTimer
+    },
+"UUID": {
+    "type":"Bullet",
+    "x":float x,
+    "y":float y,
+    "kind":String kind,
+    "ang":float ang
+    },
+"UUID": {
+    "type":"Laser",
+    "x":float x,
+    "y":float y,
+    "tele":float telegraph
+    },
+"UUID": {
+    "type":"Player",
+    "x":float x,
+    "y":float y,
+    "username":String username,
+    "isdead":boolean player.dead(),
+    "hp":float health,
+    "stam":float staminaFraction,
+    "shield":boolean shielded,
+    "inv":boolean invulnerable,
+    "sinv":float strafeInvuln,
+    "stun":float stun
+    }
+}
+
+EntityStates - delta update (see "delta compression" below)
+Sent every other tick (whenever the tracked set hasn't changed size), same
+shape as "250" but any field that is unchanged since the last tick sent to
+this client is simply omitted from that entity's object instead of being
+resent.
+{
+"t":"251",
+... same per-entity shape as "250", minus unchanged fields ...
+}
+
+ERROR:
+{
+"t":"400",
+"message":String message
+}
+
+Delta compression (how "251" stays small)
+---------------------------------------
+Each entity type has a matching "*Values" record in Messages.java (e.g.
+PlayerValues, BossValues) where every field is a boxed type (Float, Boolean,
+String, Integer) instead of a primitive. Every tick, Messages.updateEntities
+builds a fresh record per entity/player and sets a field to its new value
+only if it differs from the value in the previous tick's record
+(previousEntities/previousPlayers); otherwise the field is left null.
+Because the Gson instance used to serialize outgoing messages is a plain
+`new Gson()` (no serializeNulls()), any null field is dropped entirely from
+the JSON rather than being sent as "field":null - so a "251" payload only
+ever contains the handful of fields that actually changed that tick, instead
+of the full state of every entity. The record's merge(previous) method (see
+the Mergeable interface) then folds the newly-sent (non-null) fields on top
+of the last known-good record, so previousEntities/previousPlayers always
+holds the last value sent for every field even though any given tick's
+record only carries a partial update. On the client side
+(ClientMessages.updateEntityStates), every field is read as nullable and
+merged into the existing EntityState for that UUID, mirroring the same
+"missing field = unchanged" contract.
+
+Gotcha - Centipede.seg is NOT delta-compressed like the rest, on purpose:
+Every other field above is a primitive (float/boolean/int) that gets boxed
+into a fresh, frozen Float/Boolean/Integer when copied into a *Values
+record, so storing it as "previous" is a real snapshot. Centipede.seg is a
+Vector2[] - a reference to Centipede's own live array (Centipede.java: the
+array is created once and its Vector2 elements are mutated in place every
+update(), never replaced). Comparing it against a "previous" value that was
+saved as the *same array reference* is comparing the array to itself after
+it already moved - always equal, so the field would silently stop updating
+after the initial "250" snapshot. Rather than defensively cloning the array
+every tick just to compare it, CentipedeValues.seg is always included as-is
+(no previousValues comparison, no null-out) in both updateEntities and the
+CentipedeValues record - it rides along on every "251" tick whether the
+legs moved or not. Keep this in mind before adding any other array/object
+(non-primitive) field to a *Values record: it needs the same
+always-send treatment, or an explicit deep copy on store, or it will hit
+this exact bug.

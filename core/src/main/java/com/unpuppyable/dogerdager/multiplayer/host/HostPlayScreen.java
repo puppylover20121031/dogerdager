@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.unpuppyable.dogerdager.*;
@@ -26,7 +25,6 @@ public class HostPlayScreen extends PlayScreen {
     private final Progress progress = new Progress();
     private float tickrate = 30f;
     private float netTimer;
-    private float timeDelta;
     private static HostPlayScreen instance;
     private Websocket wsInstance = Websocket.getInstance();
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
@@ -65,8 +63,6 @@ public class HostPlayScreen extends PlayScreen {
             this.bgm.play();
         }
         reset();
-        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
-            playerShootingEnabled = true;
         Messages.gameStarted(curDifficulty, tickrate);
         DogerDager.multiplayerGameStarted = true;
         state = State.PLAYING;
@@ -112,7 +108,6 @@ public class HostPlayScreen extends PlayScreen {
     }
 
     protected void update(float delta, PostProcessor post) {
-        timeDelta = delta;
         if (host==null) return;
         if (shake > 0)
             shake -= delta;
@@ -121,13 +116,7 @@ public class HostPlayScreen extends PlayScreen {
             player.update(delta);
         }
         spawner.update(delta);
-        if (shootCooldown > 0)
-            shootCooldown -= delta;
-        if (playerShootingEnabled && shootCooldown <= 0
-                && (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB())) {
-            shootPlayer();
-            shootCooldown = PLAYER_SHOOT_COOLDOWN;
-        }
+
 
         for (var e : entities) {
             e.update(delta);
@@ -287,63 +276,6 @@ public class HostPlayScreen extends PlayScreen {
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
         player.damage(dmg);
-    }
-
-    @Override
-    protected void shootPlayer() {
-        if (host.dead()) return;
-        Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        viewport.unproject(aim);
-        float px = host.bounds().x + Player.SIZE / 2f;
-        float py = host.bounds().y + Player.SIZE / 2f;
-        float dx = 0f;
-        float dy = 0f;
-        if (Gdx.input.isTouched() || Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-            dx = aim.x - px;
-            dy = aim.y - py;
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = host.aimX();
-            dy = host.aimY();
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = 1f;
-            dy = 0f;
-        }
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float vx = dx / len * PLAYER_SHOOT_SPEED;
-        float vy = dy / len * PLAYER_SHOOT_SPEED;
-        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, host));
-    }
-
-    protected void shootPlayer(Player p, int worldX, int worldY, boolean pressed) {
-        if (p.dead()) return;
-        if (shootCooldown > 0)
-            shootCooldown -= timeDelta;
-        if (!playerShootingEnabled || shootCooldown > 0) return;
-
-        Vector3 aim = new Vector3(worldX, worldY, 0);
-        float px = player.bounds().x + Player.SIZE / 2f;
-        float py = player.bounds().y + Player.SIZE / 2f;
-        float dx = 0f;
-        float dy = 0f;
-        if (pressed) {
-            dx = aim.x - px;
-            dy = aim.y - py;
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = player.aimX();
-            dy = player.aimY();
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = 1f;
-            dy = 0f;
-        }
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float vx = dx / len * PLAYER_SHOOT_SPEED;
-        float vy = dy / len * PLAYER_SHOOT_SPEED;
-        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, player));
-        shootCooldown = PLAYER_SHOOT_COOLDOWN;
     }
 
     // Floor transition: heal, wipe the arena, then either win or stage the next

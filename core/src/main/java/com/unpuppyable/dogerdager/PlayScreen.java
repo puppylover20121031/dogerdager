@@ -26,23 +26,18 @@ import com.unpuppyable.dogerdager.entity.Powerup1;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Preferences;
-import com.badlogic.gdx.math.Vector3;
 
 public class PlayScreen implements Screen {
 
     protected static final float WORLD_W = 640 * 3;
     protected static final float WORLD_H = 360 * 3;
-    static final float ARENA_W = WORLD_W;
-    static final float HUD_H = 72 * 3;
-    static final float PLAY_TOP = WORLD_H - HUD_H;
+    protected static final float ARENA_W = WORLD_W;
+    protected static final float HUD_H = 72 * 3;
+    protected static final float PLAY_TOP = WORLD_H - HUD_H;
 
     protected static final int INSTANT_KILL = 100_000;
     protected static final float MAX_STEP = 0.05f;
-    public boolean playerShootingEnabled = false;
-    protected static final float PLAYER_SHOOT_SPEED = 380f;
-    protected static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
     protected enum State {
         PLAYING, PAUSED, GAME_OVER, WON
@@ -55,6 +50,7 @@ public class PlayScreen implements Screen {
     private boolean mute = false;
 
     protected Viewport viewport;
+    public Viewport viewport() {return this.viewport;}
     protected final ShapeRenderer shapes = new ShapeRenderer();
     protected final SpriteBatch batch = new SpriteBatch();
     protected final BitmapFont font = new BitmapFont();
@@ -77,11 +73,9 @@ public class PlayScreen implements Screen {
     protected float shake;
     //private float camX = ARENA_W / 2f;
     protected float camX = ARENA_W;
-    protected float shootCooldown;
     protected Music bgm;
     protected boolean playedMusic = false;
 
-    public boolean Easy_unlocked = false;
     protected PostProcessor post;
 
     public PlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
@@ -108,7 +102,6 @@ public class PlayScreen implements Screen {
             prefs.putBoolean("set.music", false);
         }
         reset();
-        if (difficulty == Difficulty.HARD || difficulty == Difficulty.HARDCORE) playerShootingEnabled = true;
     }
 
     protected void reset() {
@@ -200,30 +193,7 @@ public class PlayScreen implements Screen {
         }
     }
 
-    protected void shootPlayer() {
-        Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        viewport.unproject(aim);
-        float px = player.bounds().x + Player.SIZE / 2f;
-        float py = player.bounds().y + Player.SIZE / 2f;
-        float dx = 0f;
-        float dy = 0f;
-        if (Gdx.input.isTouched() || Gdx.input.isButtonPressed(Buttons.LEFT)) {
-            dx = aim.x - px;
-            dy = aim.y - py;
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = player.aimX();
-            dy = player.aimY();
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = 1f;
-            dy = 0f;
-        }
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float vx = dx / len * PLAYER_SHOOT_SPEED;
-        float vy = dy / len * PLAYER_SHOOT_SPEED;
-        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, player));
-    }
+
 
     public void win() {
         if (state == State.PLAYING) {
@@ -281,13 +251,6 @@ public class PlayScreen implements Screen {
         hud.update(delta);
         player.update(delta);
         spawner.update(delta);
-        if (shootCooldown > 0)
-            shootCooldown -= delta;
-        if (playerShootingEnabled && shootCooldown <= 0
-                && (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB())) {
-            shootPlayer();
-            shootCooldown = PLAYER_SHOOT_COOLDOWN;
-        }
 
         for (var e : entities)
             e.update(delta);

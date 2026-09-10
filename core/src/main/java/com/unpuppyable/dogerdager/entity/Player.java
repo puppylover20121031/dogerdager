@@ -1,6 +1,10 @@
 package com.unpuppyable.dogerdager.entity;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.math.Vector3;
 import com.unpuppyable.dogerdager.*;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
@@ -17,6 +21,10 @@ public final class Player extends Entity {
     private static final float HIT_GRACE = 0.7f;
     private static final float BAND = 72;
 
+    private float shootCooldown = 0;
+    private boolean playerShootingEnabled = false;
+    private static final float PLAYER_SHOOT_SPEED = 380f;
+    private static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
     public static final float SIZE = 16;
     private static float SPEED = 300;
@@ -39,6 +47,8 @@ public final class Player extends Entity {
     private float kbX;
     private float kbY;
 
+    private float timeDelta = 0;
+
     private boolean shielded;
     public boolean invulnerable;
     private boolean staminaLocked;
@@ -52,6 +62,7 @@ public final class Player extends Entity {
 
     private final PostProcessor post;
     private final Progress progress;
+    private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
 
     public Player(float worldW, float playTop, PostProcessor post, Progress progress, String username, Difficulty difficulty, boolean isHost) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
@@ -65,6 +76,9 @@ public final class Player extends Entity {
         this.isYou = isHost;
         this.username = username;
         this.name = "Player";
+        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
+            playerShootingEnabled = true;
+        if (difficulty == Difficulty.HARD || difficulty == Difficulty.HARDCORE) playerShootingEnabled = true;
     }
 
     @Override
@@ -94,6 +108,10 @@ public final class Player extends Entity {
         }
 
         shield(delta);
+
+        if (shootCooldown > 0)
+            shootCooldown -= delta;
+
         if (isYou) {
             float vx = 0, vy = 0;
             if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) vx -= SPEED;
@@ -110,6 +128,15 @@ public final class Player extends Entity {
             bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
             if ((keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA()))
                 if (strafeCd <= 0) strafe();
+            if (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB()) {
+                Vector3 aim = localAim();
+                boolean isPressed = Gdx.input.isTouched() || Gdx.input.isButtonPressed(Input.Buttons.LEFT);
+                shoot(
+                        (int) aim.x,
+                        (int) aim.y,
+                        isPressed
+                );
+            }
             //multiplayer:
         } else {
             float vx = 0, vy = 0;
@@ -148,12 +175,11 @@ public final class Player extends Entity {
         return strafeInvuln > 0;
     }
 
-    public float aimX() {
-        return lastDx;
-    }
-
-    public float aimY() {
-        return lastDy;
+    private Vector3 localAim() {
+        Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        if (DogerDager.getGameInstance().getScreen() instanceof PlayScreen screen)
+            screen.viewport().unproject(aim);
+        return aim;
     }
 
     public void knockback(float worldW, float playTop) {
@@ -245,6 +271,40 @@ public final class Player extends Entity {
         shapes.setColor(body);
         shapes.rect(bounds.x + 2, bounds.y + 2, SIZE - 4, (SIZE - 4) * staminaFraction());
     }
+
+    //actions
+
+    public void shoot(int worldX, int worldY, boolean pressed) {
+        if (dead()) return;
+        if (!playerShootingEnabled || shootCooldown > 0) return;
+
+        Vector3 aim = new Vector3(worldX, worldY, 0);
+        float px = bounds().x + SIZE / 2f;
+        float py = bounds().y + SIZE / 2f;
+        float dx = 0f;
+        float dy = 0f;
+        if (pressed) {
+            dx = aim.x - px;
+            dy = aim.y - py;
+        }
+        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
+            dx = lastDx;
+            dy = lastDy;
+        }
+        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
+            dx = 1f;
+            dy = 0f;
+        }
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        float vx = dx / len * PLAYER_SHOOT_SPEED;
+        float vy = dy / len * PLAYER_SHOOT_SPEED;
+        if (DogerDager.getGameInstance().getScreen() instanceof PlayScreen screen) {
+            screen.add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, maxX + SIZE, maxY + SIZE, this));
+        }
+        shootCooldown = PLAYER_SHOOT_COOLDOWN;
+    }
+
+
 
     //inputs
     public void keyDown(String key) {

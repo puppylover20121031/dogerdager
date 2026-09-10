@@ -90,7 +90,7 @@ public class Messages {
         if (!(msg.get("y") instanceof Double y)) return;
         if (!(msg.get("pressing") instanceof Boolean pressing)) return;
         Player player = HostPlayScreen.getPlayerByName(name);
-        HostPlayScreen.getInstance().shootPlayer(player, x.intValue(), y.intValue(), pressing);
+        player.shoot(x.intValue(), y.intValue(), pressing);
     }
 
     public static void ping(WebSocket conn) {
@@ -113,6 +113,8 @@ public class Messages {
         HashMap<String, Object> update = new HashMap<String, Object>();
         for (Entity entity : entities) {
             Object prevVal = previousEntities.get(entity);
+            if (prevVal == null) continue;
+
             String id = entity.id;
             Float x = entity.bounds().x;
             Float y = entity.bounds().y;
@@ -126,7 +128,7 @@ public class Messages {
                             null,
                             !x.equals(previousValues.x) ? x : null,
                             !y.equals(previousValues.y) ? y : null,
-                            !Arrays.equals(e.seg, previousValues.seg) ? e.seg : null,
+                            e.seg,
                             e.heading != previousValues.heading ? e.heading : null
                     );
                     update.put(id, infoSet);
