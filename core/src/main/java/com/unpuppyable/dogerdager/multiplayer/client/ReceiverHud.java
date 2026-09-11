@@ -59,7 +59,7 @@ public final class ReceiverHud {
     // Filled pass: top band, heart row, floor-progress bar.
     public void drawBars(ShapeRenderer shapes) {
         this.player = ClientPlayScreen.getInstance().getPlayer();
-        if (player.hp() == null) return;
+        if (player.hp == null) return;
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         shapes.setColor(0f, 0f, 0f, 0.45f);
@@ -67,7 +67,7 @@ public final class ReceiverHud {
 
         float hx = 28, hy = worldH - 26, r = 6, gap = 22;
         for (int i = 0; i < maxHealth; i++) {
-            heart(shapes, hx + i * gap, hy, r, i < player.hp() ? HEART_ON : HEART_OFF);
+            heart(shapes, hx + i * gap, hy, r, i < player.hp ? HEART_ON : HEART_OFF);
         }
 
         float pbX = 22, pbY = worldH - 46, pbW = 150, pbH = 5;

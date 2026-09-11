@@ -52,13 +52,19 @@ public class ClientPlayScreen implements Screen {
     private float anim = 0;
     private float timer = 0;
     private float floorTimer = 0;
+    private long lastTick;
+    private long secondLastTick;
+    private float interpTimer;
 
     private final HashSet<String> keysDown = new HashSet<String>();
     private HashSet<String> previousKeysDown = new HashSet<String>();
 
-    private final ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, EntityState> previousEntities = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> entitiesToRender = new ConcurrentHashMap<>();
+
     private final ConcurrentHashMap<String, EntityState> players = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> playersToRender = new ConcurrentHashMap<>();
     private final String yourName;
     private EntityState player;
 
@@ -87,6 +93,8 @@ public class ClientPlayScreen implements Screen {
             floorTimer = 0;
             hud.advanceFloor();
         }
+        interpTimer += delta;
+        interpolateEntities();
     }
 
     private void handleKeys(float delta) {
@@ -169,6 +177,8 @@ public class ClientPlayScreen implements Screen {
     }
 
     public void newEntityStates(HashSet<Object> entitySet) {
+        interpTimer = 0;
+
         previousEntities = new ConcurrentHashMap<>(entities);
         for (EntityState oldEnt : previousEntities.values()) {
             if (entityDied(oldEnt.id, entitySet)) entities.remove(oldEnt.id);
@@ -180,14 +190,19 @@ public class ClientPlayScreen implements Screen {
             if (newEnt.name == null) continue;
             players.put(newEnt.name, newEnt);
         }
+        secondLastTick = lastTick;
+        lastTick = System.currentTimeMillis();
     }
 
     public void updateEntityStates(HashSet<Object> entitySet) {
+        interpTimer = 0;
         previousEntities = new ConcurrentHashMap<>(entities);
 
         for (var newEntity : entitySet) {
             if (!(newEntity instanceof EntityState newEnt)) continue;
             EntityState old = previousEntities.get(newEnt.id);
+            if (old == null) continue;
+
             EntityState e = new EntityState(
                     newEnt.id,
                     newEnt.type == null ? old.type : newEnt.type,
@@ -211,12 +226,15 @@ public class ClientPlayScreen implements Screen {
                     newEnt.settled == null ? old.settled : newEnt.settled,
                     newEnt.fireTimer == null ? old.fireTimer : newEnt.fireTimer,
                     newEnt.phase == null ? old.phase : newEnt.phase,
-                    newEnt.atkTimer == null ? old.atkTimer : newEnt.atkTimer
+                    newEnt.atkTimer == null ? old.atkTimer : newEnt.atkTimer,
+                    newEnt.life == null ? old.life : newEnt.life
             );
             entities.put(e.id, e);
             if (e.name == null) continue;
             players.put(e.name, e);
         }
+        secondLastTick = lastTick;
+        lastTick = System.currentTimeMillis();
     }
 
     private boolean entityDied(String id, HashSet<Object> entitySet) {
@@ -225,6 +243,35 @@ public class ClientPlayScreen implements Screen {
             if (id.equals(ent.id)) return false;
         }
         return true;
+    }
+
+    private void interpolateEntities() {
+        if (entities.isEmpty() || previousEntities.isEmpty()) return;
+        if (lastTick == 0 || secondLastTick == 0) return;
+        entitiesToRender.clear();
+        playersToRender.clear();
+
+        long tickDiff = lastTick - secondLastTick;
+        for (String entityId : previousEntities.keySet()) {
+            if (!entities.containsKey(entityId)) {
+                entitiesToRender.put(entityId, previousEntities.get(entityId));
+                continue;
+            }
+            EntityState oldEnt = previousEntities.get(entityId);
+            EntityState newEnt = entities.get(entityId);
+            float t = MathUtils.clamp(interpTimer / (tickDiff / 1000f), 0f, 1f);
+            float newX = MathUtils.lerp(oldEnt.x, newEnt.x, t);
+            float newY = MathUtils.lerp(oldEnt.y, newEnt.y, t);
+
+            EntityState interpEntity = new EntityState(oldEnt);
+            interpEntity.x = newX;
+            interpEntity.y = newY;
+
+            //Centipede moment
+            entitiesToRender.put(entityId, interpEntity);
+            if (interpEntity.name == null) continue;
+            playersToRender.put(interpEntity.name, interpEntity);
+        }
     }
 
     protected void draw(float delta) {
@@ -254,9 +301,14 @@ public class ClientPlayScreen implements Screen {
         cam.update();
         batch.setProjectionMatrix(cam.combined);
         shapes.setProjectionMatrix(cam.combined);
+
+        if (entitiesToRender.isEmpty()) {
+            ErrorNotifier.show("skipped wrong values");
+            return;
+        }
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawBackground(shapes);
-        for (EntityState e : entities.values()) {
+        for (EntityState e : entitiesToRender.values()) {
             drawEntity(e, shapes);
         }
 
@@ -272,15 +324,17 @@ public class ClientPlayScreen implements Screen {
         batch.begin();
         hud.drawText(batch, font);
         if (waitingForExitConfirm) {
-            drawCentered("Are you sure you want to leave? (press enter or a on pad)");
+            drawCentered("Are you sure you want to leave? (press enter or A on pad)");
         }
         batch.end();
     }
 
     private void drawEntity(EntityState entity, ShapeRenderer shapes) {
-        switch (entity.type()) {
+        if (entity.type == null) return;
+
+        switch (entity.type) {
             case "Player" -> {
-                if (entity.invulnerable == null) return;
+                if (entity.invulnerable == null || entity.strafeinvuln == null || entity.stun == null || entity.shielded == null || entity.stamina == null) return;
 
                 if (entity.strafeinvuln > 0) {
                     EntityState prevPlayer = previousEntities.get(entity.id);
@@ -297,6 +351,7 @@ public class ClientPlayScreen implements Screen {
                 shapes.rect(entity.x + 2, entity.y + 2, Player.SIZE - 4, (Player.SIZE - 4) * entity.stamina);
             }
             case "Centipede" -> {
+
                 // legs: a wiggling pair per body segment, perpendicular to the spine
                 shapes.setColor(Centipede.LEG);
                 for (int i = 1; i < Centipede.SEGMENTS; i++) {
@@ -396,10 +451,12 @@ public class ClientPlayScreen implements Screen {
                 shapes.rect(entity.x, entity.y, PlayerArrow.SIZE, PlayerArrow.SIZE);
             }
             case "Potion" -> {
+                if (entity.life < 2f && (int) (anim * 8) % 2 == 0) return;
                 shapes.setColor(Color.CYAN);
                 shapes.rect(entity.x, entity.y, Potion.SIZE, Potion.SIZE);
             }
             case "Powerup1" -> {
+                if (entity.life < 2f && (int) (anim * 8) % 2 == 0) return;
                 shapes.setColor(Color.WHITE);
                 shapes.rect(entity.x, entity.y, Powerup1.SIZE, Powerup1.SIZE);
             }
@@ -473,35 +530,103 @@ public class ClientPlayScreen implements Screen {
         return player;
     }
 
-    public record EntityState(
-            String id,
-            String type,
-            Float x,
-            Float y,
-            String name,
-            //player
-            Boolean dead,
-            Float stamina,
-            Boolean shielded,
-            Boolean invulnerable,
-            Float strafeinvuln,
-            Float stun,
-            Float hp,
-            //centipede
-            Vector2[] seg,
-            Float heading,
-            //boss, bullet, enemy
-            String kind,
-            //bullet special
-            Float ang,
-            //laser
-            Float telegraph,
-            //boss
-            Float targetX,
-            Float targetY,
-            Boolean settled,
-            Float fireTimer,
-            Integer phase,
-            Float atkTimer
-    ) {}
+    public static final class EntityState {
+        public final String id;
+        public final String type;
+        public Float x;
+        public Float y;
+        public final String name;
+        //player
+        public final Boolean dead;
+        public final Float stamina;
+        public final Boolean shielded;
+        public final Boolean invulnerable;
+        public final Float strafeinvuln;
+        public final Float stun;
+        public final Float hp;
+        //centipede
+        public final Vector2[] seg;
+        public final Float heading;
+        //boss, bullet, enemy
+        public final String kind;
+        //bullet special
+        public final Float ang;
+        //laser
+        public final Float telegraph;
+        //boss
+        public final Float targetX;
+        public final Float targetY;
+        public final Boolean settled;
+        public final Float fireTimer;
+        public final Integer phase;
+        public final Float atkTimer;
+        public final Float life;
+
+        public EntityState(
+                String id,
+                String type,
+                Float x,
+                Float y,
+                String name,
+                //player
+                Boolean dead,
+                Float stamina,
+                Boolean shielded,
+                Boolean invulnerable,
+                Float strafeinvuln,
+                Float stun,
+                Float hp,
+                //centipede
+                Vector2[] seg,
+                Float heading,
+                //boss, bullet, enemy
+                String kind,
+                //bullet special
+                Float ang,
+                //laser
+                Float telegraph,
+                //boss
+                Float targetX,
+                Float targetY,
+                Boolean settled,
+                Float fireTimer,
+                Integer phase,
+                Float atkTimer,
+                //powerup and potion
+                Float life
+        ) {
+            this.id = id;
+            this.type = type;
+            this.x = x;
+            this.y = y;
+            this.name = name;
+            this.dead = dead;
+            this.stamina = stamina;
+            this.shielded = shielded;
+            this.invulnerable = invulnerable;
+            this.strafeinvuln = strafeinvuln;
+            this.stun = stun;
+            this.hp = hp;
+            this.seg = seg;
+            this.heading = heading;
+            this.kind = kind;
+            this.ang = ang;
+            this.telegraph = telegraph;
+            this.targetX = targetX;
+            this.targetY = targetY;
+            this.settled = settled;
+            this.fireTimer = fireTimer;
+            this.phase = phase;
+            this.atkTimer = atkTimer;
+            this.life = life;
+        }
+
+        public EntityState(EntityState other) {
+            this(other.id, other.type, other.x, other.y, other.name,
+                    other.dead, other.stamina, other.shielded, other.invulnerable,
+                    other.strafeinvuln, other.stun, other.hp, other.seg, other.heading,
+                    other.kind, other.ang, other.telegraph, other.targetX, other.targetY,
+                    other.settled, other.fireTimer, other.phase, other.atkTimer, other.life);
+        }
+    }
 }

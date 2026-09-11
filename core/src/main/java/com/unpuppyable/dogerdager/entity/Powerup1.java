@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public final class Powerup1 extends Entity {
     public static final float SIZE = 16;
-    private float life = 8f;
+    public float life = 8f;
     private float anim;
 
     public Powerup1(float x, float y) {
