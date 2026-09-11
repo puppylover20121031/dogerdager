@@ -2,6 +2,7 @@ package com.unpuppyable.dogerdager.multiplayer.host;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.unpuppyable.dogerdager.DogerDager;
+import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 import com.unpuppyable.dogerdager.multiplayer.Schedulers;
 import org.java_websocket.server.WebSocketServer;
@@ -109,7 +110,8 @@ public class Websocket extends WebSocketServer {
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        ServerLogs.write("WS Server Encountered An Error: "+ex);
+        ServerLogs.write("WebSocket Server Encountered An Error: "+ex);
+        ErrorNotifier.show("server error (check multiplayer.logs)");
     }
 
     @Override
@@ -153,15 +155,8 @@ public class Websocket extends WebSocketServer {
         try {
             instance.stop();
         } catch (InterruptedException ex) {
-            System.out.println("Exception in Websocket: "+ex);
+            ServerLogs.write("Error while stopping WebSocket server: "+ex);
         }
-    }
-
-    public WebSocket nameToConn(String name) {
-        for (WebSocket conn : users.keySet()) {
-            if (users.get(conn).equals(name)) return conn;
-        }
-        return null;
     }
 
     public void deleteNotVerified() {

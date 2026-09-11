@@ -286,7 +286,7 @@ public class MultiplayerScreen extends ScreenAdapter {
             wsInstance = Websocket.startServer(PORT);
         } catch (InterruptedException e) {
             ServerLogs.write("Start was interrupted: "+e);
-            //show error
+            ErrorNotifier.show("Start was interrupted, check multiplayer.logs");
             return;
         }
         DogerDager.setMultiplayer(true);
@@ -324,7 +324,7 @@ public class MultiplayerScreen extends ScreenAdapter {
                 connectButton.setText("Connect");
             }
         } catch (InterruptedException e) {
-            ErrorNotifier.show("Something went wrong, please try again");
+            ErrorNotifier.show("Something went wrong, please try again (report in multiplayer.logs)");
             connectButton.setDisabled(false);
             connectButton.setText("Connect");
         }
