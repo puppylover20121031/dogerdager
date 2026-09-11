@@ -13,7 +13,7 @@ import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
 import org.java_websocket.WebSocket;
 
-import java.util.HashMap;
+import java.util.*;
 
 
 public class HostPlayScreen extends PlayScreen {
@@ -129,12 +129,8 @@ public class HostPlayScreen extends PlayScreen {
                 if (enemy.kind != Enemy.Kind.SMART) continue;
             }
             if (!e.getTarget().dead()) continue;
-            for (Player p : players.values()) {
-                if (!p.dead()) {
-                    e.setTarget(p);
-                    break;
-                }
-            }
+            e.setTarget(getRandomPlayer());
+
         }
         entities.addAll(pending);
         pending.clear();
@@ -305,6 +301,19 @@ public class HostPlayScreen extends PlayScreen {
 
     public static Player getPlayerByName(String name) {
         return players.get(name);
+    }
+
+    public static Player getRandomPlayer() {
+        int randomNumber = MathUtils.random(players.size()-1);
+        List<Player> list = new ArrayList<Player>(players.values());
+        if (list.stream().allMatch(Player :: dead)) return null;
+        Player culprit = list.get(randomNumber);
+        return culprit.dead() ? getRandomPlayer() : culprit;
+    }
+
+    @Override
+    protected Player getTarget() {
+        return getRandomPlayer();
     }
 
     public static HostPlayScreen getInstance() {

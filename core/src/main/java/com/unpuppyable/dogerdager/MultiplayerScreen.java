@@ -47,11 +47,10 @@ public class MultiplayerScreen extends ScreenAdapter {
     private Collection<String> players;
 
     // --- UI widgets ---
-    // `root` holds the title + error label, which never disappear. `content` holds whatever
+    // `root` holds the title, which never disappear. `content` holds whatever
     // is specific to the current LobbyState, and gets torn down and rebuilt by setState(...).
     private final VisTable root = new VisTable();
     private final VisTable content = new VisTable();
-    private final VisLabel error = new VisLabel("");
     private final LinkedHashMap<String, VisLabel> userList = new LinkedHashMap<>();
     private final VisTable userListTable = new VisTable();
     private VisTextButton joinButton;
