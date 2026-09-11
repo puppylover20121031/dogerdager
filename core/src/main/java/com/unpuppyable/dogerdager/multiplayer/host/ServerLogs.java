@@ -11,7 +11,7 @@ public class ServerLogs {
 
     static {
         try {
-            logger = new PrintWriter(new FileWriter("../core/src/main/java/com/unpuppyable/dogerdager/multiplayer/host/wsServer.log", true));
+            logger = new PrintWriter(new FileWriter("multiplayer.logs", true));
         } catch (IOException e) {
             throw new RuntimeException("Couldn't open logs", e);
         }

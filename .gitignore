@@ -1,5 +1,5 @@
 ### ServerLogs ###
-core/src/main/java/com/unpuppyable/dogerdager/multiplayer/host/wsServer.log
+multiplayer.logs
 
 ### Gradle ###
 .gradle/
