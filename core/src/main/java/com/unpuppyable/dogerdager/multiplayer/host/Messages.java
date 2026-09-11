@@ -197,6 +197,34 @@ public class Messages {
                     update.put(id, infoSet);
                     updatePreviousEntity(infoSet, e);
                 }
+                case Potion e -> {
+                    if (!(prevVal instanceof PowerUpValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Potion");
+                        continue;
+                    }
+                    PowerUpValues infoSet = new PowerUpValues(
+                            null,
+                            !x.equals(previousValues.x) ? x : null,
+                            !y.equals(previousValues.y) ? y : null,
+                            e.life != previousValues.life ? e.life : null
+                    );
+                    update.put(id, infoSet);
+                    updatePreviousEntity(infoSet, e);
+                }
+                case Powerup1 e -> {
+                    if (!(prevVal instanceof PowerUpValues previousValues)) {
+                        ErrorNotifier.show("Something went wrong with parsing entity: Potion");
+                        continue;
+                    }
+                    PowerUpValues infoSet = new PowerUpValues(
+                            null,
+                            !x.equals(previousValues.x) ? x : null,
+                            !y.equals(previousValues.y) ? y : null,
+                            e.life != previousValues.life ? e.life : null
+                    );
+                    update.put(id, infoSet);
+                    updatePreviousEntity(infoSet, e);
+                }
                 default -> {
                     if (!(prevVal instanceof EntityValues previousValues)) {
                         ErrorNotifier.show("Something went wrong with parsing entity");
@@ -301,6 +329,26 @@ public class Messages {
                             x,
                             y,
                             e.telegraph
+                    );
+                    init.put(id, infoSet);
+                    previousEntities.put(e, infoSet);
+                }
+                case Potion e -> {
+                    PowerUpValues infoSet = new PowerUpValues(
+                            type,
+                            x,
+                            y,
+                            e.life
+                    );
+                    init.put(id, infoSet);
+                    previousEntities.put(e, infoSet);
+                }
+                case Powerup1 e -> {
+                    PowerUpValues infoSet = new PowerUpValues(
+                            type,
+                            x,
+                            y,
+                            e.life
                     );
                     init.put(id, infoSet);
                     previousEntities.put(e, infoSet);
@@ -497,6 +545,23 @@ public class Messages {
                     x != null ? x : previous.x,
                     y != null ? y : previous.y,
                     tele != null ? tele : previous.tele
+            );
+        }
+    }
+
+    public record PowerUpValues(
+            String type,
+            Float x,
+            Float y,
+            Float life
+    ) implements Mergeable<PowerUpValues> {
+        @Override
+        public PowerUpValues merge(PowerUpValues previous) {
+            return new PowerUpValues(
+                    type != null ? type : previous.type,
+                    x != null ? x : previous.x,
+                    y != null ? y : previous.y,
+                    life != null ? life : previous.life
             );
         }
     }
