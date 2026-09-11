@@ -121,13 +121,13 @@ public class PlayScreen implements Screen {
     public void spawn(Enemy.Kind kind) {
         float x = MathUtils.random(0f, ARENA_W - 24);
         float y = MathUtils.random(0f, PLAY_TOP - 24);
-        add(new Enemy(kind, x, y, difficulty.enemySpeed, ARENA_W, PLAY_TOP, player));
+        add(new Enemy(kind, x, y, difficulty.enemySpeed, ARENA_W, PLAY_TOP, getTarget()));
     }
 
     public void spawnBoss(Boss.Kind kind) {
         clearHazards();
         float restY = PLAY_TOP - Boss.SIZE - 8;
-        add(new Boss(kind, (ARENA_W - Boss.SIZE) / 2, restY, ARENA_W, this, player));
+        add(new Boss(kind, (ARENA_W - Boss.SIZE) / 2, restY, ARENA_W, this, getTarget()));
     }
 
     public void spawnPotion() {
@@ -141,7 +141,7 @@ public class PlayScreen implements Screen {
     public void spawnCentipede() {
         float x = MathUtils.random(60f, ARENA_W - 60);
         float y = MathUtils.random(60f, PLAY_TOP - 60);
-        add(new Centipede(x, y, ARENA_W, PLAY_TOP, player));
+        add(new Centipede(x, y, ARENA_W, PLAY_TOP, getTarget()));
     }
 
     // Vertical laser walls with one guaranteed safe slot -- never an impossible
@@ -169,6 +169,10 @@ public class PlayScreen implements Screen {
     protected void clearHazards() {
         entities.clear();
         pending.clear();
+    }
+
+    protected Player getTarget() {
+        return this.player;
     }
 
     // Floor transition: heal, wipe the arena, then either win or stage the next

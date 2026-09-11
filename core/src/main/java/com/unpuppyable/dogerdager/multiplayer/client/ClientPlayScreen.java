@@ -260,14 +260,20 @@ public class ClientPlayScreen implements Screen {
             EntityState oldEnt = previousEntities.get(entityId);
             EntityState newEnt = entities.get(entityId);
             float t = MathUtils.clamp(interpTimer / (tickDiff / 1000f), 0f, 1f);
-            float newX = MathUtils.lerp(oldEnt.x, newEnt.x, t);
-            float newY = MathUtils.lerp(oldEnt.y, newEnt.y, t);
 
             EntityState interpEntity = new EntityState(oldEnt);
-            interpEntity.x = newX;
-            interpEntity.y = newY;
+            interpEntity.x = MathUtils.lerp(oldEnt.x, newEnt.x, t);
+            interpEntity.y = MathUtils.lerp(oldEnt.y, newEnt.y, t);
 
-            //Centipede moment
+            if (interpEntity.type.equals("Centipede") && interpEntity.seg != null) {
+                for (int i = 0; i < oldEnt.seg.length; i++) {
+                    if (oldEnt.seg[i] == null || newEnt.seg[i] == null) continue;
+
+                    interpEntity.seg[i].x = MathUtils.lerp(oldEnt.seg[i].x, newEnt.seg[i].x, t);
+                    interpEntity.seg[i].y = MathUtils.lerp(oldEnt.seg[i].y, newEnt.seg[i].y, t);
+                }
+            }
+
             entitiesToRender.put(entityId, interpEntity);
             if (interpEntity.name == null) continue;
             playersToRender.put(interpEntity.name, interpEntity);

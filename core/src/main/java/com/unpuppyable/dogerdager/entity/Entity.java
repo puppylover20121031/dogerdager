@@ -2,6 +2,8 @@ package com.unpuppyable.dogerdager.entity;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.unpuppyable.dogerdager.DogerDager;
+import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
 
 import java.util.UUID;
 
