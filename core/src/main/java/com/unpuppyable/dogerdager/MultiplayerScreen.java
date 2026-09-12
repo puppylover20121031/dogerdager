@@ -90,12 +90,12 @@ public class MultiplayerScreen extends ScreenAdapter {
         // should land straight in the matching lobby instead of the idle Host/Join menu.
         if (DogerDager.getMultiplayer()) {
             wsInstance = Websocket.getInstance();
-            clientInstance = WebsocketClient.getClientInstance();
+            clientInstance = WebsocketClient.getInstance();
             if (wsInstance != null) {
-                players = wsInstance.users.values();
+                players = wsInstance.getUserList();
                 setState(LobbyState.HOST_LOBBY);
             } else if (clientInstance != null) {
-                players = clientInstance.players;
+                players = clientInstance.getPlayerList();
                 setState(LobbyState.CLIENT_LOBBY);
             } else {
                 setState(LobbyState.IDLE);
@@ -291,8 +291,8 @@ public class MultiplayerScreen extends ScreenAdapter {
         DogerDager.setMultiplayer(true);
         //describing your name to put into users
         String host = prefs.getString("user.name");
-        wsInstance.users.put(null, host);
-        players = wsInstance.users.values();
+        wsInstance.addHost(host);
+        players = wsInstance.getUserList();
         setState(LobbyState.HOST_LOBBY);
     }
 
@@ -336,7 +336,7 @@ public class MultiplayerScreen extends ScreenAdapter {
     }
 
     private void handleClientVerified() {
-        players = new HashSet<>(clientInstance.players);
+        players = clientInstance.getPlayerList();
         setState(LobbyState.CLIENT_LOBBY);
     }
 

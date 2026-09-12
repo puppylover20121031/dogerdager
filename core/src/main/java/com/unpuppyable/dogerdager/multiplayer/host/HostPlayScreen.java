@@ -42,8 +42,8 @@ public class HostPlayScreen extends PlayScreen {
         instance = this;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
-        for (WebSocket conn : wsInstance.users.keySet()) {
-            String playerName = wsInstance.users.get(conn);
+        for (WebSocket conn : wsInstance.getConnectionsList()) {
+            String playerName = wsInstance.getUserName(conn);
             if (conn == null) {
                 host = player;
                 players.put(playerName, host);
@@ -325,8 +325,7 @@ public class HostPlayScreen extends PlayScreen {
     protected void reset() {
         super.reset();
         for (Player p : players.values()) {
-            p.revive();
-            p.healFull();
+            p.reset();;
         }
     }
 

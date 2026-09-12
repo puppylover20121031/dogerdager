@@ -108,6 +108,7 @@ public class PlayScreen implements Screen {
         playedMusic = true;
         entities.clear();
         pending.clear();
+        player.reset();
         state = State.PLAYING;
         shake = 0;
         //camX = ARENA_W / 2f;
