@@ -129,7 +129,7 @@ public class HostPlayScreen extends PlayScreen {
                 if (enemy.kind != Enemy.Kind.SMART) continue;
             }
             if (!e.getTarget().dead()) continue;
-            e.setTarget(getRandomPlayer());
+            e.setTarget(getTarget());
 
         }
         entities.addAll(pending);
@@ -313,7 +313,8 @@ public class HostPlayScreen extends PlayScreen {
 
     @Override
     protected Player getTarget() {
-        return getRandomPlayer();
+        Player random = getRandomPlayer();
+        return random == null ? player : random;
     }
 
     public static HostPlayScreen getInstance() {

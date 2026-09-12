@@ -252,6 +252,8 @@ public class ClientPlayScreen implements Screen {
         playersToRender.clear();
 
         long tickDiff = lastTick - secondLastTick;
+        if (tickDiff == 0) return;
+
         for (String entityId : previousEntities.keySet()) {
             if (!entities.containsKey(entityId)) {
                 entitiesToRender.put(entityId, previousEntities.get(entityId));
@@ -308,10 +310,6 @@ public class ClientPlayScreen implements Screen {
         batch.setProjectionMatrix(cam.combined);
         shapes.setProjectionMatrix(cam.combined);
 
-        if (entitiesToRender.isEmpty()) {
-            ErrorNotifier.show("skipped wrong values");
-            return;
-        }
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawBackground(shapes);
         for (EntityState e : entitiesToRender.values()) {
@@ -630,9 +628,17 @@ public class ClientPlayScreen implements Screen {
         public EntityState(EntityState other) {
             this(other.id, other.type, other.x, other.y, other.name,
                     other.dead, other.stamina, other.shielded, other.invulnerable,
-                    other.strafeinvuln, other.stun, other.hp, other.seg, other.heading,
+                    other.strafeinvuln, other.stun, other.hp, copyVectorArrayVector2(other.seg), other.heading,
                     other.kind, other.ang, other.telegraph, other.targetX, other.targetY,
                     other.settled, other.fireTimer, other.phase, other.atkTimer, other.life);
         }
+
+        private static Vector2[] copyVectorArrayVector2(Vector2[] array) {
+            if (array == null) return null;
+            Vector2[] newArray = new Vector2[array.length];
+            for (int i = 0; i < array.length; i++) newArray[i] = array[i].cpy();
+            return newArray;
+        }
+
     }
 }
