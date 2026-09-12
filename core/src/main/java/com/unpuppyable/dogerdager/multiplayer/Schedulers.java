@@ -5,6 +5,7 @@ import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
 import org.java_websocket.WebSocket;
 
 
+import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -13,9 +14,12 @@ import java.util.concurrent.TimeUnit;
 
 public class Schedulers {
     private static Websocket wsInstance = Websocket.getInstance();
-    private static WebsocketClient clientInstance = WebsocketClient.getClientInstance();
+    public static void reloadWsInstance() { wsInstance = Websocket.getInstance(); }
 
-    private static Set<ScheduledExecutorService> schedulers = ConcurrentHashMap.newKeySet();
+    private static WebsocketClient clientInstance = WebsocketClient.getInstance();
+    public static void reloadClientInstance() { clientInstance = WebsocketClient.getInstance(); }
+
+    private final static Set<ScheduledExecutorService> schedulers = ConcurrentHashMap.newKeySet();
 
     public static void stopSchedulers() {
         for (ScheduledExecutorService s : schedulers) {
@@ -31,10 +35,11 @@ public class Schedulers {
             return t;
         });
         scheduler.scheduleAtFixedRate(() -> {
-            if (wsInstance.lastPing.isEmpty()) return;
-            for (WebSocket conn : wsInstance.lastPing.keySet()) {
-                if (System.currentTimeMillis() - wsInstance.lastPing.get(conn) > timeToPing) {
-                    wsInstance.logOff(conn, 1006, "timed out");
+            HashMap<WebSocket, Long> lastPing = wsInstance.getPingMap();
+            if (lastPing.isEmpty()) return;
+            for (WebSocket conn : lastPing.keySet()) {
+                if (System.currentTimeMillis() - lastPing.get(conn) > timeToPing) {
+                    wsInstance.logOffUser(conn, 1006, "timed out");
                 }
             }
         }, 0,15, TimeUnit.SECONDS );
@@ -47,10 +52,11 @@ public class Schedulers {
             return t;
         });
         scheduler.scheduleAtFixedRate(() -> {
-            if (wsInstance.notVerified.isEmpty()) return;
-            for (WebSocket conn : wsInstance.notVerified.keySet()) {
-                if (System.currentTimeMillis() - wsInstance.notVerified.get(conn) > timeToVerify) {
-                    wsInstance.logOff(conn, 1006, "didnt register in time");
+            HashMap<WebSocket, Long> notVerified = wsInstance.getNotVerifiedMap();
+            if (notVerified.isEmpty()) return;
+            for (WebSocket conn : notVerified.keySet()) {
+                if (System.currentTimeMillis() - notVerified.get(conn) > timeToVerify) {
+                    wsInstance.logOffUser(conn, 1006, "didnt register in time");
                 }
             }
         }, 0,5, TimeUnit.SECONDS );
@@ -66,7 +72,7 @@ public class Schedulers {
             return t;
         });
         scheduler.scheduleAtFixedRate(() -> {
-            if (!clientInstance.verified) return;
+            if (!clientInstance.isVerified()) return;
             ClientMessages.sendPing();
             }, 0,5, TimeUnit.SECONDS );
         schedulers.add(scheduler);

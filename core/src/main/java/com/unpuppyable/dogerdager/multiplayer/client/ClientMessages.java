@@ -8,30 +8,29 @@ import com.unpuppyable.dogerdager.DogerDager;
 import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
+import com.unpuppyable.dogerdager.multiplayer.MessageType;
 
 import java.util.*;
 
 public class ClientMessages {
-    private static WebsocketClient instance = WebsocketClient.getClientInstance();
+    private static WebsocketClient clientInstance = WebsocketClient.getInstance();
     private static ClientPlayScreen screenInstance;
     // Server -> client
     public static void authorizeResponse(Map<String, Object> response) {
         //getters
-        if (!response.containsKey("success")) return;
         if (!(response.get("success") instanceof Boolean success)) return;
-        if (!response.containsKey("message")) return;
         if (!(response.get("message") instanceof String message)) return;
-        if (!response.containsKey("users")) return;
-        if (!(response.get("users") instanceof List<?> users)) return;
         //logic
         if (!success) {
             ErrorNotifier.show(message);
             return;
         }
-        instance.verified = true;
+        if (!(response.get("users") instanceof List<?> users)) return;
+        clientInstance.setVerified(true);
+
         for (var user : users) {
             if (!(user instanceof String p)) continue;
-            instance.players.add(p);
+            clientInstance.addPlayer(p);
         }
         MultiplayerScreen.onClientVerified();
     }
@@ -39,14 +38,14 @@ public class ClientMessages {
     public static void newUser(Map<String, Object> message) {
         if (!message.containsKey("user")) return;
         if (!(message.get("user") instanceof String newUser)) return;
-        instance.players.add(newUser);
+        clientInstance.addPlayer(newUser);
         MultiplayerScreen.addToUserList(newUser);
     }
 
     public static void userLoggedOut(Map<String, Object> message) {
         if (!message.containsKey("user")) return;
         if (!(message.get("user") instanceof String loggedOut)) return;
-        instance.players.remove(loggedOut);
+        clientInstance.removePlayer(loggedOut);
         MultiplayerScreen.deleteFromUserList(loggedOut);
     }
 
@@ -76,7 +75,7 @@ public class ClientMessages {
         Gdx.app.postRunnable(() -> {
             DogerDager game = DogerDager.getGameInstance();
             DogerDager.multiplayerGameStarted = true;
-            DogerDager.instance.setScreen(new ClientPlayScreen(game, game.post, difficulty, instance.playerName));
+            DogerDager.getGameInstance().setScreen(new ClientPlayScreen(game, game.post, difficulty, clientInstance.getClientName()));
             screenInstance = ClientPlayScreen.getInstance();
         });
 
@@ -124,7 +123,7 @@ public class ClientMessages {
                 String type = entityMap.get("type") instanceof String u ? u : null;
                 //player
                 String username = entityMap.get("username") instanceof String u ? u : null;
-                Boolean isDead = entityMap.get("isdead") instanceof Boolean b ? b : false;
+                Boolean isDead = entityMap.get("isdead") instanceof Boolean b ? b : null;
                 Float health = entityMap.get("hp") instanceof Double d ? d.floatValue() : null;
                 Float stamina = entityMap.get("stam") instanceof Double d ? d.floatValue() : null;
                 Boolean shielded = entityMap.get("shield") instanceof Boolean b ? b : null;
@@ -148,7 +147,7 @@ public class ClientMessages {
                 Float telegraph = entityMap.get("tele") instanceof Double d ? d.floatValue() : null;
                 Float targetX = entityMap.get("tx") instanceof Double d ? d.floatValue() : null;
                 Float targetY = entityMap.get("ty") instanceof Double d ? d.floatValue() : null;
-                Boolean settled = entityMap.get("s") instanceof Boolean b ? b : false;
+                Boolean settled = entityMap.get("s") instanceof Boolean b ? b : null;
                 Float fireTimer = entityMap.get("ft") instanceof Double d ? d.floatValue() : null;
                 Integer phase = entityMap.get("ph") instanceof Double d ? d.intValue() : null;
                 Float atkTimer = entityMap.get("at") instanceof Double d ? d.floatValue() : null;
@@ -183,7 +182,8 @@ public class ClientMessages {
             }
             return entities;
         } catch (ClassCastException | NullPointerException ex) {
-            ex.printStackTrace();
+            ErrorNotifier.show("unexpected error. check logs");
+            ErrorLogs.write("Error: " + ex);
         }
         return null;
     }
@@ -192,44 +192,55 @@ public class ClientMessages {
 
     //type 0
     public static void authorize(String name) {
-        if (instance.verified || !instance.isOpen()) return;
+        if (!isConnected()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("user", name);
-        instance.sendWS("0", message);
+        clientInstance.sendWS(MessageType.AUTHORIZE.code, message);
     }
 
     //type 1
     public static void keysDown(HashSet<String> keys) {
-        if (!instance.verified || !instance.isOpen()) return;
-        if (!DogerDager.multiplayerGameStarted) return;
+        if (!connectedAndGameStarted()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("keys", keys);
-        instance.sendWS("1", message);
+        clientInstance.sendWS(MessageType.KEYS_DOWN.code, message);
     }
 
     //type 2
     public static void keysUp(HashSet<String> keys) {
-        if (!instance.verified || !instance.isOpen()) return;
-        if (!DogerDager.multiplayerGameStarted) return;
+        if (!connectedAndGameStarted()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("keys", keys);
-        instance.sendWS("2", message);
+        clientInstance.sendWS(MessageType.KEYS_UP.code, message);
     }
 
     //type 3
     public static void shoot(int x, int y, boolean isPressed) {
-        if (!instance.verified || !instance.isOpen()) return;
+        if (!connectedAndGameStarted()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("x", x);
         message.put("y", y);
         message.put("pressing", isPressed);
-        instance.sendWS("3", message);
+        clientInstance.sendWS(MessageType.SHOOT.code, message);
     }
 
     //type 5
     public static void sendPing() {
-        if (!instance.verified || !instance.isOpen()) return;
+        if (!isConnected()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
-        instance.sendWS("5", message);
+        clientInstance.sendWS(MessageType.PING.code, message);
+    }
+
+    private static boolean isConnected() {
+        return clientInstance.isVerified() && clientInstance.isOpen();
+    }
+
+    private static boolean connectedAndGameStarted() {
+        return DogerDager.multiplayerGameStarted && clientInstance.isVerified() && clientInstance.isOpen();
+    }
+
+    public static void dispose() {
+        clientInstance = null;
+        screenInstance = null;
     }
 }

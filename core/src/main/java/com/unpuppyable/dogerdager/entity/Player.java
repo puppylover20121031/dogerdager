@@ -47,8 +47,6 @@ public final class Player extends Entity {
     private float kbX;
     private float kbY;
 
-    private float timeDelta = 0;
-
     private boolean shielded;
     public boolean invulnerable;
     private boolean staminaLocked;
@@ -230,7 +228,6 @@ public final class Player extends Entity {
     }
 
     public void healFull() {
-        if (this.dead()) return;
         health = maxHealth;
     }
 
@@ -332,4 +329,12 @@ public final class Player extends Entity {
         multiplayerKeysDown.remove(key);
     }
 
+
+    public void reset() {
+        revive();
+        healFull();
+        refillStamina();
+        bounds().x = maxX / 2f;
+        bounds.y = maxY / 2f;
+    }
 }

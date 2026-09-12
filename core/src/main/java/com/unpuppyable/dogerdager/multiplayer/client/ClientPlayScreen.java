@@ -111,7 +111,7 @@ public class ClientPlayScreen implements Screen {
             waitingForExitConfirm = true;
         }
 
-        if (!WebsocketClient.getClientInstance().verified) {
+        if (!WebsocketClient.getInstance().isVerified()) {
             batch.begin();
             drawCentered("Encountered a connection issue, redirecting to menu...");
             batch.end();
@@ -540,7 +540,6 @@ public class ClientPlayScreen implements Screen {
         public Float x;
         public Float y;
         public final String name;
-        //player
         public final Boolean dead;
         public final Float stamina;
         public final Boolean shielded;
@@ -548,16 +547,11 @@ public class ClientPlayScreen implements Screen {
         public final Float strafeinvuln;
         public final Float stun;
         public final Float hp;
-        //centipede
         public final Vector2[] seg;
         public final Float heading;
-        //boss, bullet, enemy
         public final String kind;
-        //bullet special
         public final Float ang;
-        //laser
         public final Float telegraph;
-        //boss
         public final Float targetX;
         public final Float targetY;
         public final Boolean settled;
@@ -572,7 +566,6 @@ public class ClientPlayScreen implements Screen {
                 Float x,
                 Float y,
                 String name,
-                //player
                 Boolean dead,
                 Float stamina,
                 Boolean shielded,
@@ -580,23 +573,17 @@ public class ClientPlayScreen implements Screen {
                 Float strafeinvuln,
                 Float stun,
                 Float hp,
-                //centipede
                 Vector2[] seg,
                 Float heading,
-                //boss, bullet, enemy
                 String kind,
-                //bullet special
                 Float ang,
-                //laser
                 Float telegraph,
-                //boss
                 Float targetX,
                 Float targetY,
                 Boolean settled,
                 Float fireTimer,
                 Integer phase,
                 Float atkTimer,
-                //powerup and potion
                 Float life
         ) {
             this.id = id;

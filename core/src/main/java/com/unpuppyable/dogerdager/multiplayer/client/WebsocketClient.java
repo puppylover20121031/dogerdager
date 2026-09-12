@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.unpuppyable.dogerdager.DogerDager;
 import com.unpuppyable.dogerdager.ErrorNotifier;
+import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
 import com.unpuppyable.dogerdager.multiplayer.Schedulers;
+import com.unpuppyable.dogerdager.multiplayer.MessageType;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -14,11 +16,12 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class WebsocketClient extends WebSocketClient {
+
     private static WebsocketClient instance;
-    public String playerName;
+    private final String playerName;
     private Gson gson = new Gson();
-    public boolean verified;
-    public Collection<String> players;
+    private boolean verified;
+    private Collection<String> players;
 
     public static WebsocketClient startClient(String URI, String yourName) throws InterruptedException {
         URI uri;
@@ -38,7 +41,7 @@ public class WebsocketClient extends WebSocketClient {
         t.start();
         latch.await();
         Schedulers.sendOutPingMessage(5000);
-        return getClientInstance();
+        return getInstance();
     }
 
     public WebsocketClient(URI uri, String yourName) {
@@ -46,6 +49,7 @@ public class WebsocketClient extends WebSocketClient {
         this.players = new HashSet<>();
         this.playerName = yourName;
         instance = this;
+        Schedulers.reloadClientInstance();
         verified = false;
     }
 
@@ -63,38 +67,32 @@ public class WebsocketClient extends WebSocketClient {
         } catch (JsonSyntaxException e) {
             return;
         }
-        if (!msg.containsKey("t")) return;
+        MessageType type = MessageType.fromCode(msg.get("t").toString());
+        if (type == null) return;
         // authorize
-        if (msg.get("t").equals("200")) {
-            ClientMessages.authorizeResponse(msg);
-            return;
+        switch (type) {
+             case AUTHORIZE_RESPONSE -> ClientMessages.authorizeResponse(msg);
+             case ERROR -> {
+                 ErrorNotifier.show("Error received from server");
+                 ErrorLogs.write("Error received from server: " + msg);
+             }
+             default -> {}
         }
 
         if (!verified) return;
-        // new user joined
-        if (msg.get("t").equals("201")) {
-            ClientMessages.newUser(msg);
-            return;
+        switch (type) {
+            case USER_JOINED -> ClientMessages.newUser(msg);
+            case USER_LEFT -> ClientMessages.userLoggedOut(msg);
+            case GAME_STARTED -> ClientMessages.gameStarted(msg);
+            default -> {}
         }
-        //user logged out
-        if (msg.get("t").equals("202")) {
-            ClientMessages.userLoggedOut(msg);
-            return;
-        }
-        //game started
-        if (msg.get("t").equals("210")) {
-            ClientMessages.gameStarted(msg);
-            return;
-        }
+
         if (!DogerDager.multiplayerGameStarted) return;
-        //entity states
-        if (msg.get("t").equals("250")) {
-            ClientMessages.newEntityStates(msg);
-            return;
-        }
-        if (msg.get("t").equals("251")) {
-            ClientMessages.updateEntityStates(msg);
-            return;
+
+        switch (type) {
+            case ENTITIES_INIT -> ClientMessages.newEntityStates(msg);
+            case ENTITIES_UPDATE -> ClientMessages.updateEntityStates(msg);
+            default -> {}
         }
     }
 
@@ -108,16 +106,32 @@ public class WebsocketClient extends WebSocketClient {
 
     @Override
     public void onError(Exception ex) {
-
+        ErrorNotifier.show("Encountered an error (see multiplayer logs)");
+        ErrorLogs.write("Error in ClientWebSocket: " + ex);
     }
+
     public void sendWS(String type, Map<String, Object> message) {
         Map<String, Object> json = new HashMap<>(message);
         json.put("t", type);
         instance.send(gson.toJson(json));
     }
-    public static WebsocketClient getClientInstance() {
+
+    public static WebsocketClient getInstance() {
         return instance;
     }
+
+    public boolean isVerified() { return verified; }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public void addPlayer(String name) { players.add(name); }
+    public void removePlayer(String name) { players.remove(name); }
+    public String getClientName() { return playerName; }
+
+    public List<String> getPlayerList() { return new ArrayList<String>(players); }
+
 
     public static void closeClient() {
         if (instance == null || instance.isClosed() || instance.isClosing()) return;
@@ -127,7 +141,9 @@ public class WebsocketClient extends WebSocketClient {
     public static void dispose() {
         closeClient();
         if (instance != null) instance.verified = false;
+        instance = null;
         DogerDager.setMultiplayer(false);
         Schedulers.stopSchedulers();
+        ClientMessages.dispose();
     }
 }
