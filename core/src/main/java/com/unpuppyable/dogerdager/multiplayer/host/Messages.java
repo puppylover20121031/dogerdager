@@ -90,7 +90,8 @@ public class Messages {
         if (!(msg.get("y") instanceof Double y)) return;
         if (!(msg.get("pressing") instanceof Boolean pressing)) return;
         Player player = HostPlayScreen.getPlayerByName(name);
-        player.shoot(x.intValue(), y.intValue(), pressing);
+        if (player == null) return;
+        Gdx.app.postRunnable(() -> player.shoot(x.intValue(), y.intValue(), pressing));
     }
 
     public static void ping(WebSocket conn) {
@@ -102,7 +103,7 @@ public class Messages {
 
     // server -> client
     public static void renderTick(HashMap<String, Player> players, List<Entity> entities) {
-        if (entities.size() != previousEntities.size() || players.size() != previousPlayers.size()) {
+        if (entities.size() != previousEntities.size() || players.size() != previousPlayers.size() || !previousEntities.keySet().containsAll(entities)) {
             initializeEntities(players, entities);
         } else {
             updateEntities(players, entities);
@@ -213,7 +214,7 @@ public class Messages {
                 }
                 case Powerup1 e -> {
                     if (!(prevVal instanceof PowerUpValues previousValues)) {
-                        ErrorNotifier.show("Something went wrong with parsing entity: Potion");
+                        ErrorNotifier.show("Something went wrong with parsing entity: PowerUp1");
                         continue;
                     }
                     PowerUpValues infoSet = new PowerUpValues(

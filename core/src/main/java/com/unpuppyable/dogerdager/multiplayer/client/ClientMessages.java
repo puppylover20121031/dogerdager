@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
 import com.unpuppyable.dogerdager.ErrorNotifier;
+import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 
 import java.util.*;
@@ -101,7 +102,14 @@ public class ClientMessages {
             return;
         }
 
-        Gdx.app.postRunnable(() -> screenInstance.updateEntityStates(entities));
+        Gdx.app.postRunnable(() -> {
+            try {
+                screenInstance.updateEntityStates(entities);
+            } catch (Exception ex) {
+                ErrorNotifier.show("unexpected error, more info in logs");
+                ErrorLogs.write("Unexpected exception: " + ex);
+            }
+        });
     }
 
     private static HashSet<Object> validateServerTick(Map<String, Object> message) {

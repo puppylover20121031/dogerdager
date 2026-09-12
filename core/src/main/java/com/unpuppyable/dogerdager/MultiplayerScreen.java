@@ -15,7 +15,7 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisTextField;
 import com.unpuppyable.dogerdager.multiplayer.client.WebsocketClient;
-import com.unpuppyable.dogerdager.multiplayer.host.ServerLogs;
+import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
 import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
 
 import java.util.*;
@@ -273,7 +273,7 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     private void onHostClicked() {
         //getting player name
-        if (!promptName.isEmpty() || !promptName.getText().equals("Insert Name")) {
+        if (!promptName.isEmpty() || promptName.getText().equals("Insert Name")) {
             prefs.putString("user.name", promptName.getText());
         } else {
             if (prefs.getString("user.name", null) == null || prefs.getString("user.name").equals("Insert Name")) {
@@ -284,7 +284,7 @@ public class MultiplayerScreen extends ScreenAdapter {
         try {
             wsInstance = Websocket.startServer(PORT);
         } catch (InterruptedException e) {
-            ServerLogs.write("Start was interrupted: "+e);
+            ErrorLogs.write("Start was interrupted: "+e);
             ErrorNotifier.show("Start was interrupted, check multiplayer.logs");
             return;
         }
@@ -365,7 +365,7 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     private void removePlayer(String name) {
         if (userList.remove(name) == null) {
-            ServerLogs.write("deleteFromUserList: no such player '" + name + "'");
+            ErrorLogs.write("deleteFromUserList: no such player '" + name + "'");
             return;
         }
         refreshUserList();
