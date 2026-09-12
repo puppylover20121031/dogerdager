@@ -192,7 +192,7 @@ public class ClientMessages {
 
     //type 0
     public static void authorize(String name) {
-        if (!isConnected()) return;
+        if (clientInstance.isClosed()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("user", name);
         clientInstance.sendWS(MessageType.AUTHORIZE.code, message);
