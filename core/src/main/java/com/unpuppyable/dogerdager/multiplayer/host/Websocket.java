@@ -7,6 +7,7 @@ import com.unpuppyable.dogerdager.MultiplayerScreen;
 import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
 import com.unpuppyable.dogerdager.multiplayer.MessageType;
 import com.unpuppyable.dogerdager.multiplayer.Schedulers;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -123,17 +124,26 @@ public class Websocket extends WebSocketServer {
         Map<String, Object> json = new HashMap<>(data);
         json.put("t", type);
         if (conn == null) return;
-        if (conn.isClosed()) return;
-        conn.send(gson.toJson(json));
+        if (!conn.isOpen()) return;
+        try {
+            conn.send(gson.toJson(json));
+        } catch (WebsocketNotConnectedException ex) {
+            ErrorLogs.write("Websocket:sendWS: " + ex);
+        }
     }
+
     public void broadcastWS(String type, Map<String, Object> data) {
         Map<String, Object> json = new HashMap<>(data);
         json.put("t", type);
         for (WebSocket conn : users.keySet()) {
             if (conn == null) continue;
             if (users.get(conn)==null) continue;
-            if (conn.isClosed()) continue;
-            conn.send(gson.toJson(json));
+            if (!conn.isOpen()) continue;
+            try {
+                conn.send(gson.toJson(json));
+            } catch (WebsocketNotConnectedException ex) {
+                ErrorLogs.write("Websocket:broadcastWS: "+ex);
+            }
         }
     }
 
@@ -149,7 +159,7 @@ public class Websocket extends WebSocketServer {
         try {
             instance.stop();
         } catch (InterruptedException ex) {
-            ErrorLogs.write("Error while stopping WebSocket server: "+ex);
+            ErrorLogs.write("Websocket:stopServer: "+ex);
         }
     }
 

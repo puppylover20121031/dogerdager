@@ -17,6 +17,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("com.badlogicgames.gdx:gdx-backend-headless:1.13.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("com.badlogicgames.gdx:gdx-platform:1.13.1:natives-desktop")
 }
 
 tasks.test {

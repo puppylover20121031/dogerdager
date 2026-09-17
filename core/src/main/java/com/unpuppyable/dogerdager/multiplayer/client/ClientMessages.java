@@ -192,7 +192,6 @@ public class ClientMessages {
 
     //type 0
     public static void authorize(String name) {
-        if (clientInstance.isClosed()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("user", name);
         clientInstance.sendWS(MessageType.AUTHORIZE.code, message);
@@ -200,7 +199,7 @@ public class ClientMessages {
 
     //type 1
     public static void keysDown(HashSet<String> keys) {
-        if (!connectedAndGameStarted()) return;
+        if (gameNotStarted()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("keys", keys);
         clientInstance.sendWS(MessageType.KEYS_DOWN.code, message);
@@ -208,7 +207,7 @@ public class ClientMessages {
 
     //type 2
     public static void keysUp(HashSet<String> keys) {
-        if (!connectedAndGameStarted()) return;
+        if (gameNotStarted()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("keys", keys);
         clientInstance.sendWS(MessageType.KEYS_UP.code, message);
@@ -216,7 +215,7 @@ public class ClientMessages {
 
     //type 3
     public static void shoot(int x, int y, boolean isPressed) {
-        if (!connectedAndGameStarted()) return;
+        if (gameNotStarted()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("x", x);
         message.put("y", y);
@@ -226,17 +225,14 @@ public class ClientMessages {
 
     //type 5
     public static void sendPing() {
-        if (!isConnected()) return;
+        if (!clientInstance.isVerified()) return;
         HashMap<String, Object> message = new HashMap<String, Object>();
         clientInstance.sendWS(MessageType.PING.code, message);
     }
 
-    private static boolean isConnected() {
-        return clientInstance.isVerified() && clientInstance.isOpen();
-    }
-
-    private static boolean connectedAndGameStarted() {
-        return DogerDager.multiplayerGameStarted && clientInstance.isVerified() && clientInstance.isOpen();
+    private static boolean gameNotStarted() {
+        if (clientInstance == null) return false;
+        return DogerDager.multiplayerGameStarted && clientInstance.isVerified();
     }
 
     public static void dispose() {
