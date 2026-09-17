@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
-import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 import com.unpuppyable.dogerdager.entity.*;
 import com.unpuppyable.dogerdager.multiplayer.MessageType;

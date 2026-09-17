@@ -8,6 +8,7 @@ import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
 import com.unpuppyable.dogerdager.multiplayer.Schedulers;
 import com.unpuppyable.dogerdager.multiplayer.MessageType;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
@@ -113,7 +114,13 @@ public class WebsocketClient extends WebSocketClient {
     public void sendWS(String type, Map<String, Object> message) {
         Map<String, Object> json = new HashMap<>(message);
         json.put("t", type);
-        instance.send(gson.toJson(json));
+        if (!this.isOpen()) return;
+        try {
+            instance.send(gson.toJson(json));
+        } catch (WebsocketNotConnectedException ex) {
+            ErrorLogs.write("WebsocketClient:sendWS: "+ex);
+        }
+
     }
 
     public static WebsocketClient getInstance() {

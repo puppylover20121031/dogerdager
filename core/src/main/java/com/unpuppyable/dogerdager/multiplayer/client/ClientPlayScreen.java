@@ -245,14 +245,23 @@ public class ClientPlayScreen implements Screen {
         return true;
     }
 
+    //interpolate entities fills an entitiesToRender map with calculated frames in between
+    //previousEntities and entities maps. Skips new entities and draws nonexistent entities
+    //for one additional tick (0,033s with 30tps) to not make the logic even more complicated.
     private void interpolateEntities() {
-        if (entities.isEmpty() || previousEntities.isEmpty()) return;
-        if (lastTick == 0 || secondLastTick == 0) return;
         entitiesToRender.clear();
         playersToRender.clear();
-
+        if (entities.isEmpty()) return;
+        if (lastTick == 0 || secondLastTick == 0) return;
+        if ((previousEntities.isEmpty())) {
+            entitiesToRender.putAll(entities);
+            return;
+        }
         long tickDiff = lastTick - secondLastTick;
-        if (tickDiff == 0) return;
+        if (tickDiff == 0) {
+            entitiesToRender.putAll(entities);
+            return;
+        }
 
         for (String entityId : previousEntities.keySet()) {
             if (!entities.containsKey(entityId)) {
@@ -267,7 +276,7 @@ public class ClientPlayScreen implements Screen {
             interpEntity.x = MathUtils.lerp(oldEnt.x, newEnt.x, t);
             interpEntity.y = MathUtils.lerp(oldEnt.y, newEnt.y, t);
 
-            if (interpEntity.type.equals("Centipede") && interpEntity.seg != null) {
+            if (interpEntity.type.equals("Centipede") && interpEntity.seg != null && oldEnt.seg != null) {
                 for (int i = 0; i < oldEnt.seg.length; i++) {
                     if (oldEnt.seg[i] == null || newEnt.seg[i] == null) continue;
 
