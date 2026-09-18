@@ -28,7 +28,7 @@ public class HostPlayScreen extends PlayScreen {
     private static HostPlayScreen instance;
     private Websocket wsInstance = Websocket.getInstance();
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
-    private static HashMap<String, Player> players = new HashMap<String, Player>();
+    private HashMap<String, Player> players = new HashMap<String, Player>();
     private Player host;
 
     protected State state;
@@ -300,12 +300,12 @@ public class HostPlayScreen extends PlayScreen {
     }
 
     public static Player getPlayerByName(String name) {
-        return players.get(name);
+        return instance.players.get(name);
     }
 
     public static Player getRandomPlayer() {
-        int randomNumber = MathUtils.random(players.size()-1);
-        List<Player> list = new ArrayList<Player>(players.values());
+        int randomNumber = MathUtils.random(instance.players.size()-1);
+        List<Player> list = new ArrayList<Player>(instance.players.values());
         if (list.stream().allMatch(Player :: dead)) return null;
         Player culprit = list.get(randomNumber);
         return culprit.dead() ? getRandomPlayer() : culprit;
@@ -328,5 +328,4 @@ public class HostPlayScreen extends PlayScreen {
             p.reset();;
         }
     }
-
 }
