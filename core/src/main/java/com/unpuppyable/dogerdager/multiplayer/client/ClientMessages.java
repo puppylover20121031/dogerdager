@@ -231,8 +231,8 @@ public class ClientMessages {
     }
 
     private static boolean gameNotStarted() {
-        if (clientInstance == null) return false;
-        return DogerDager.multiplayerGameStarted && clientInstance.isVerified();
+        if (clientInstance == null) return true;
+        return !DogerDager.multiplayerGameStarted || !clientInstance.isVerified();
     }
 
     public static void dispose() {
