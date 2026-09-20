@@ -73,7 +73,7 @@ public final class Player extends Entity {
         this.stamina = MAX_STAMINA;
         this.isYou = isHost;
         this.username = username;
-        this.name = "Player";
+        this.type = "Player";
         if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
             playerShootingEnabled = true;
         if (difficulty == Difficulty.HARD || difficulty == Difficulty.HARDCORE) playerShootingEnabled = true;

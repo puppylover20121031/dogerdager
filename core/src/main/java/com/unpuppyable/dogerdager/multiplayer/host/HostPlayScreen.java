@@ -23,18 +23,22 @@ public class HostPlayScreen extends PlayScreen {
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
     private final Progress progress = new Progress();
+
     private float tickrate = 30f;
+    private boolean pvpOn = false;
+
     private float netTimer;
     private static HostPlayScreen instance;
     private Websocket wsInstance = Websocket.getInstance();
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
-    private HashMap<String, Player> players = new HashMap<String, Player>();
+    private final HashMap<String, Player> players = new HashMap<String, Player>();
     private Player host;
+    private String winner;
 
     protected State state;
 
     protected enum State {
-        PLAYING, PAUSED, DEAD, GAME_OVER, WON
+        PLAYING, PAUSED, GAME_OVER, WON, PLAYER_WON, YOU_DIED
     }
 
     public HostPlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
@@ -73,9 +77,18 @@ public class HostPlayScreen extends PlayScreen {
         for (Player p : players.values()) {
             if (p.dead()) playersDead++;
         }
-        if (playersDead>=players.size()) {
+
+        if (playersDead>=players.size() && state != State.GAME_OVER) {
             state = State.GAME_OVER;
-            //broadcast new gamestate
+            Messages.newGameState(state.toString(), winner);
+        }
+        if (pvpOn && playersDead + 1 == players.size() && state != State.PLAYER_WON) {
+            state = State.PLAYER_WON;
+            for (Player p : players.values()) {
+                if (p.dead()) continue;
+                winner = p.username;
+            }
+            Messages.newGameState(state.toString(), winner);
         }
 
         if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
@@ -88,9 +101,10 @@ public class HostPlayScreen extends PlayScreen {
                 return;
             }
         }
-        if (state == State.PLAYING || state == State.DEAD) {
+        if (state == State.PLAYING || state == State.YOU_DIED) {
             update(Math.min(delta, MAX_STEP), post);
         } else if (state == State.PAUSED) {
+            update(Math.min(delta, MAX_STEP), post);
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
                 DogerDager.multiplayerGameStarted = false;
                 toMenu();
@@ -147,15 +161,28 @@ public class HostPlayScreen extends PlayScreen {
                         break;
                     }
                 }
+                if (!pvpOn) continue;
+                for (var target : players.values()) {
+                    if (target.dead() || arrow.getOwner() == target) continue;
+
+                    if (arrow.hits(target.bounds())) {
+                        arrow.kill();
+                        hurt(target, 2);
+                        break;
+                    }
+                }
             }
         }
-        //loop for players
+        //loop for players (what they're touching)
         for (Player p : players.values()) {
+            boolean isHost = p == host;
+
             if (p.dead()) continue;
             for (var e : entities) {
                 if (e.dead() || !e.hits(p.bounds()))
                     continue;
                 if (e.heals()) {
+                    if (isHost) progress.unlock(Achievement.POTIONER);
                     p.heal(2);
                     e.kill();
                 } else if (e.contactDamage() > 0) {
@@ -165,36 +192,19 @@ public class HostPlayScreen extends PlayScreen {
                     hurt(p, e.contactDamage());
                     if (e.diesOnPlayerHit())
                         e.kill();
+                    if (e.glitches()) {
+                        if (isHost) post.setGlitch(true);
+                        e.kill();
+                    }
                 }
-            }
-        }
-
-        //loop for enemies then host
-        for (var e : entities) {
-            if (e.dead() || !e.hits(host.bounds()))
-                continue;
-            if (e.heals()) {
-                host.heal(2);
-                progress.unlock(Achievement.POTIONER);
-                e.kill();
-            } else if (e.contactDamage() > 0) {
-                if (e.knocksBack() && !host.strafing() && !host.invulnerable) {
-                    host.knockback(ARENA_W, PLAY_TOP);
-                }
-                hurt(e.contactDamage());
-                if (e.diesOnPlayerHit())
-                    e.kill();
-            } if (e.glitches()) {
-                post.setGlitch(true);
-                e.kill();
             }
         }
 
         entities.removeIf(Entity::dead);
 
         if (host.dead()) {
+            state = State.YOU_DIED;
             progress.unlock(Achievement.FIRST_DEATH);
-            state = State.DEAD;
             progress.recordRun(difficulty, hud.highScore(), false);
         }
     }
@@ -247,31 +257,23 @@ public class HostPlayScreen extends PlayScreen {
         hud.drawText(batch, font);
         if (state == State.PAUSED) {
             drawCentered("PAUSED   -   Esc resume   Q menu");
-        } else if (state == State.DEAD){
+        } else if (state == State.YOU_DIED){
             drawCentered("You Died!"); //respawn
         } else if (state == State.WON) {
             drawMovieEnding(endingText.replace("YOU WON", "YOU WON"), delta);
         } else if (state == State.GAME_OVER) {
             drawMovieEnding(endingText.replace("YOU WON", "GAME OVER"), delta);
+        } else if (state == State.PLAYER_WON) {
+            drawMovieEnding(endingText.replace("YOU WON", winner + " WON"), delta);
         }
         batch.end();
     }
 
-    @Override
-    protected void hurt(int amount) {
-        if (host.strafing())
-            return;
-        int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (host.damage(dmg)) {
-            host.health -= dmg;
-            shake = 0.22f;
-        }
-    }
     protected void hurt(Player player, int amount) {
         if (player.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        player.damage(dmg);
+        if (player.damage(dmg) && player == host) shake = 0.22f;
     }
 
     // Floor transition: heal, wipe the arena, then either win or stage the next
@@ -324,8 +326,10 @@ public class HostPlayScreen extends PlayScreen {
     @Override
     protected void reset() {
         super.reset();
+        if (players == null) return;
         for (Player p : players.values()) {
             p.reset();;
         }
+        DogerDager.multiplayerGameStarted = false;
     }
 }

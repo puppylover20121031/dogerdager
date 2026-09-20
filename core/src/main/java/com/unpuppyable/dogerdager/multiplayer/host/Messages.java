@@ -182,6 +182,13 @@ public class Messages {
         wsInstance.broadcastWS(MessageType.GAME_STARTED.code, response);
     }
 
+    public static void newGameState(String state, String winner) {
+        HashMap<String, Object> response = new HashMap<String, Object>();
+        response.put("gs", state);
+        response.put("w", winner);
+        wsInstance.broadcastWS(MessageType.NEW_GAME_STATE.code, response);
+    }
+
     // help
     private static Boolean isNameLegal(String name) {
         if (name.chars().anyMatch(Character::isWhitespace)) return false;
@@ -214,7 +221,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new EntityValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y
             );
@@ -250,7 +257,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new CentipedeValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.seg,
@@ -288,7 +295,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new EnemyValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.kind.toString()
@@ -336,7 +343,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new BossValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.kind.toString(),
@@ -386,7 +393,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new BulletValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.kind.toString(),
@@ -424,7 +431,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new LaserValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.telegraph
@@ -460,7 +467,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new PowerUpValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.life
@@ -478,7 +485,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new PowerUpValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.life
@@ -528,7 +535,7 @@ public class Messages {
         float y = entity.bounds().y;
         if (previous == null) {
             return new PlayerValues(
-                    entity.name,
+                    entity.type,
                     x,
                     y,
                     entity.username,

@@ -10,7 +10,7 @@ public final class Potion extends Entity {
 
     public Potion(float x, float y) {
         super(x, y, SIZE);
-        this.name = "Potion";
+        this.type = "Potion";
     }
 
     @Override

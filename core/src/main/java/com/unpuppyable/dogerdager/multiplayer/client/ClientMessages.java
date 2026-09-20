@@ -13,8 +13,10 @@ import com.unpuppyable.dogerdager.multiplayer.MessageType;
 import java.util.*;
 
 public class ClientMessages {
-    private static WebsocketClient clientInstance = WebsocketClient.getInstance();
+    private static WebsocketClient clientInstance;
     private static ClientPlayScreen screenInstance;
+    public static void initMessages() { clientInstance = WebsocketClient.getInstance(); }
+
     // Server -> client
     public static void authorizeResponse(Map<String, Object> response) {
         //getters
@@ -53,24 +55,15 @@ public class ClientMessages {
         if (!(message.get("diff") instanceof String diff)) return;
         Difficulty difficulty;
         switch (diff) {
-            case "EASY" -> {
-                difficulty = Difficulty.EASY;
-            }
-            case "NORMAL" -> {
-                difficulty = Difficulty.NORMAL;
-            }
-            case "HARD" -> {
-                difficulty = Difficulty.HARD;
-            }
-            case "HARDCORE" -> {
-                difficulty = Difficulty.HARDCORE;
-            }
-            case "CUSTOM" -> {
-                difficulty = Difficulty.CUSTOM;
-            }
+            case "EASY" -> difficulty = Difficulty.EASY;
+            case "NORMAL" -> difficulty = Difficulty.NORMAL;
+            case "HARD" -> difficulty = Difficulty.HARD;
+            case "HARDCORE" -> difficulty = Difficulty.HARDCORE;
+            case "CUSTOM" -> difficulty = Difficulty.CUSTOM;
             default -> {
                 return;
             }
+
         }
         Gdx.app.postRunnable(() -> {
             DogerDager game = DogerDager.getGameInstance();
@@ -78,7 +71,12 @@ public class ClientMessages {
             DogerDager.getGameInstance().setScreen(new ClientPlayScreen(game, game.post, difficulty, clientInstance.getClientName()));
             screenInstance = ClientPlayScreen.getInstance();
         });
+    }
 
+    public static void changeGameState(Map<String, Object> message) {
+        if (!(message.get("gs") instanceof String state)) return;
+        String winner = message.get("w") instanceof String u ? u : null;
+        ClientPlayScreen.changeGameState(state, winner);
     }
 
     public static void newEntityStates(Map<String, Object> message) {

@@ -64,11 +64,14 @@ public class Websocket extends WebSocketServer {
         //broadcast
         if (!users.containsKey(conn)) return;
         String name = users.get(conn);
+
         users.remove(conn);
+        lastPing.remove(conn);
+        //output into userlist if game didn't start yet
+        if (DogerDager.multiplayerGameStarted) return;
         HashMap<String, Object> response = new HashMap<String, Object>();
         response.put("user", name);
         broadcastWS(MessageType.USER_LEFT.code, response);
-        //output into userlist if game didn't start yet
         if (!DogerDager.multiplayerGameStarted) MultiplayerScreen.deleteFromUserList(name);
     }
 
@@ -211,9 +214,6 @@ public class Websocket extends WebSocketServer {
         if (conn == null) return;
         String name = users.get(conn);
         //deleting connection
-        lastPing.remove(conn);
-        notVerified.remove(conn);
-        users.remove(conn);
         conn.close(code, message);
     }
     public static void dispose() {

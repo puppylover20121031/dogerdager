@@ -36,7 +36,7 @@ public final class Enemy extends Entity {
         this.target = target;
         this.vx = speed;
         this.vy = speed;
-        this.name = "Enemy";
+        this.type = "Enemy";
     }
 
     @Override

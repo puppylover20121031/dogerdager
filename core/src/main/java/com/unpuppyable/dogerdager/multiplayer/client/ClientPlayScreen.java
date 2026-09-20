@@ -17,6 +17,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
+import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
 
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +38,7 @@ public class ClientPlayScreen implements Screen {
     private final KeyBind keyBind = new KeyBind();
     private final Difficulty difficulty;
     protected final Progress progress = new Progress();
+    private State state;
 
     protected Viewport viewport;
     protected final ShapeRenderer shapes = new ShapeRenderer();
@@ -44,11 +46,11 @@ public class ClientPlayScreen implements Screen {
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
     private final ReceiverHud hud;
+    protected final String endingText = "THE END\n\nYOU WON\n\nRIP Honey Bun\n\nIn loving memory\n\nCredits\nHoney Bun\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
 
     protected float shake;
     protected float camX = ARENA_W;
 
-    private boolean waitingForExitConfirm = false;
     private float anim = 0;
     private float timer = 0;
     private float floorTimer = 0;
@@ -67,6 +69,11 @@ public class ClientPlayScreen implements Screen {
     private final ConcurrentHashMap<String, EntityState> playersToRender = new ConcurrentHashMap<>();
     private final String yourName;
     private EntityState player;
+    private String winner;
+
+    private enum State {
+        PLAYING, PAUSED, WON, PLAYER_WON, GAME_OVER, YOU_DIED
+    }
 
     public ClientPlayScreen(DogerDager game, PostProcessor post, Difficulty difficulty, String name) {
         this.yourName = name;
@@ -74,6 +81,7 @@ public class ClientPlayScreen implements Screen {
         this.difficulty = difficulty;
         hud = new ReceiverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         instance = this;
+        state = State.PLAYING;
     }
 
     @Override
@@ -95,20 +103,22 @@ public class ClientPlayScreen implements Screen {
         }
         interpTimer += delta;
         interpolateEntities();
+        if (player == null) return;
+        if (player.dead && state == State.PLAYING) state = State.YOU_DIED;
     }
 
     private void handleKeys(float delta) {
-        if (waitingForExitConfirm && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Pad.justA())) {
+        if (state == State.PAUSED && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Pad.justA())) {
             game.setScreen(new MenuScreen(game, game.post));
             dispose();
         }
 
         if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
-            if (waitingForExitConfirm) {
-                waitingForExitConfirm = false;
+            if (state == State.PAUSED) {
+                state = State.PLAYING;
                 return;
             }
-            waitingForExitConfirm = true;
+            state = State.PAUSED;
         }
 
         if (!WebsocketClient.getInstance().isVerified()) {
@@ -325,7 +335,7 @@ public class ClientPlayScreen implements Screen {
             drawEntity(e, shapes);
         }
 
-        if (waitingForExitConfirm) {
+        if (state == State.PAUSED) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapes.setColor(0f, 0f, 0f, 0.6f);
             shapes.rect(0, 0, WORLD_W, WORLD_H);
@@ -336,8 +346,16 @@ public class ClientPlayScreen implements Screen {
 
         batch.begin();
         hud.drawText(batch, font);
-        if (waitingForExitConfirm) {
+        if (state == State.PAUSED) {
             drawCentered("Are you sure you want to leave? (press enter or A on pad)");
+        } else if (state == State.YOU_DIED){
+            drawCentered("You Died!");
+        } else if (state == State.WON) {
+            drawCentered(endingText.replace("YOU WON", "YOU WON"));
+        } else if (state == State.GAME_OVER) {
+            drawCentered(endingText.replace("YOU WON", "GAME OVER"));
+        } else if (state == State.PLAYER_WON) {
+            drawCentered(endingText.replace("YOU WON", winner + " WON"));
         }
         batch.end();
     }
@@ -502,7 +520,15 @@ public class ClientPlayScreen implements Screen {
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
     }
 
-
+    public static void changeGameState(String inputState, String winner) {
+        switch (inputState) {
+            case ("WON") -> instance.state = State.WON;
+            case ("PLAYER_WON") -> instance.state = State.PLAYER_WON;
+            case ("GAME_OVER") -> instance.state = State.GAME_OVER;
+            default -> {}
+        }
+        if (winner != null) instance.winner = winner;
+    }
 
     @Override
     public void show() {

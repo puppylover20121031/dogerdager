@@ -12,7 +12,7 @@ public abstract class Entity {
     protected final Rectangle bounds;
     protected boolean dead;
     public String id = UUID.randomUUID().toString();
-    public String name;
+    public String type;
 
     protected Entity(float x, float y, float size) {
         bounds = new Rectangle(x, y, size, size);
