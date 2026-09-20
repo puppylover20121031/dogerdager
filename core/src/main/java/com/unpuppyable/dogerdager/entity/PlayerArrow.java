@@ -11,7 +11,9 @@ public final class PlayerArrow extends Entity {
     private final float playTop;
     private final float vx;
     private final float vy;
-    private Player owner;
+
+    private final Player owner;
+    public Player getOwner() { return this.owner; }
 
     public PlayerArrow(float x, float y, float vx, float vy, float worldW, float playTop, Player owner) {
         super(x, y, SIZE);
@@ -20,7 +22,7 @@ public final class PlayerArrow extends Entity {
         this.vy = vy;
         this.worldW = worldW;
         this.playTop = playTop;
-        this.name = "PlayerArrow";
+        this.type = "PlayerArrow";
     }
 
     @Override

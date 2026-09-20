@@ -65,6 +65,13 @@ gameStarted:
 "tps":float tickrate
 }
 
+newGameState:
+{
+"t":"211",
+"gs":state.toString(),
+"w":String winner
+}
+
 EntityStates - full snapshot (see "delta compression" below)
 Sent once whenever the number of tracked entities/players changes (someone
 spawns, dies, joins, etc.) - every field is always present so the client can

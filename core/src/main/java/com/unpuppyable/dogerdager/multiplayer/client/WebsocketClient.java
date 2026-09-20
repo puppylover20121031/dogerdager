@@ -51,6 +51,7 @@ public class WebsocketClient extends WebSocketClient {
         this.playerName = yourName;
         instance = this;
         Schedulers.reloadClientInstance();
+        ClientMessages.initMessages();
         verified = false;
     }
 
@@ -93,6 +94,7 @@ public class WebsocketClient extends WebSocketClient {
         switch (type) {
             case ENTITIES_INIT -> ClientMessages.newEntityStates(msg);
             case ENTITIES_UPDATE -> ClientMessages.updateEntityStates(msg);
+            case NEW_GAME_STATE -> ClientMessages.changeGameState(msg);
             default -> {}
         }
     }

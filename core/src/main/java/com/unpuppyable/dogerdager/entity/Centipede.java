@@ -41,7 +41,7 @@ public final class Centipede extends Entity {
         for (int i = 0; i < SEGMENTS; i++) {
             seg[i] = new Vector2(x - i * SPACING, y);
         }
-        this.name = "Centipede";
+        this.type = "Centipede";
     }
 
     private float radius(int i) {
