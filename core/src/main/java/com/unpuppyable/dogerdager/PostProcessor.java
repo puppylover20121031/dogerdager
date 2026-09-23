@@ -25,7 +25,11 @@ public final class PostProcessor implements Disposable {
         }
     }
 
-    public void resize(int width, int height) {
+    public void resize(int logicalWidth, int logicalHeight) {
+        // resize() gets the window's logical size, but with desktop scaling the real pixel count
+        // (back buffer) can be bigger. Capture at real pixels so the frame isn't drawn small and stretched.
+        int width = Gdx.graphics.getBackBufferWidth();
+        int height = Gdx.graphics.getBackBufferHeight();
         if (width <= 0 || height <= 0) {
             Gdx.app.error("PostProcessor", "Ignoring resize with invalid dimensions: " + width + "x" + height);
             return;
