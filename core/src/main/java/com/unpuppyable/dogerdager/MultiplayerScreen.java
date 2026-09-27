@@ -57,8 +57,10 @@ public class MultiplayerScreen extends ScreenAdapter {
     private VisTextButton connectButton;
     private VisTextButton hostButton;
     private VisTextButton startGame;
+    private VisTextButton leaveMultiplayer;
     private VisTextField promptName;
     private VisTextField promptUri;
+
 
     // --- keyboard/pad navigation ---
     private final List<Actor> choices = new ArrayList<>();
@@ -79,6 +81,21 @@ public class MultiplayerScreen extends ScreenAdapter {
         }
         stage.addActor(root);
         root.setFillParent(true);
+
+        // lives outside `content` so setState(...) never wipes it; visibility is synced every frame in render()
+        var corner = new VisTable();
+        corner.setFillParent(true);
+        corner.top().left();
+        leaveMultiplayer = new VisTextButton("Disconnect (Esc/B)");
+        leaveMultiplayer.setColor(Color.RED);
+        leaveMultiplayer.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                disconnect();
+            }
+        });
+        corner.add(leaveMultiplayer).width(BUTTON_WIDTH).height(BUTTON_HEIGHT).pad(16);
+        stage.addActor(corner);
 
         var title = new VisLabel("MULTIPLAYER");
         title.setFontScale(3f);
@@ -207,16 +224,12 @@ public class MultiplayerScreen extends ScreenAdapter {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Pad.justB()) {
                 waitingForInput = false;
                 pendingAction = null;
+                stage.setKeyboardFocus(null);
             }
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Pad.justB()) {
-            switching = true;
-            DogerDager.setMultiplayer(false);
-            Websocket.dispose();
-            WebsocketClient.dispose();
-            game.setScreen(new MenuScreen(game, post));
-            dispose();
+            disconnect();
             return;
         }
         if (choices.isEmpty()) return;
@@ -237,6 +250,8 @@ public class MultiplayerScreen extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Pad.justA()) {
             if (stage.getKeyboardFocus() instanceof VisTextField) {
                 stage.setKeyboardFocus(null);
+                waitingForInput = false;
+                pendingAction = null;
                 return;
             }
             if (choice == joinButton) {
@@ -298,6 +313,16 @@ public class MultiplayerScreen extends ScreenAdapter {
 
     private void start() {
         switching = true;
+        game.setScreen(new MenuScreen(game, post));
+        dispose();
+    }
+
+    /** Leaves multiplayer (host or client), stops networking, and returns to the menu. */
+    private void disconnect() {
+        switching = true;
+        DogerDager.setMultiplayer(false);
+        Websocket.dispose();
+        WebsocketClient.dispose();
         game.setScreen(new MenuScreen(game, post));
         dispose();
     }
@@ -385,6 +410,7 @@ public class MultiplayerScreen extends ScreenAdapter {
         if (switching) return;
         handleKeys(post);
         if (switching) return;
+        leaveMultiplayer.setVisible(DogerDager.getMultiplayer());
         ScreenUtils.clear(Color.BLACK);
         stage.act(delta);
         if (switching) return;

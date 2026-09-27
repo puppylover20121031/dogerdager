@@ -27,6 +27,7 @@ public class WebsocketClient extends WebSocketClient {
     public static WebsocketClient startClient(String URI, String yourName) throws InterruptedException {
         URI uri;
         try {
+            if (!URI.contains(".") || !URI.contains(":")) return null;
             uri = new URI("ws://"+URI);
         } catch (URISyntaxException e) {
             return null;

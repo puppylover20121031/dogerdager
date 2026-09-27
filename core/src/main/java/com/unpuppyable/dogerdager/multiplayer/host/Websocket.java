@@ -218,5 +218,7 @@ public class Websocket extends WebSocketServer {
     }
     public static void dispose() {
         stopServer();
+        Schedulers.stopSchedulers();
+        instance = null;
     }
 }
