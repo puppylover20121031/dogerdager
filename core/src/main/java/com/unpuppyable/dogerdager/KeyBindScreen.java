@@ -28,6 +28,8 @@ public final class KeyBindScreen extends ScreenAdapter {
             KeyBind.Action.MOVE_LEFT,
             KeyBind.Action.MOVE_RIGHT,
             KeyBind.Action.STRAFE,
+            KeyBind.Action.SHOOT,
+            KeyBind.Action.REVIVE,
             KeyBind.Action.PAUSE
     };
     private int index;
@@ -118,6 +120,7 @@ public final class KeyBindScreen extends ScreenAdapter {
             case MOVE_RIGHT -> "Move Right";
             case STRAFE -> "Strafe";
             case SHOOT -> "Shoot";
+            case REVIVE -> "Revive (multiplayer only)";
             case PAUSE -> "Pause";
         };
     }

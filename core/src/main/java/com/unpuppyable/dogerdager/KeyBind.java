@@ -15,6 +15,7 @@ public final class KeyBind {
         MOVE_RIGHT,
         STRAFE,
         SHOOT,
+        REVIVE,
         PAUSE
     }
 
@@ -58,8 +59,9 @@ public final class KeyBind {
             case MOVE_LEFT -> Input.Keys.A;
             case MOVE_RIGHT -> Input.Keys.D;
             case STRAFE -> Input.Keys.TAB;
-            case PAUSE -> Input.Keys.ESCAPE;
             case SHOOT -> Input.Keys.SPACE;
+            case REVIVE -> Input.Keys.R;
+            case PAUSE -> Input.Keys.ESCAPE;
         };
     }
 

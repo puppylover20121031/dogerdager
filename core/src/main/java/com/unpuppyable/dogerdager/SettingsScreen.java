@@ -92,7 +92,7 @@ public final class SettingsScreen extends ScreenAdapter {
         line(2, "In Game Music", settings.music() ? "ON" : "OFF", 212);
         line(3, "FPS", settings.fps() == 0 ? "uncapped" : String.valueOf(settings.fps()), 184);
         line(4, "Glitch", settings.glitch() ? "ON" : "OFF", 156);
-        line(5, "bingo heeler mode\n(needs restart)", Settings.bingo() ? "ON" : "OFF", 124);
+        line(5, "bingo healer mode\n(needs restart)", Settings.bingo() ? "ON" : "OFF", 124);
         line(6, "Keybinds", "change", 92);
 
         font.setColor(Color.GRAY);

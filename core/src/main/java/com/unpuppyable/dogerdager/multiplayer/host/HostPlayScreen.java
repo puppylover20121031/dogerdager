@@ -26,6 +26,11 @@ public class HostPlayScreen extends PlayScreen {
 
     private float tickrate = 30f;
     private boolean pvpOn = false;
+    private boolean revivesOn = true;
+    private int reviveAttemptsReq = 10;
+    private HashMap<Player, Integer> reviveAttemptsDone;
+
+    //private ServerSettings settings;
 
     private float netTimer;
     private static HostPlayScreen instance;
@@ -66,6 +71,14 @@ public class HostPlayScreen extends PlayScreen {
         Messages.gameStarted(curDifficulty, tickrate);
         DogerDager.multiplayerGameStarted = true;
         state = State.PLAYING;
+
+        //settings
+        if (revivesOn) {
+            reviveAttemptsDone = new HashMap<>();
+            for (Player p : players.values()) {
+                reviveAttemptsDone.put(p, 0);
+            }
+        }
     }
 
     @Override public void render(float delta) {
@@ -102,7 +115,6 @@ public class HostPlayScreen extends PlayScreen {
         } else if (state == State.PAUSED) {
             update(Math.min(delta, MAX_STEP), post);
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
-                DogerDager.multiplayerGameStarted = false;
                 toMenu();
                 return;
             }
@@ -275,6 +287,23 @@ public class HostPlayScreen extends PlayScreen {
         if (player.damage(dmg) && player == host) shake = 0.22f;
     }
 
+    public void tryRevive(Player caller) {
+        if (!revivesOn) return;
+        if (caller.dead()) return;
+        for (Player player : players.values()) {
+            if (!player.dead()) continue;
+            int playerAttempts = reviveAttemptsDone.getOrDefault(player, 0);
+            if (!caller.hits(player.bounds())) continue;
+
+            reviveAttemptsDone.put(player, playerAttempts + 1);
+            if (playerAttempts + 1 >= reviveAttemptsReq) {
+                player.revive();
+                player.healFull();
+                reviveAttemptsDone.remove(player);
+            }
+        }
+    }
+
     // Floor transition: heal, wipe the arena, then either win or stage the next
     // floor.
     public void nextFloor() {
@@ -329,6 +358,14 @@ public class HostPlayScreen extends PlayScreen {
         for (Player p : players.values()) {
             p.reset();;
         }
+        if (reviveAttemptsDone != null) reviveAttemptsDone.clear();
+
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
         DogerDager.multiplayerGameStarted = false;
+        instance = null;
     }
 }

@@ -10,6 +10,7 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
 
 import java.util.HashSet;
 
@@ -138,16 +139,18 @@ public final class Player extends Entity {
                         isPressed
                 );
             }
+            if (keyBind.isJustPressed(KeyBind.Action.REVIVE) || Pad.justY()) {
+                attemptRevive();
+            }
             //multiplayer:
-        } else {
+        } else if (!multiplayerKeysDown.isEmpty()) {
             float vx = 0, vy = 0;
-            if (multiplayerKeysDown.isEmpty()) return;
             if (multiplayerKeysDown.contains("W")||multiplayerKeysDown.contains("UP")) vy += SPEED;
             if (multiplayerKeysDown.contains("S")||multiplayerKeysDown.contains("DOWN")) vy -= SPEED;
             if (multiplayerKeysDown.contains("A")||multiplayerKeysDown.contains("LEFT")) vx -= SPEED;
             if (multiplayerKeysDown.contains("D")||multiplayerKeysDown.contains("RIGHT")) vx += SPEED;
-            vx = MathUtils.clamp(vx + Pad.moveX() * SPEED, -SPEED, SPEED);
-            vy = MathUtils.clamp(vy + Pad.moveY() * SPEED, -SPEED, SPEED);
+            vx = MathUtils.clamp(vx + 0 * SPEED, -SPEED, SPEED);
+            vy = MathUtils.clamp(vy + 0 * SPEED, -SPEED, SPEED);
             if (vx != 0 || vy != 0) {
                 lastDx = vx / SPEED;
                 lastDy = vy / SPEED;
@@ -156,6 +159,8 @@ public final class Player extends Entity {
             bounds.y = MathUtils.clamp(bounds.y + vy * delta, 0, maxY);
             if (multiplayerKeysDown.contains("TAB"))
                 strafe();
+            if (multiplayerKeysDown.contains("REV"))
+                attemptRevive();
         }
         if (shielded) stamina = Math.max(0, stamina - DRAIN * delta);
         else if (stamina < MAX_STAMINA) stamina = Math.min(MAX_STAMINA, stamina + REGEN * delta);
@@ -288,6 +293,12 @@ public final class Player extends Entity {
     }
 
     //actions
+
+    private void attemptRevive() {
+        HostPlayScreen instance = HostPlayScreen.getInstance();
+        if (instance == null) return;
+        instance.tryRevive(this);
+    }
 
     public void shoot(int worldX, int worldY, boolean pressed) {
         if (dead()) return;

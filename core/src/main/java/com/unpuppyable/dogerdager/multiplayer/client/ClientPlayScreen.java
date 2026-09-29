@@ -149,7 +149,7 @@ public class ClientPlayScreen implements Screen {
             keysDown.add("D");
         }
 
-        if (keyBind.isPressed(KeyBind.Action.STRAFE) || Pad.justA()) {
+        if (keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA()) {
             keysDown.add("TAB");
         }
 
@@ -160,6 +160,10 @@ public class ClientPlayScreen implements Screen {
 
         if (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB()) {
             shoot();
+        }
+
+        if (keyBind.isJustPressed(KeyBind.Action.REVIVE) || Pad.justY()) {
+            keysDown.add("REV");
         }
 
         if (keysDown == previousKeysDown) return;
