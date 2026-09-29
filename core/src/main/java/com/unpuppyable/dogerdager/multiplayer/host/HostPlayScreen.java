@@ -37,10 +37,6 @@ public class HostPlayScreen extends PlayScreen {
 
     protected State state;
 
-    protected enum State {
-        PLAYING, PAUSED, GAME_OVER, WON, PLAYER_WON, YOU_DIED
-    }
-
     public HostPlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
         super(game, difficulty, delta, post);
         instance = this;
@@ -204,8 +200,11 @@ public class HostPlayScreen extends PlayScreen {
 
         if (host.dead()) {
             state = State.YOU_DIED;
-            progress.unlock(Achievement.FIRST_DEATH);
-            progress.recordRun(difficulty, hud.highScore(), false);
+            if (!progress.achieved(Achievement.FIRST_DEATH))
+                progress.unlock(Achievement.FIRST_DEATH);
+
+            if (progress.bestScore(difficulty) < hud.highScore())
+                progress.recordRun(difficulty, hud.highScore(), false);
         }
     }
 

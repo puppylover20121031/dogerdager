@@ -41,7 +41,7 @@ public class PlayScreen implements Screen {
     protected static final float MAX_STEP = 0.05f;
 
     protected enum State {
-        PLAYING, PAUSED, GAME_OVER, WON
+        PLAYING, PAUSED, GAME_OVER, WON, PLAYER_WON, YOU_DIED
     }
 
     protected DogerDager game;
