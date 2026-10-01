@@ -28,8 +28,8 @@ public class HostPlayScreen extends PlayScreen {
     private boolean pvpOn = false;
     private boolean revivesOn = true;
     private int reviveAttemptsReq = 10;
-    private HashMap<Player, Integer> reviveAttemptsDone;
 
+    private HashMap<Player, Integer> reviveAttemptsDone;
     //private ServerSettings settings;
 
     private float netTimer;
@@ -90,6 +90,7 @@ public class HostPlayScreen extends PlayScreen {
         if (playersDead>=players.size() && state != State.GAME_OVER) {
             state = State.GAME_OVER;
             Messages.newGameState(state.toString(), winner);
+            progress.recordRun(difficulty, hud.highScore(), false);
         }
         if (pvpOn && playersDead + 1 == players.size() && state != State.PLAYER_WON) {
             state = State.PLAYER_WON;
@@ -210,14 +211,14 @@ public class HostPlayScreen extends PlayScreen {
 
         entities.removeIf(Entity::dead);
 
-        if (host.dead()) {
+        if (host.dead() && state != State.YOU_DIED) {
             state = State.YOU_DIED;
+
             if (!progress.achieved(Achievement.FIRST_DEATH))
                 progress.unlock(Achievement.FIRST_DEATH);
-
-            if (progress.bestScore(difficulty) < hud.highScore())
-                progress.recordRun(difficulty, hud.highScore(), false);
         }
+
+        if (!host.dead() && state != State.PAUSED) state = State.PLAYING;
     }
 
     protected void draw(float delta) {
@@ -269,7 +270,7 @@ public class HostPlayScreen extends PlayScreen {
         if (state == State.PAUSED) {
             drawCentered("PAUSED   -   Esc resume   Q menu");
         } else if (state == State.YOU_DIED){
-            drawCentered("You Died!"); //respawn
+            drawCentered("You Died! Wait for a player to revive you.");
         } else if (state == State.WON) {
             drawMovieEnding(endingText.replace("YOU WON", "YOU WON"), delta);
         } else if (state == State.GAME_OVER) {

@@ -85,8 +85,9 @@ public final class Player extends Entity {
 
     @Override
     public void update(float delta) {
-        if (dead) return;
         anim += delta;
+        if (dead) return;
+
         if (invulnerableFor > 0) {
             invulnerableFor -= delta;
         } else {

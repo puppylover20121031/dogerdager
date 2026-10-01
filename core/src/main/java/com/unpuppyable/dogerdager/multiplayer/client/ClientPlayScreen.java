@@ -103,8 +103,10 @@ public class ClientPlayScreen implements Screen {
         }
         interpTimer += delta;
         interpolateEntities();
+
         if (player == null) return;
         if (player.dead && state == State.PLAYING) state = State.YOU_DIED;
+        if (!player.dead && state == State.YOU_DIED) state = State.PLAYING;
     }
 
     private void handleKeys(float delta) {
