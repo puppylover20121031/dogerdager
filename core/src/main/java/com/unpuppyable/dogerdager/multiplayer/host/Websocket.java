@@ -12,6 +12,7 @@ import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -108,8 +109,12 @@ public class Websocket extends WebSocketServer {
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
+        if (ex instanceof BindException) {
+            ErrorNotifier.show("Port already in use. Please change.");
+        } else {
+            ErrorNotifier.show("server error (check multiplayer.logs)");
+        }
         ErrorLogs.write("WebSocket Server Encountered An Error: "+ex);
-        ErrorNotifier.show("server error (check multiplayer.logs)");
     }
 
     @Override
