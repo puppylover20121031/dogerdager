@@ -65,8 +65,6 @@ public class HostPlayScreen extends PlayScreen {
             this.bgm.play();
         }
         reset();
-        if (progress.achieved(Achievement.CLEAR_NORMAL) || prefs.getBoolean("Easy_unlock", false))
-            playerShootingEnabled = true;
         Messages.gameStarted(curDifficulty, tickrate);
         DogerDager.multiplayerGameStarted = true;
         state = State.PLAYING;

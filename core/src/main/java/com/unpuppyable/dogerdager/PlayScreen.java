@@ -52,8 +52,6 @@ public class PlayScreen implements Screen {
     protected Difficulty difficulty;
     public Difficulty curDifficulty;
 
-    private boolean mute = false;
-
     protected Viewport viewport;
     protected final ShapeRenderer shapes = new ShapeRenderer();
     protected final SpriteBatch batch = new SpriteBatch();
@@ -79,7 +77,7 @@ public class PlayScreen implements Screen {
     protected float camX = ARENA_W;
     protected float shootCooldown;
     protected Music bgm;
-    protected boolean playedMusic = false;
+    protected boolean playedMusic = true;
 
     public boolean Easy_unlocked = false;
     protected PostProcessor post;
@@ -88,6 +86,7 @@ public class PlayScreen implements Screen {
         this.game = game;
         this.difficulty = difficulty;
         this.post = post;
+        playerShootingEnabled = true;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.playedMusic = playedMusic;
@@ -347,10 +346,20 @@ public class PlayScreen implements Screen {
         // }
         // } 
 
+
+
+
         if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
                 && Gdx.input.isKeyPressed(Keys.W)) {
             win();
         }
+
+        if (Gdx.input.isKeyPressed(Keys.NUM_1) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.P)) {
+            spawnPowerup1();
+        }
+
+
+        
 
         if(player.strafing() && this.post.getGlitch()) {
             progress.unlock(Achievement.USE_GLITCH);
