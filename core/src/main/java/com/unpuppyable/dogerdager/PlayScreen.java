@@ -77,7 +77,7 @@ public class PlayScreen implements Screen {
     protected float camX = ARENA_W;
     protected float shootCooldown;
     protected Music bgm;
-    protected boolean playedMusic = true;
+    protected boolean playedMusic = false;
 
     public boolean Easy_unlocked = false;
     protected PostProcessor post;
@@ -359,7 +359,7 @@ public class PlayScreen implements Screen {
         }
 
 
-        
+
 
         if(player.strafing() && this.post.getGlitch()) {
             progress.unlock(Achievement.USE_GLITCH);
