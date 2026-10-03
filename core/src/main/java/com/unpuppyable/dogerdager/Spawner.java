@@ -59,8 +59,8 @@ public final class Spawner {
                 case POTION:
                     screen.spawnPotion();
                     break;
-                case Powerup1:
-                    screen.spawnPowerup1();
+                case Powerup0:
+                    screen.spawnPowerup0();
                     break;
                 case NORMAL:
                 default:

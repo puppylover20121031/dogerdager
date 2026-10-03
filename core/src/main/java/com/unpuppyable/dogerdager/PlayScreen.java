@@ -22,6 +22,7 @@ import com.unpuppyable.dogerdager.entity.Laser;
 import com.unpuppyable.dogerdager.entity.Player;
 import com.unpuppyable.dogerdager.entity.Potion;
 import com.unpuppyable.dogerdager.entity.PlayerArrow;
+import com.unpuppyable.dogerdager.entity.Powerup0;
 import com.unpuppyable.dogerdager.entity.Powerup1;
 
 import java.util.ArrayList;
@@ -140,6 +141,9 @@ public class PlayScreen implements Screen {
         add(new Potion(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
     }
 
+    public void spawnPowerup0() {
+        add(new Powerup0(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
+    }
     public void spawnPowerup1() {
         add(new Powerup1(MathUtils.random(0f, ARENA_W - 16), MathUtils.random(0f, PLAY_TOP - 16)));
     }
@@ -325,6 +329,8 @@ public class PlayScreen implements Screen {
             } if (e.glitches()) {
                 post.setGlitch(true);
                 e.kill();
+            } if (e.card1()) {
+                hud.setCardActive(0, true);
             }
         }
 
@@ -348,14 +354,13 @@ public class PlayScreen implements Screen {
 
 
 
-
         if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
                 && Gdx.input.isKeyPressed(Keys.W)) {
             win();
         }
 
-        if (Gdx.input.isKeyPressed(Keys.NUM_1) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.P)) {
-            spawnPowerup1();
+        if (Gdx.input.isKeyPressed(Keys.NUM_1) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
+            hud.setCardActive(0, true);
         }
 
 

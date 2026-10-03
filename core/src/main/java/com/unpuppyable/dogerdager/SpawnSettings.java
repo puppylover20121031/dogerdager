@@ -151,7 +151,7 @@ public final class SpawnSettings {
         schedule.rules.add(new SpawnRule(3, 6, SpawnRule.Type.SMART));
         schedule.rules.add(new SpawnRule(5, 4, SpawnRule.Type.CENTIPEDE));
         schedule.rules.add(new SpawnRule(1, 3, SpawnRule.Type.POTION));
-        schedule.rules.add(new SpawnRule(10, 2, SpawnRule.Type.Powerup1));
+        schedule.rules.add(new SpawnRule(10, 2, SpawnRule.Type.Powerup0));
         return schedule;
     }
 

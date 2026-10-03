@@ -397,7 +397,7 @@ public class ClientPlayScreen implements Screen {
             }
             case "Powerup1" -> {
                 shapes.setColor(Color.WHITE);
-                shapes.rect(entity.x, entity.y, Powerup1.SIZE, Powerup1.SIZE);
+                shapes.rect(entity.x, entity.y, Powerup0.SIZE, Powerup0.SIZE);
             }
             default -> {}
         }

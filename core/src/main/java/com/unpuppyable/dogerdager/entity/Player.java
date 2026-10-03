@@ -46,7 +46,9 @@ public final class Player extends Entity {
     public float stamina;
 
     public float health;
-    public float maxHealth;
+    public int maxHealth;
+    private int baseMaxHealth;
+    private int bonusMaxHealth;
     private final boolean isYou;
     private final HashSet<String> multiplayerKeysDown = new HashSet<String>();
 
@@ -59,7 +61,8 @@ public final class Player extends Entity {
         maxY = playTop - SIZE;
         this.post = post;
         this.progress = progress;
-        this.maxHealth = difficulty.maxHealth;
+        this.baseMaxHealth = difficulty.maxHealth;
+        this.maxHealth = baseMaxHealth;
         this.health = difficulty.maxHealth;
         this.stamina = MAX_STAMINA;
         this.isYou = isHost;
@@ -183,6 +186,21 @@ public final class Player extends Entity {
 
     public void heal(int amount) {
         health = Math.min(maxHealth, health + amount);
+    }
+
+    public void setMaxHealth(int maxHealth) {
+        baseMaxHealth = Math.max(1, maxHealth);
+        updateMaxHealth();
+    }
+
+    public void setBonusMaxHealth(int bonus) {
+        bonusMaxHealth = Math.max(0, bonus);
+        updateMaxHealth();
+    }
+
+    private void updateMaxHealth() {
+        maxHealth = baseMaxHealth + bonusMaxHealth;
+        health = Math.min(health, maxHealth);
     }
 
     public void healFull() {

@@ -9,6 +9,7 @@ public final class SpawnRule {
         CENTIPEDE,
         POTION, 
         LongGuy,
+        Powerup0,
         Powerup1
     }
 

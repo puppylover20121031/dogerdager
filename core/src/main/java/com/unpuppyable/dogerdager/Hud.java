@@ -21,20 +21,18 @@ public final class Hud {
 
     private final float worldH;
     private final float worldW;
-    private final int maxHealth;
     private final GlyphLayout layout = new GlyphLayout();
 
     private int floor = 1;
     private float runTime;
     private float floorProgress;
     private int bestFloor;
-    private int cards;
+    private final boolean[] cards = new boolean[MAX_CARDS];
     private Player player;
 
     public Hud(Difficulty difficulty, int bestFloor, float worldW, float worldH, Player player) {
         this.worldW = worldW;
         this.worldH = worldH;
-        this.maxHealth = difficulty.maxHealth;
         this.bestFloor = bestFloor;
         this.player = player;
     }
@@ -59,15 +57,38 @@ public final class Hud {
     }
 
     public int cardCount() {
-        return cards;
+        int count = 0;
+        for (boolean active : cards) {
+            if (active) count++;
+        }
+        return count;
     }
 
     public void setCardCount(int count) {
-        cards = Math.max(0, Math.min(MAX_CARDS, count));
+        int remaining = Math.max(0, Math.min(MAX_CARDS, count));
+        for (int i = 0; i < MAX_CARDS; i++) {
+            cards[i] = i < remaining;
+        }
+        updateCardEffects();
     }
 
     public void changeCards(int amount) {
-        cards = (int) Math.max(0L, Math.min(MAX_CARDS, (long) cards + amount));
+        if (amount > 0) {
+            for (int i = 0; i < MAX_CARDS && amount > 0; i++) {
+                if (!cards[i]) {
+                    cards[i] = true;
+                    amount--;
+                }
+            }
+        } else {
+            for (int i = MAX_CARDS - 1; i >= 0 && amount < 0; i--) {
+                if (cards[i]) {
+                    cards[i] = false;
+                    amount++;
+                }
+            }
+        }
+        updateCardEffects();
     }
 
     public void addCard() {
@@ -76,6 +97,33 @@ public final class Hud {
 
     public void removeCard() {
         changeCards(-1);
+    }
+
+    public boolean cardActive(int index) {
+        checkCardIndex(index);
+        return cards[index];
+    }
+
+    public void setCardActive(int index, boolean active) {
+        checkCardIndex(index);
+        cards[index] = active;
+        updateCardEffects();
+    }
+
+    public void toggleCard(int index) {
+        checkCardIndex(index);
+        cards[index] = !cards[index];
+        updateCardEffects();
+    }
+
+    private void updateCardEffects() {
+        player.setBonusMaxHealth(cards[0] ? 4 : 0);
+    }
+
+    private void checkCardIndex(int index) {
+        if (index < 0 || index >= MAX_CARDS) {
+            throw new IndexOutOfBoundsException("Card index must be between 0 and " + (MAX_CARDS - 1));
+        }
     }
 
     public int highScore() {
@@ -89,14 +137,14 @@ public final class Hud {
         shapes.rect(0, worldH - BAND, worldW, BAND);
 
         float hx = 28, hy = worldH - 26, r = 6, gap = 22;
-        for (int i = 0; i < maxHealth; i++) {
+        for (int i = 0; i < player.maxHealth; i++) {
             heart(shapes, hx + i * gap, hy, r, i < player.health ? HEART_ON : HEART_OFF);
         }
 
-        float cardX = 190, cardY = worldH - 40, cardW = 14, cardH = 18, cardGap = 5;
+        float cardX = 255, cardY = worldH - 40, cardW = 14, cardH = 18, cardGap = 5;
         for (int i = 0; i < MAX_CARDS; i++) {
             card(shapes, cardX + i * (cardW + cardGap), cardY, cardW, cardH,
-                    i < cards ? CARD_ON : CARD_OFF);
+                    cards[i] ? CARD_ON : CARD_OFF);
         }
 
         float pbX = 22, pbY = worldH - 46, pbW = 150, pbH = 5;
