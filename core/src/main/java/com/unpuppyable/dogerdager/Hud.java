@@ -12,9 +12,12 @@ import com.unpuppyable.dogerdager.entity.Player;
 public final class Hud {
 
     private static final float BAND = 72;
+    public static final int MAX_CARDS = 5;
 
     private static final Color HEART_ON = Color.SCARLET;
     private static final Color HEART_OFF = new Color(0.22f, 0.10f, 0.12f, 1f);
+    private static final Color CARD_ON = new Color(0.25f, 0.75f, 1f, 1f);
+    private static final Color CARD_OFF = new Color(0.18f, 0.22f, 0.25f, 1f);
 
     private final float worldH;
     private final float worldW;
@@ -25,6 +28,7 @@ public final class Hud {
     private float runTime;
     private float floorProgress;
     private int bestFloor;
+    private int cards;
     private Player player;
 
     public Hud(Difficulty difficulty, int bestFloor, float worldW, float worldH, Player player) {
@@ -54,6 +58,26 @@ public final class Hud {
         floorProgress = fraction;
     }
 
+    public int cardCount() {
+        return cards;
+    }
+
+    public void setCardCount(int count) {
+        cards = Math.max(0, Math.min(MAX_CARDS, count));
+    }
+
+    public void changeCards(int amount) {
+        cards = (int) Math.max(0L, Math.min(MAX_CARDS, (long) cards + amount));
+    }
+
+    public void addCard() {
+        changeCards(1);
+    }
+
+    public void removeCard() {
+        changeCards(-1);
+    }
+
     public int highScore() {
         return bestFloor;
     }
@@ -67,6 +91,12 @@ public final class Hud {
         float hx = 28, hy = worldH - 26, r = 6, gap = 22;
         for (int i = 0; i < maxHealth; i++) {
             heart(shapes, hx + i * gap, hy, r, i < player.health ? HEART_ON : HEART_OFF);
+        }
+
+        float cardX = 190, cardY = worldH - 40, cardW = 14, cardH = 18, cardGap = 5;
+        for (int i = 0; i < MAX_CARDS; i++) {
+            card(shapes, cardX + i * (cardW + cardGap), cardY, cardW, cardH,
+                    i < cards ? CARD_ON : CARD_OFF);
         }
 
         float pbX = 22, pbY = worldH - 46, pbW = 150, pbH = 5;
@@ -83,6 +113,16 @@ public final class Hud {
         shapes.circle(cx - r * 0.45f, cy + r * 0.35f, r * 0.6f);
         shapes.circle(cx + r * 0.45f, cy + r * 0.35f, r * 0.6f);
         shapes.triangle(cx - r, cy + r * 0.45f, cx + r, cy + r * 0.45f, cx, cy - r * 0.9f);
+    }
+
+    private void card(ShapeRenderer shapes, float x, float y, float width, float height, Color color) {
+        shapes.setColor(color);
+        shapes.rect(x, y, width, height);
+        shapes.setColor(0.08f, 0.12f, 0.16f, 1f);
+        float cx = x + width / 2f;
+        float cy = y + height / 2f;
+        shapes.triangle(cx, cy + 3, cx + 2, cy, cx, cy - 3);
+        shapes.triangle(cx, cy + 3, cx - 2, cy, cx, cy - 3);
     }
 
     // Batch pass: floor (left), run time and best depth (right).
