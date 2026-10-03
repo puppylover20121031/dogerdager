@@ -81,10 +81,8 @@ public class PlayScreen implements Screen {
         this.game = game;
         this.difficulty = difficulty;
         this.post = post;
-        playerShootingEnabled = true;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
-        this.playedMusic = playedMusic;
         player = new Player(ARENA_W, PLAY_TOP, post, progress, prefs.getString("user.name"), curDifficulty, true);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H, player);
         spawner = new Spawner(difficulty, hud, this);

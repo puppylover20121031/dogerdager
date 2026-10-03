@@ -10,7 +10,7 @@ public final class Powerup0 extends Entity {
 
     public Powerup0(float x, float y) {
         super(x, y, SIZE);
-        this.name = "Powerup0";
+        this.type = "Powerup0";
     }
 
     @Override
