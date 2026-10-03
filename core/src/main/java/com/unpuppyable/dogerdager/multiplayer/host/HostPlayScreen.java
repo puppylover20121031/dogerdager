@@ -217,6 +217,34 @@ public class HostPlayScreen extends PlayScreen {
                         }
                         e.kill();
                     }
+                    if (e.card2()) {
+                        if (isHost) hud.setCardActive(1, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card3()) {
+                        if (isHost) hud.setCardActive(2, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card4()) {
+                        if (isHost) hud.setCardActive(3, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card5()) {
+                        if (isHost) hud.setCardActive(4, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
                 }
             }
         }

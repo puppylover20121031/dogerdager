@@ -503,9 +503,9 @@ public class ClientPlayScreen implements Screen {
                 shapes.setColor(Color.CYAN);
                 shapes.rect(entity.x, entity.y, Potion.SIZE, Potion.SIZE);
             }
-            case "Powerup1" -> {
+            case "Powerup0", "Powerup1", "Powerup2" -> {
                 if (entity.life < 2f && (int) (anim * 8) % 2 == 0) return;
-                shapes.setColor(Color.WHITE);
+                shapes.setColor(Color.YELLOW);
                 shapes.rect(entity.x, entity.y, Powerup0.SIZE, Powerup0.SIZE);
             }
             default -> {}
