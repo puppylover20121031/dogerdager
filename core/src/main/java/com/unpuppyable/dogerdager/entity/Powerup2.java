@@ -3,14 +3,14 @@ package com.unpuppyable.dogerdager.entity;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-public final class Powerup0 extends Entity {
+public final class Powerup2 extends Entity {
     public static final float SIZE = 16;
     private float life = 8f;
     private float anim;
 
-    public Powerup0(float x, float y) {
+    public Powerup2(float x, float y) {
         super(x, y, SIZE);
-        this.name = "Powerup0";
+        this.name = "Powerup2";
     }
 
     @Override
@@ -19,7 +19,7 @@ public final class Powerup0 extends Entity {
     }
 
     @Override
-    public boolean glitches() {
+    public boolean card2() {
         return true;
     }
 
