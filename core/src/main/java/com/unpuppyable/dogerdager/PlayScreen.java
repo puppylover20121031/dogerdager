@@ -297,14 +297,19 @@ public class PlayScreen implements Screen {
                 e.kill();
             } if (e.card1()) {
                 hud.setCardActive(0, true);
+                e.kill();
             } if (e.card2()) {
                 hud.setCardActive(1, true);
+                e.kill();
             } if (e.card3()) {
                 hud.setCardActive(2, true);
+                e.kill();
             } if (e.card4()) {
                 hud.setCardActive(3, true);
+                e.kill();
             } if (e.card5()) {
                 hud.setCardActive(4, true);
+                e.kill();
             }
         }
 
@@ -336,23 +341,23 @@ public class PlayScreen implements Screen {
 
 
 
-        
+
         if (Gdx.input.isKeyPressed(Keys.NUM_1) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
             hud.setCardActive(0, true);
         }
-        
+
         if (Gdx.input.isKeyPressed(Keys.NUM_2) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
             hud.setCardActive(1, true);
         }
-        
+
         if (Gdx.input.isKeyPressed(Keys.NUM_3) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
             hud.setCardActive(2, true);
         }
-        
+
         if (Gdx.input.isKeyPressed(Keys.NUM_4) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
             hud.setCardActive(3, true);
         }
-        
+
         if (Gdx.input.isKeyPressed(Keys.NUM_5) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
             hud.setCardActive(4, true);
         }

@@ -123,6 +123,7 @@ public class ClientMessages {
                 String username = entityMap.get("username") instanceof String u ? u : null;
                 Boolean isDead = entityMap.get("isdead") instanceof Boolean b ? b : null;
                 Float health = entityMap.get("hp") instanceof Double d ? d.floatValue() : null;
+                Integer maxHp = entityMap.get("mhp") instanceof Double d ? d.intValue() : null;
                 Float stamina = entityMap.get("stam") instanceof Double d ? d.floatValue() : null;
                 Boolean shielded = entityMap.get("shield") instanceof Boolean b ? b : null;
                 Boolean invulnerable = entityMap.get("inv") instanceof Boolean b ? b : null;
@@ -164,6 +165,7 @@ public class ClientMessages {
                         strafeInvuln,
                         stun,
                         health,
+                        maxHp,
                         seg,
                         heading,
                         kind,
@@ -184,6 +186,20 @@ public class ClientMessages {
             ErrorLogs.write("Error: " + ex);
         }
         return null;
+    }
+
+    public static void playerEffects(Map<String, Object> message) {
+        Boolean glitch = message.get("gl") instanceof Boolean b ? b : null;
+        Float shake = message.get("sh") instanceof Double f ? f.floatValue() : null;
+
+        Gdx.app.postRunnable(() -> {
+            try {
+                screenInstance.updateEffects(glitch, shake);
+            } catch (Exception ex) {
+                ErrorNotifier.show("unexpected error, more info in logs");
+                ErrorLogs.write("Unexpected exception: " + ex);
+            }
+        });
     }
 
     // Client -> server

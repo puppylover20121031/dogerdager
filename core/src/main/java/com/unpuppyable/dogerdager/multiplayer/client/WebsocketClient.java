@@ -96,6 +96,7 @@ public class WebsocketClient extends WebSocketClient {
             case ENTITIES_INIT -> ClientMessages.newEntityStates(msg);
             case ENTITIES_UPDATE -> ClientMessages.updateEntityStates(msg);
             case NEW_GAME_STATE -> ClientMessages.changeGameState(msg);
+            case PLAYER_EFFECTS -> ClientMessages.playerEffects(msg);
             default -> {}
         }
     }

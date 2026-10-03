@@ -8,6 +8,7 @@ public enum MessageType {
     AUTHORIZE("0"), KEYS_DOWN("1"), KEYS_UP("2"), SHOOT("3"), PING("5"),
     AUTHORIZE_RESPONSE("200"), USER_JOINED("201"), USER_LEFT("202"),
     PONG("205"), GAME_STARTED("210"), NEW_GAME_STATE("211"),
+    PLAYER_EFFECTS("220"),
     ENTITIES_INIT("250"), ENTITIES_UPDATE("251"), ERROR("400");
 
     public final String code;

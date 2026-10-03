@@ -205,6 +205,13 @@ public class Websocket extends WebSocketServer {
         return users.get(conn);
     }
 
+    public WebSocket getConnByName(String name) {
+        for (WebSocket conn : users.keySet()) {
+            if (users.get(conn).equals(name)) return conn;
+        }
+        return null;
+    }
+
     public void pingFromUser(WebSocket conn) {
         lastPing.put(conn, System.currentTimeMillis());
     }

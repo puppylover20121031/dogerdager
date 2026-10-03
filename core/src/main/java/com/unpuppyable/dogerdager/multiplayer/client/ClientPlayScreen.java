@@ -40,6 +40,7 @@ public class ClientPlayScreen implements Screen {
     protected final Progress progress = new Progress();
     private State state;
 
+    private PostProcessor post;
     protected Viewport viewport;
     protected final ShapeRenderer shapes = new ShapeRenderer();
     private final SpriteBatch batch = new SpriteBatch();
@@ -78,6 +79,7 @@ public class ClientPlayScreen implements Screen {
     public ClientPlayScreen(DogerDager game, PostProcessor post, Difficulty difficulty, String name) {
         this.yourName = name;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
+        this.post = post;
         this.difficulty = difficulty;
         hud = new ReceiverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         instance = this;
@@ -95,6 +97,9 @@ public class ClientPlayScreen implements Screen {
     }
 
     public void update(float delta) {
+        if (shake > 0)
+            shake -= delta;
+
         floorTimer += delta;
         hud.setFloorProgress(floorTimer / FLOOR_TIME);
         if (floorTimer >= FLOOR_TIME) {
@@ -192,6 +197,11 @@ public class ClientPlayScreen implements Screen {
         ClientMessages.shoot((int)aim.x, (int)aim.y, isPressed);
     }
 
+    public void updateEffects(Boolean glitch, Float shake) {
+        if (glitch != null) post.setGlitch(glitch);
+        if (shake != null) this.shake = shake;
+    }
+
     public void newEntityStates(HashSet<Object> entitySet) {
         interpTimer = 0;
 
@@ -232,6 +242,7 @@ public class ClientPlayScreen implements Screen {
                     newEnt.strafeinvuln == null ? old.strafeinvuln : newEnt.strafeinvuln,
                     newEnt.stun == null ? old.stun : newEnt.stun,
                     newEnt.hp == null ? old.hp : newEnt.hp,
+                    newEnt.maxHp == null ? old.maxHp : newEnt.maxHp,
                     newEnt.seg == null ? old.seg : newEnt.seg,
                     newEnt.heading == null ? old.heading : newEnt.heading,
                     newEnt.kind == null ? old.kind : newEnt.kind,
@@ -588,6 +599,7 @@ public class ClientPlayScreen implements Screen {
         public final Float strafeinvuln;
         public final Float stun;
         public final Float hp;
+        public final Integer maxHp;
         public final Vector2[] seg;
         public final Float heading;
         public final String kind;
@@ -614,6 +626,7 @@ public class ClientPlayScreen implements Screen {
                 Float strafeinvuln,
                 Float stun,
                 Float hp,
+                Integer maxHp,
                 Vector2[] seg,
                 Float heading,
                 String kind,
@@ -639,6 +652,7 @@ public class ClientPlayScreen implements Screen {
             this.strafeinvuln = strafeinvuln;
             this.stun = stun;
             this.hp = hp;
+            this.maxHp = maxHp;
             this.seg = seg;
             this.heading = heading;
             this.kind = kind;
@@ -656,7 +670,7 @@ public class ClientPlayScreen implements Screen {
         public EntityState(EntityState other) {
             this(other.id, other.type, other.x, other.y, other.name,
                     other.dead, other.stamina, other.shielded, other.invulnerable,
-                    other.strafeinvuln, other.stun, other.hp, copyVectorArrayVector2(other.seg), other.heading,
+                    other.strafeinvuln, other.stun, other.hp, other.maxHp, copyVectorArrayVector2(other.seg), other.heading,
                     other.kind, other.ang, other.telegraph, other.targetX, other.targetY,
                     other.settled, other.fireTimer, other.phase, other.atkTimer, other.life);
         }
