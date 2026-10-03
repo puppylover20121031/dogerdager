@@ -83,8 +83,8 @@ public class PlayScreen implements Screen {
         this.post = post;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
-        player = new Player(ARENA_W, PLAY_TOP, post, progress, prefs.getString("user.name"), curDifficulty, true);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H, player);
+        player = new Player(ARENA_W, PLAY_TOP, post, progress, prefs.getString("user.name"), curDifficulty, true, hud);
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
         bingo = Settings.bingo();

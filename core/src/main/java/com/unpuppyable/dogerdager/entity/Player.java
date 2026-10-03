@@ -24,8 +24,8 @@ public final class Player extends Entity {
 
     private float shootCooldown = 0;
     private boolean playerShootingEnabled = false;
-    private static final float PLAYER_SHOOT_SPEED = 380f;
-    private static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
+    private static float PLAYER_SHOOT_SPEED = 380f;
+    private static float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
     public static final float SIZE = 16;
     private static float SPEED = 300;
@@ -61,16 +61,18 @@ public final class Player extends Entity {
     private final boolean isYou;
     private final HashSet<String> multiplayerKeysDown = new HashSet<String>();
 
+    protected Hud hud;
     private final PostProcessor post;
     private final Progress progress;
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
 
-    public Player(float worldW, float playTop, PostProcessor post, Progress progress, String username, Difficulty difficulty, boolean isHost) {
+    public Player(float worldW, float playTop, PostProcessor post, Progress progress, String username, Difficulty difficulty, boolean isHost, Hud hud) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
         maxX = worldW - SIZE;
         maxY = playTop - SIZE;
         this.post = post;
         this.progress = progress;
+        this.hud = hud;
         this.baseMaxHealth = difficulty.maxHealth;
         this.maxHealth = baseMaxHealth;
         this.health = difficulty.maxHealth;
@@ -85,6 +87,11 @@ public final class Player extends Entity {
 
     @Override
     public void update(float delta) {
+
+        if (hud.cardActive(1)) {
+            PLAYER_SHOOT_COOLDOWN = 0;
+        }
+        
         anim += delta;
         if (dead) return;
 

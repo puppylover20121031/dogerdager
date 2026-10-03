@@ -54,7 +54,7 @@ public class HostPlayScreen extends PlayScreen {
                 players.put(playerName, host);
                 continue;
             }
-            players.put(playerName, new Player(ARENA_W, PLAY_TOP, post, progress, playerName, curDifficulty, false));
+            players.put(playerName, new Player(ARENA_W, PLAY_TOP, post, progress, playerName, curDifficulty, false, hud));
         }
         if (host == null) return;
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H, host);
