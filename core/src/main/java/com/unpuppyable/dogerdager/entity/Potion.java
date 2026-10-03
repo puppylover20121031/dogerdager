@@ -5,12 +5,12 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public final class Potion extends Entity {
     public static final float SIZE = 16;
-    private float life = 8f;
+    public float life = 8f;
     private float anim;
 
     public Potion(float x, float y) {
         super(x, y, SIZE);
-        this.name = "Potion";
+        this.type = "Potion";
     }
 
     @Override

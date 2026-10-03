@@ -17,6 +17,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
+import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
 
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,37 +38,50 @@ public class ClientPlayScreen implements Screen {
     private final KeyBind keyBind = new KeyBind();
     private final Difficulty difficulty;
     protected final Progress progress = new Progress();
+    private State state;
 
     protected Viewport viewport;
     protected final ShapeRenderer shapes = new ShapeRenderer();
     private final SpriteBatch batch = new SpriteBatch();
     private final BitmapFont font = new BitmapFont();
     private final GlyphLayout layout = new GlyphLayout();
-    private final RecieverHud hud;
+    private final ReceiverHud hud;
+    protected final String endingText = "THE END\n\nYOU WON\n\nRIP Honey Bun\n\nIn loving memory\n\nCredits\nHoney Bun\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
 
     protected float shake;
     protected float camX = ARENA_W;
 
-    private boolean waitingForExitConfirm = false;
     private float anim = 0;
     private float timer = 0;
     private float floorTimer = 0;
+    private long lastTick;
+    private long secondLastTick;
+    private float interpTimer;
 
     private final HashSet<String> keysDown = new HashSet<String>();
     private HashSet<String> previousKeysDown = new HashSet<String>();
 
-    private final ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, EntityState> previousEntities = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> entities = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> entitiesToRender = new ConcurrentHashMap<>();
+
     private final ConcurrentHashMap<String, EntityState> players = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, EntityState> playersToRender = new ConcurrentHashMap<>();
     private final String yourName;
     private EntityState player;
+    private String winner;
+
+    private enum State {
+        PLAYING, PAUSED, WON, PLAYER_WON, GAME_OVER, YOU_DIED
+    }
 
     public ClientPlayScreen(DogerDager game, PostProcessor post, Difficulty difficulty, String name) {
         this.yourName = name;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         this.difficulty = difficulty;
-        hud = new RecieverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
+        hud = new ReceiverHud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H);
         instance = this;
+        state = State.PLAYING;
     }
 
     @Override
@@ -87,24 +101,32 @@ public class ClientPlayScreen implements Screen {
             floorTimer = 0;
             hud.advanceFloor();
         }
+        interpTimer += delta;
+        interpolateEntities();
+
+        if (player == null) return;
+        if (player.dead && state == State.PLAYING) state = State.YOU_DIED;
+        if (!player.dead && state == State.YOU_DIED) state = State.PLAYING;
     }
 
     private void handleKeys(float delta) {
-        if (waitingForExitConfirm && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Pad.justA())) {
+        if (state == State.PAUSED && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Pad.justA())) {
             game.setScreen(new MenuScreen(game, game.post));
             dispose();
         }
 
         if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
-            if (waitingForExitConfirm) {
-                waitingForExitConfirm = false;
+            if (state == State.PAUSED) {
+                state = State.PLAYING;
                 return;
             }
-            waitingForExitConfirm = true;
+            state = State.PAUSED;
         }
 
-        if (!WebsocketClient.getClientInstance().verified) {
+        if (!WebsocketClient.getInstance().isVerified()) {
+            batch.begin();
             drawCentered("Encountered a connection issue, redirecting to menu...");
+            batch.end();
             timer += delta;
             if (timer >= 3) {
                 game.setScreen(new MenuScreen(game, game.post));
@@ -129,7 +151,7 @@ public class ClientPlayScreen implements Screen {
             keysDown.add("D");
         }
 
-        if (keyBind.isPressed(KeyBind.Action.STRAFE) || Pad.justA()) {
+        if (keyBind.isJustPressed(KeyBind.Action.STRAFE) || Pad.justA()) {
             keysDown.add("TAB");
         }
 
@@ -140,6 +162,10 @@ public class ClientPlayScreen implements Screen {
 
         if (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB()) {
             shoot();
+        }
+
+        if (keyBind.isJustPressed(KeyBind.Action.REVIVE) || Pad.justY()) {
+            keysDown.add("REV");
         }
 
         if (keysDown == previousKeysDown) return;
@@ -167,6 +193,8 @@ public class ClientPlayScreen implements Screen {
     }
 
     public void newEntityStates(HashSet<Object> entitySet) {
+        interpTimer = 0;
+
         previousEntities = new ConcurrentHashMap<>(entities);
         for (EntityState oldEnt : previousEntities.values()) {
             if (entityDied(oldEnt.id, entitySet)) entities.remove(oldEnt.id);
@@ -178,14 +206,19 @@ public class ClientPlayScreen implements Screen {
             if (newEnt.name == null) continue;
             players.put(newEnt.name, newEnt);
         }
+        secondLastTick = lastTick;
+        lastTick = System.currentTimeMillis();
     }
 
     public void updateEntityStates(HashSet<Object> entitySet) {
+        interpTimer = 0;
         previousEntities = new ConcurrentHashMap<>(entities);
 
         for (var newEntity : entitySet) {
             if (!(newEntity instanceof EntityState newEnt)) continue;
             EntityState old = previousEntities.get(newEnt.id);
+            if (old == null) continue;
+
             EntityState e = new EntityState(
                     newEnt.id,
                     newEnt.type == null ? old.type : newEnt.type,
@@ -209,12 +242,15 @@ public class ClientPlayScreen implements Screen {
                     newEnt.settled == null ? old.settled : newEnt.settled,
                     newEnt.fireTimer == null ? old.fireTimer : newEnt.fireTimer,
                     newEnt.phase == null ? old.phase : newEnt.phase,
-                    newEnt.atkTimer == null ? old.atkTimer : newEnt.atkTimer
+                    newEnt.atkTimer == null ? old.atkTimer : newEnt.atkTimer,
+                    newEnt.life == null ? old.life : newEnt.life
             );
             entities.put(e.id, e);
             if (e.name == null) continue;
             players.put(e.name, e);
         }
+        secondLastTick = lastTick;
+        lastTick = System.currentTimeMillis();
     }
 
     private boolean entityDied(String id, HashSet<Object> entitySet) {
@@ -223,6 +259,52 @@ public class ClientPlayScreen implements Screen {
             if (id.equals(ent.id)) return false;
         }
         return true;
+    }
+
+    //interpolate entities fills an entitiesToRender map with calculated frames in between
+    //previousEntities and entities maps. Skips new entities and draws nonexistent entities
+    //for one additional tick (0,033s with 30tps) to not make the logic even more complicated.
+    private void interpolateEntities() {
+        entitiesToRender.clear();
+        playersToRender.clear();
+        if (entities.isEmpty()) return;
+        if (lastTick == 0 || secondLastTick == 0) return;
+        if ((previousEntities.isEmpty())) {
+            entitiesToRender.putAll(entities);
+            return;
+        }
+        long tickDiff = lastTick - secondLastTick;
+        if (tickDiff == 0) {
+            entitiesToRender.putAll(entities);
+            return;
+        }
+
+        for (String entityId : previousEntities.keySet()) {
+            if (!entities.containsKey(entityId)) {
+                entitiesToRender.put(entityId, previousEntities.get(entityId));
+                continue;
+            }
+            EntityState oldEnt = previousEntities.get(entityId);
+            EntityState newEnt = entities.get(entityId);
+            float t = MathUtils.clamp(interpTimer / (tickDiff / 1000f), 0f, 1f);
+
+            EntityState interpEntity = new EntityState(oldEnt);
+            interpEntity.x = MathUtils.lerp(oldEnt.x, newEnt.x, t);
+            interpEntity.y = MathUtils.lerp(oldEnt.y, newEnt.y, t);
+
+            if (interpEntity.type.equals("Centipede") && interpEntity.seg != null && oldEnt.seg != null) {
+                for (int i = 0; i < oldEnt.seg.length; i++) {
+                    if (oldEnt.seg[i] == null || newEnt.seg[i] == null) continue;
+
+                    interpEntity.seg[i].x = MathUtils.lerp(oldEnt.seg[i].x, newEnt.seg[i].x, t);
+                    interpEntity.seg[i].y = MathUtils.lerp(oldEnt.seg[i].y, newEnt.seg[i].y, t);
+                }
+            }
+
+            entitiesToRender.put(entityId, interpEntity);
+            if (interpEntity.name == null) continue;
+            playersToRender.put(interpEntity.name, interpEntity);
+        }
     }
 
     protected void draw(float delta) {
@@ -252,13 +334,14 @@ public class ClientPlayScreen implements Screen {
         cam.update();
         batch.setProjectionMatrix(cam.combined);
         shapes.setProjectionMatrix(cam.combined);
+
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         drawBackground(shapes);
-        for (EntityState e : entities.values()) {
+        for (EntityState e : entitiesToRender.values()) {
             drawEntity(e, shapes);
         }
 
-        if (waitingForExitConfirm) {
+        if (state == State.PAUSED) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapes.setColor(0f, 0f, 0f, 0.6f);
             shapes.rect(0, 0, WORLD_W, WORLD_H);
@@ -269,15 +352,27 @@ public class ClientPlayScreen implements Screen {
 
         batch.begin();
         hud.drawText(batch, font);
-        if (waitingForExitConfirm) {
-            drawCentered("Are you sure you want to leave? (press enter or a on pad)");
+        if (state == State.PAUSED) {
+            drawCentered("Are you sure you want to leave? (press enter or A on pad)");
+        } else if (state == State.YOU_DIED){
+            drawCentered("You Died!");
+        } else if (state == State.WON) {
+            drawCentered(endingText.replace("YOU WON", "YOU WON"));
+        } else if (state == State.GAME_OVER) {
+            drawCentered(endingText.replace("YOU WON", "GAME OVER"));
+        } else if (state == State.PLAYER_WON) {
+            drawCentered(endingText.replace("YOU WON", winner + " WON"));
         }
         batch.end();
     }
 
     private void drawEntity(EntityState entity, ShapeRenderer shapes) {
-        switch (entity.type()) {
+        if (entity.type == null) return;
+
+        switch (entity.type) {
             case "Player" -> {
+                if (entity.invulnerable == null || entity.strafeinvuln == null || entity.stun == null || entity.shielded == null || entity.stamina == null) return;
+
                 if (entity.strafeinvuln > 0) {
                     EntityState prevPlayer = previousEntities.get(entity.id);
                     shapes.setColor(0.4f, 0.7f, 1f, 1f);
@@ -293,6 +388,7 @@ public class ClientPlayScreen implements Screen {
                 shapes.rect(entity.x + 2, entity.y + 2, Player.SIZE - 4, (Player.SIZE - 4) * entity.stamina);
             }
             case "Centipede" -> {
+
                 // legs: a wiggling pair per body segment, perpendicular to the spine
                 shapes.setColor(Centipede.LEG);
                 for (int i = 1; i < Centipede.SEGMENTS; i++) {
@@ -392,10 +488,12 @@ public class ClientPlayScreen implements Screen {
                 shapes.rect(entity.x, entity.y, PlayerArrow.SIZE, PlayerArrow.SIZE);
             }
             case "Potion" -> {
+                if (entity.life < 2f && (int) (anim * 8) % 2 == 0) return;
                 shapes.setColor(Color.CYAN);
                 shapes.rect(entity.x, entity.y, Potion.SIZE, Potion.SIZE);
             }
             case "Powerup1" -> {
+                if (entity.life < 2f && (int) (anim * 8) % 2 == 0) return;
                 shapes.setColor(Color.WHITE);
                 shapes.rect(entity.x, entity.y, Powerup0.SIZE, Powerup0.SIZE);
             }
@@ -428,7 +526,15 @@ public class ClientPlayScreen implements Screen {
         font.draw(batch, text, (WORLD_W - layout.width) / 2f, PLAY_TOP / 2f);
     }
 
-
+    public static void changeGameState(String inputState, String winner) {
+        switch (inputState) {
+            case ("WON") -> instance.state = State.WON;
+            case ("PLAYER_WON") -> instance.state = State.PLAYER_WON;
+            case ("GAME_OVER") -> instance.state = State.GAME_OVER;
+            default -> {}
+        }
+        if (winner != null) instance.winner = winner;
+    }
 
     @Override
     public void show() {
@@ -469,35 +575,98 @@ public class ClientPlayScreen implements Screen {
         return player;
     }
 
-    public record EntityState(
-            String id,
-            String type,
-            Float x,
-            Float y,
-            String name,
-            //player
-            Boolean dead,
-            Float stamina,
-            Boolean shielded,
-            Boolean invulnerable,
-            Float strafeinvuln,
-            Float stun,
-            Float hp,
-            //centipede
-            Vector2[] seg,
-            Float heading,
-            //boss, bullet, enemy
-            String kind,
-            //bullet special
-            Float ang,
-            //laser
-            Float telegraph,
-            //boss
-            Float targetX,
-            Float targetY,
-            Boolean settled,
-            Float fireTimer,
-            Integer phase,
-            Float atkTimer
-    ) {}
+    public static final class EntityState {
+        public final String id;
+        public final String type;
+        public Float x;
+        public Float y;
+        public final String name;
+        public final Boolean dead;
+        public final Float stamina;
+        public final Boolean shielded;
+        public final Boolean invulnerable;
+        public final Float strafeinvuln;
+        public final Float stun;
+        public final Float hp;
+        public final Vector2[] seg;
+        public final Float heading;
+        public final String kind;
+        public final Float ang;
+        public final Float telegraph;
+        public final Float targetX;
+        public final Float targetY;
+        public final Boolean settled;
+        public final Float fireTimer;
+        public final Integer phase;
+        public final Float atkTimer;
+        public final Float life;
+
+        public EntityState(
+                String id,
+                String type,
+                Float x,
+                Float y,
+                String name,
+                Boolean dead,
+                Float stamina,
+                Boolean shielded,
+                Boolean invulnerable,
+                Float strafeinvuln,
+                Float stun,
+                Float hp,
+                Vector2[] seg,
+                Float heading,
+                String kind,
+                Float ang,
+                Float telegraph,
+                Float targetX,
+                Float targetY,
+                Boolean settled,
+                Float fireTimer,
+                Integer phase,
+                Float atkTimer,
+                Float life
+        ) {
+            this.id = id;
+            this.type = type;
+            this.x = x;
+            this.y = y;
+            this.name = name;
+            this.dead = dead;
+            this.stamina = stamina;
+            this.shielded = shielded;
+            this.invulnerable = invulnerable;
+            this.strafeinvuln = strafeinvuln;
+            this.stun = stun;
+            this.hp = hp;
+            this.seg = seg;
+            this.heading = heading;
+            this.kind = kind;
+            this.ang = ang;
+            this.telegraph = telegraph;
+            this.targetX = targetX;
+            this.targetY = targetY;
+            this.settled = settled;
+            this.fireTimer = fireTimer;
+            this.phase = phase;
+            this.atkTimer = atkTimer;
+            this.life = life;
+        }
+
+        public EntityState(EntityState other) {
+            this(other.id, other.type, other.x, other.y, other.name,
+                    other.dead, other.stamina, other.shielded, other.invulnerable,
+                    other.strafeinvuln, other.stun, other.hp, copyVectorArrayVector2(other.seg), other.heading,
+                    other.kind, other.ang, other.telegraph, other.targetX, other.targetY,
+                    other.settled, other.fireTimer, other.phase, other.atkTimer, other.life);
+        }
+
+        private static Vector2[] copyVectorArrayVector2(Vector2[] array) {
+            if (array == null) return null;
+            Vector2[] newArray = new Vector2[array.length];
+            for (int i = 0; i < array.length; i++) newArray[i] = array[i].cpy();
+            return newArray;
+        }
+
+    }
 }

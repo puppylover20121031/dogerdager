@@ -2,15 +2,19 @@ package com.unpuppyable.dogerdager.multiplayer.host;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.unpuppyable.dogerdager.DogerDager;
+import com.unpuppyable.dogerdager.ErrorNotifier;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
+import com.unpuppyable.dogerdager.multiplayer.ErrorLogs;
+import com.unpuppyable.dogerdager.multiplayer.MessageType;
 import com.unpuppyable.dogerdager.multiplayer.Schedulers;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 
+import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 
@@ -18,13 +22,15 @@ public class Websocket extends WebSocketServer {
     private static Websocket instance;
     private static Gson gson;
 
-    public final HashMap<WebSocket, String> users = new HashMap<WebSocket, String>(); //logged-in users map;
-    public final HashMap<WebSocket, Long> notVerified = new HashMap<WebSocket, Long>();
-    public final HashMap<WebSocket, Long> lastPing = new HashMap<WebSocket, Long>();
+    private final HashMap<WebSocket, String> users = new HashMap<WebSocket, String>(); //logged-in users map;
+    private final HashMap<WebSocket, Long> notVerified = new HashMap<WebSocket, Long>();
+    private final HashMap<WebSocket, Long> lastPing = new HashMap<WebSocket, Long>();
 
     public Websocket(InetSocketAddress address) {
         super(address); //address ws
         instance = this;
+        Messages.reloadWsInstance();
+        Schedulers.reloadWsInstance();
         gson = new Gson();
         onAppStop();
     }
@@ -47,7 +53,7 @@ public class Websocket extends WebSocketServer {
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         if (DogerDager.multiplayerGameStarted) {
-            logOff(conn, 1000, "Game has already started.");
+            logOffUser(conn, 1000, "Game has already started.");
             return;
         }
         notVerified.put(conn, System.currentTimeMillis());
@@ -59,11 +65,14 @@ public class Websocket extends WebSocketServer {
         //broadcast
         if (!users.containsKey(conn)) return;
         String name = users.get(conn);
+
         users.remove(conn);
+        lastPing.remove(conn);
+        //output into userlist if game didn't start yet
+        if (DogerDager.multiplayerGameStarted) return;
         HashMap<String, Object> response = new HashMap<String, Object>();
         response.put("user", name);
-        broadcastWS("202", response);
-        //output into userlist if game didn't start yet
+        broadcastWS(MessageType.USER_LEFT.code, response);
         if (!DogerDager.multiplayerGameStarted) MultiplayerScreen.deleteFromUserList(name);
     }
 
@@ -76,45 +85,41 @@ public class Websocket extends WebSocketServer {
         } catch (JsonSyntaxException e) {
             return;
         }
-        //0 auth
-        if (msg.get("t").equals("0")) {
+        MessageType type = MessageType.fromCode(msg.get("t").toString());
+        if (type == null) return;
+
+        if (type == MessageType.AUTHORIZE) {
             Messages.authorize(conn, msg);
             return;
         }
         if (!users.containsKey(conn)) return;
-        //5 ping
-        if (msg.get("t").equals("5")) {
+        if (type == MessageType.PING) {
             Messages.ping(conn);
             return;
         }
         if (!DogerDager.multiplayerGameStarted) return;
         if (HostPlayScreen.getPlayerByName(users.get(conn)).dead()) return;
-        //1 key being pressed
-        if (msg.get("t").equals("1")) {
-            Messages.keyDown(conn, msg);
-            return;
+        switch (type) {
+            case KEYS_DOWN -> Messages.keyDown(conn, msg);
+            case KEYS_UP -> Messages.keyUp(conn, msg);
+            case SHOOT -> Messages.shoot(conn, msg);
+            default -> {}
         }
-        //2 key being let go
-        if (msg.get("t").equals("2")) {
-            Messages.keyUp(conn, msg);
-            return;
-        }
-        //3 shoot arrow
-        if (msg.get("t").equals("3")) {
-            Messages.shoot(conn, msg);
-            return;
-        }
-
     }
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        ServerLogs.write("WS Server Encountered An Error: "+ex);
+        if (ex instanceof BindException) {
+            ErrorNotifier.show("Port already in use. Please change.");
+        } else {
+            ErrorNotifier.show("server error (check multiplayer.logs)");
+        }
+        ErrorLogs.write("WebSocket Server Encountered An Error: "+ex);
     }
 
     @Override
     public void onStart() {
-        ServerLogs.write("WS Server Started");
+        ErrorLogs.write("WS Server Started");
     }
 
     public void onAppStop() {
@@ -127,17 +132,26 @@ public class Websocket extends WebSocketServer {
         Map<String, Object> json = new HashMap<>(data);
         json.put("t", type);
         if (conn == null) return;
-        if (conn.isClosed()) return;
-        conn.send(gson.toJson(json));
+        if (!conn.isOpen()) return;
+        try {
+            conn.send(gson.toJson(json));
+        } catch (WebsocketNotConnectedException ex) {
+            ErrorLogs.write("Websocket:sendWS: " + ex);
+        }
     }
+
     public void broadcastWS(String type, Map<String, Object> data) {
         Map<String, Object> json = new HashMap<>(data);
         json.put("t", type);
         for (WebSocket conn : users.keySet()) {
             if (conn == null) continue;
             if (users.get(conn)==null) continue;
-            if (conn.isClosed()) continue;
-            conn.send(gson.toJson(json));
+            if (!conn.isOpen()) continue;
+            try {
+                conn.send(gson.toJson(json));
+            } catch (WebsocketNotConnectedException ex) {
+                ErrorLogs.write("Websocket:broadcastWS: "+ex);
+            }
         }
     }
 
@@ -153,32 +167,63 @@ public class Websocket extends WebSocketServer {
         try {
             instance.stop();
         } catch (InterruptedException ex) {
-            System.out.println("Exception in Websocket: "+ex);
+            ErrorLogs.write("Websocket:stopServer: "+ex);
         }
     }
 
-    public WebSocket nameToConn(String name) {
-        for (WebSocket conn : users.keySet()) {
-            if (users.get(conn).equals(name)) return conn;
-        }
-        return null;
+    public List<String> getUserList() {
+        return new ArrayList<String>(users.values());
+    }
+
+    public List<WebSocket> getConnectionsList() {
+        return new ArrayList<WebSocket>(users.keySet());
+    }
+
+    public HashMap<WebSocket, Long> getPingMap() {
+        return new HashMap<WebSocket, Long>(lastPing);
+    }
+
+    public HashMap<WebSocket, Long> getNotVerifiedMap() {
+        return new HashMap<WebSocket, Long>(notVerified);
+    }
+
+    public void addHost(String name) {
+        users.put(null, name);
+    }
+
+    public void markLoggedIn(WebSocket conn, String name) {
+        notVerified.remove(conn);
+        users.put(conn, name);
+        lastPing.put(conn, System.currentTimeMillis());
+    }
+
+    public boolean isUserLoggedIn(String name) {
+        return users.containsValue(name);
+    }
+
+    public String getUserName(WebSocket conn) {
+        return users.get(conn);
+    }
+
+    public void pingFromUser(WebSocket conn) {
+        lastPing.put(conn, System.currentTimeMillis());
     }
 
     public void deleteNotVerified() {
         for (WebSocket conn : notVerified.keySet()) {
-            logOff(conn, 1000, "Game has been started.");
+            logOffUser(conn, 1000, "Game has been started.");
         }
     }
 
-    public void logOff(WebSocket conn, Integer code, String message) {
+    public void logOffUser(WebSocket conn, Integer code, String message) {
+        if (conn == null) return;
         String name = users.get(conn);
         //deleting connection
-        lastPing.remove(conn);
-        notVerified.remove(conn);
-        users.remove(conn);
         conn.close(code, message);
     }
     public static void dispose() {
         stopServer();
+        Schedulers.stopSchedulers();
+        instance = null;
     }
 }

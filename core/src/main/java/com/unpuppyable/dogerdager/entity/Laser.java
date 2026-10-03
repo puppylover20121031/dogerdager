@@ -12,7 +12,7 @@ public final class Laser extends Entity {
 
     public Laser(float x, float width, float playTop) {
         super(x, 0, width, playTop);
-        this.name = "Laser";
+        this.type = "Laser";
     }
 
     private boolean firing() {

@@ -1,5 +1,5 @@
 ### ServerLogs ###
-core/src/main/java/com/unpuppyable/dogerdager/multiplayer/host/wsServer.log
+multiplayer.logs
 
 ### Gradle ###
 .gradle/
@@ -51,3 +51,6 @@ Thumbs.db
 hs_err_pid*.log
 replay_pid*.log
 puppy.jar
+
+### Claude context ###
+CLAUDE.md

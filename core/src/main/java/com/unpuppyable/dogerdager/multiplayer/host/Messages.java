@@ -1,68 +1,63 @@
 package com.unpuppyable.dogerdager.multiplayer.host;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.math.Vector2;
 import com.unpuppyable.dogerdager.Difficulty;
 import com.unpuppyable.dogerdager.DogerDager;
 import com.unpuppyable.dogerdager.MultiplayerScreen;
 import com.unpuppyable.dogerdager.entity.*;
+import com.unpuppyable.dogerdager.multiplayer.MessageType;
 import org.java_websocket.WebSocket;
 
 import java.util.*;
 
-import static com.unpuppyable.dogerdager.multiplayer.host.Websocket.*;
-
 public class Messages {
-    private static Websocket wsInstance = getInstance();
-    private static HashMap<WebSocket, String> users = wsInstance.users;
-    private final static Preferences prefs = Gdx.app.getPreferences("doger-dager");
+    private static Websocket wsInstance = Websocket.getInstance();
+    public static void reloadWsInstance() { wsInstance = Websocket.getInstance(); }
 
-    private static HashMap<Player, PlayerValues> previousPlayers = new HashMap<Player, PlayerValues>();
-    private static HashMap<Entity, Object> previousEntities = new HashMap<Entity, Object>();
+    private final static HashMap<Player, PlayerValues> previousPlayers = new HashMap<Player, PlayerValues>();
+    private final static HashMap<Entity, Object> previousEntities = new HashMap<Entity, Object>();
 
     // client -> server
     public static void authorize(WebSocket conn, Map<String, Object> msg) {
         HashMap<String, Object> response = new HashMap<String, Object>();
         if (DogerDager.multiplayerGameStarted) return;
-        if (users.containsKey(conn)) {
+        if (wsInstance.getUserName(conn) != null) {
             response.put("success", false);
             response.put("message", "you are already logged in");
-            wsInstance.sendWS(conn, "400", response);
+            wsInstance.sendWS(conn, MessageType.AUTHORIZE_RESPONSE.code, response);
             return;
         }
         if (!msg.containsKey("user")) return;
         String name = msg.get("user")+"";
-        if (users.containsValue(name)) {
+        if (wsInstance.isUserLoggedIn(name)) {
             response.put("success", false);
             response.put("message", "name already taken");
-            wsInstance.sendWS(conn, "400", response);
+            wsInstance.sendWS(conn, MessageType.AUTHORIZE_RESPONSE.code, response);
             return;
         }
         if (!isNameLegal(name)) {
             response.put("success", false);
             response.put("message", "illegal name");
-            wsInstance.sendWS(conn, "400", response);
+            wsInstance.sendWS(conn, MessageType.AUTHORIZE_RESPONSE.code, response);
             return;
         }
         //broadcast user joined
         response.put("user", name);
-        wsInstance.broadcastWS("201", response);
-        //some listing bs
-        wsInstance.notVerified.remove(conn);
-        users.put(conn, name);
+        wsInstance.broadcastWS(MessageType.USER_JOINED.code, response);
+        wsInstance.markLoggedIn(conn, name);
         MultiplayerScreen.addToUserList(name);
-        wsInstance.lastPing.put(conn, System.currentTimeMillis());
         //responding with success
         response.clear();
         response.put("success", true);
         response.put("message", "you have logged in");
-        response.put("users", users.values());
-        wsInstance.sendWS(conn, "200", response);
+        response.put("users", wsInstance.getUserList());
+        wsInstance.sendWS(conn, MessageType.AUTHORIZE_RESPONSE.code, response);
+
     }
 
     public static void keyDown(WebSocket conn, Map<String, Object> msg) {
-        String name = users.get(conn);
+        String name = wsInstance.getUserName(conn);
         if (!msg.containsKey("keys")) return;
         if (!(msg.get("keys") instanceof List<?> keys)) return;
         for (var key : keys) {
@@ -73,7 +68,7 @@ public class Messages {
     }
 
     public static void keyUp(WebSocket conn, Map<String, Object> msg) {
-        String name = users.get(conn);
+        String name = wsInstance.getUserName(conn);
         if (!msg.containsKey("keys")) return;
         if (!(msg.get("keys") instanceof List<?> keys)) return;
         for (var key : keys) {
@@ -84,245 +79,79 @@ public class Messages {
     }
 
     public static void shoot(WebSocket conn, Map<String, Object> msg) {
-        String name = users.get(conn);
+        String name = wsInstance.getUserName(conn);
         if (!msg.containsKey("x") || !msg.containsKey("y") || !msg.containsKey("pressing")) return;
         if (!(msg.get("x") instanceof Double x)) return;
         if (!(msg.get("y") instanceof Double y)) return;
         if (!(msg.get("pressing") instanceof Boolean pressing)) return;
         Player player = HostPlayScreen.getPlayerByName(name);
-        HostPlayScreen.getInstance().shootPlayer(player, x.intValue(), y.intValue(), pressing);
+        if (player == null) return;
+        Gdx.app.postRunnable(() -> player.shoot(x.intValue(), y.intValue(), pressing));
     }
 
     public static void ping(WebSocket conn) {
         HashMap<String, Object> response = new HashMap<String, Object>();
 
-        wsInstance.lastPing.replace(conn, System.currentTimeMillis());
-        wsInstance.sendWS(conn, "205", response);
+        wsInstance.pingFromUser(conn);
+        wsInstance.sendWS(conn, MessageType.PONG.code, response);
     }
 
     // server -> client
     public static void renderTick(HashMap<String, Player> players, List<Entity> entities) {
-        if (entities.size() != previousEntities.size() || players.size() != previousPlayers.size()) {
+        if (entities.size() != previousEntities.size() || players.size() != previousPlayers.size() || !previousEntities.keySet().containsAll(entities)) {
             initializeEntities(players, entities);
         } else {
             updateEntities(players, entities);
         }
     }
 
-    private static void updateEntities(HashMap<String, Player> players, List<Entity> entities) {
-        HashMap<String, Object> update = new HashMap<String, Object>();
-        for (Entity entity : entities) {
-            Object prevVal = previousEntities.get(entity);
-            String id = entity.id;
-            Float x = entity.bounds().x;
-            Float y = entity.bounds().y;
-            switch (entity) {
-                case Centipede e -> {
-                    if (!(prevVal instanceof CentipedeValues previousValues)) return;
-                    CentipedeValues infoSet = new CentipedeValues(
-                            null,
-                            !x.equals(previousValues.x) ? x : null,
-                            !y.equals(previousValues.y) ? y : null,
-                            !Arrays.equals(e.seg, previousValues.seg) ? e.seg : null,
-                            e.heading != previousValues.heading ? e.heading : null
-                    );
-                    update.put(id, infoSet);
-                    updatePreviousEntity(infoSet, e);
-                }
-                case Enemy e -> {
-                    if (!(prevVal instanceof EnemyValues previousValues)) return;
-                    EnemyValues infoSet = new EnemyValues(
-                            null,
-                            !x.equals(previousValues.x) ? x : null,
-                            !y.equals(previousValues.y) ? y : null,
-                            null
-                    );
-                    update.put(id, infoSet);
-                    updatePreviousEntity(infoSet, e);
-                }
-                case Boss e -> {
-                    if (!(prevVal instanceof BossValues previousValues)) return;
-                    BossValues infoSet = new BossValues(
-                            null,
-                            !x.equals(previousValues.x) ? x : null,
-                            !y.equals(previousValues.y) ? y : null,
-                            null,
-                            e.getTarget().bounds().x != previousValues.tx ? e.getTarget().bounds().x : null,
-                            e.getTarget().bounds().y != previousValues.ty ? e.getTarget().bounds().y : null,
-                            e.settled != previousValues.s ? e.settled : null,
-                            e.fireTimer != previousValues.ft ? e.fireTimer : null,
-                            e.phase != previousValues.ph ? e.phase : null,
-                            e.atkTimer != previousValues.at ? e.atkTimer : null
-                    );
-                    update.put(id, infoSet);
-                    updatePreviousEntity(infoSet, e);
-                }
-                case Bullet e -> {
-                    if (!(prevVal instanceof BulletValues previousValues)) return;
-                    BulletValues infoSet = new BulletValues(
-                            null,
-                            !x.equals(previousValues.x) ? x : null,
-                            !y.equals(previousValues.y) ? y : null,
-                            null,
-                            e.ang != previousValues.ang ? e.ang : null
-                    );
-                    update.put(id, infoSet);
-                    updatePreviousEntity(infoSet, e);
-                }
-                case Laser e -> {
-                    if (!(prevVal instanceof LaserValues previousValues)) return;
-                    LaserValues infoSet = new LaserValues(
-                            null,
-                            !x.equals(previousValues.x) ? x : null,
-                            !y.equals(previousValues.y) ? y : null,
-                            e.telegraph != previousValues.tele ? e.telegraph : null
-                    );
-                    update.put(id, infoSet);
-                    updatePreviousEntity(infoSet, e);
-                }
-                default -> {
-                    if (!(prevVal instanceof EntityValues previousValues)) return;
-                    EntityValues infoSet = new EntityValues(
-                            null,
-                            !x.equals(previousValues.x) ? x : null,
-                            !y.equals(previousValues.y) ? y : null
-                    );
-                    update.put(id, infoSet);
-                    updatePreviousEntity(infoSet, entity);
-                }
-            }
-        }
-        for (Player p : players.values()) {
-            PlayerValues previousValues = previousPlayers.get(p);
-            String id = p.id;
-            float x = p.bounds().x;
-            float y = p.bounds().y;
-            PlayerValues infoSet = new PlayerValues(
-                    null,
-                    x != previousValues.x ? x : null,
-                    y != previousValues.y ? y : null,
-                    !p.username.equals(previousValues.username) ? p.username : null,
-                    p.dead() != previousValues.isdead ? p.dead() : null,
-                    p.health != previousValues.hp ? p.health : null,
-                    p.staminaFraction() != previousValues.stam ? p.staminaFraction() : null,
-                    p.getShielded() != previousValues.shield ? p.getShielded() : null,
-                    p.invulnerable != previousValues.inv ? p.invulnerable : null,
-                    p.strafeInvuln != previousValues.sinv ? p.strafeInvuln : null,
-                    p.stun != previousValues.stun ? p.stun : null
-            );
-            update.put(id, infoSet);
-            updatePreviousPlayer(infoSet, p);
-        }
-
-        wsInstance.broadcastWS("251", update);
-        wsInstance.deleteNotVerified();
-
-    }
-
     private static void initializeEntities(HashMap<String, Player> players, List<Entity> entities) {
         HashMap<String, Object> init = new HashMap<String, Object>();
         for (Entity entity : entities) {
-            String id = entity.id;
-            String type = entity.name;
-            float x = entity.bounds().x;
-            float y = entity.bounds().y;
-            switch (entity) {
-                case Centipede e -> {
-                    CentipedeValues infoSet = new CentipedeValues(
-                            type,
-                            x,
-                            y,
-                            e.seg,
-                            e.heading
-                    );
-                    init.put(id, infoSet);
-                    previousEntities.put(e, infoSet);
-                }
-                case Enemy e -> {
-                    EnemyValues infoSet = new EnemyValues(
-                            type,
-                            x,
-                            y,
-                            e.kind.toString()
-                    );
-                    init.put(id, infoSet);
-                    previousEntities.put(e, infoSet);
-                }
-                case Boss e -> {
-                    BossValues infoSet = new BossValues(
-                            type,
-                            x,
-                            y,
-                            e.kind.toString(),
-                            e.getTarget().bounds().x,
-                            e.getTarget().bounds().y,
-                            e.settled,
-                            e.fireTimer,
-                            e.phase,
-                            e.atkTimer
-                    );
-                    init.put(id, infoSet);
-                    previousEntities.put(e, infoSet);
-                }
-                case Bullet e -> {
-                    BulletValues infoSet = new BulletValues(
-                            type,
-                            x,
-                            y,
-                            e.kind.toString(),
-                            e.ang
-                    );
-                    init.put(id, infoSet);
-                    previousEntities.put(e, infoSet);
-                }
-                case Laser e -> {
-                    LaserValues infoSet = new LaserValues(
-                            type,
-                            x,
-                            y,
-                            e.telegraph
-                    );
-                    init.put(id, infoSet);
-                    previousEntities.put(e, infoSet);
-                }
-                default -> {
-                    EntityValues infoSet = new EntityValues(
-                            type,
-                            x,
-                            y
-                    );
-                    init.put(id, infoSet);
-                    previousEntities.put(entity, infoSet);
-                }
-            }
+            Object infoSet = valuesFor(entity, null);
+            init.put(entity.id, infoSet);
+            previousEntities.put(entity, infoSet);
         }
         for (Player p : players.values()) {
-            String id = p.id;
-            String type = p.name;
-            float x = p.bounds().x;
-            float y = p.bounds().y;
-            PlayerValues infoSet = new PlayerValues(
-                    type,
-                    x,
-                    y,
-                    p.username,
-                    p.dead(),
-                    p.health,
-                    p.staminaFraction(),
-                    p.getShielded(),
-                    p.invulnerable,
-                    p.strafeInvuln,
-                    p.stun
-            );
-            init.put(id, infoSet);
-            previousPlayers.put(p, infoSet);
+            Object infoSet = playerValues(p, null);
+            init.put(p.id, infoSet);
+            previousPlayers.put(p, (PlayerValues) infoSet);
         }
-
         previousPlayers.keySet().retainAll(players.values());
         previousEntities.keySet().retainAll(entities);
 
-        wsInstance.broadcastWS("250", init);
+        wsInstance.broadcastWS(MessageType.ENTITIES_INIT.code, init);
         wsInstance.deleteNotVerified();
+    }
+
+    private static void updateEntities(HashMap<String, Player> players, List<Entity> entities) {
+        HashMap<String, Object> update = new HashMap<String, Object>();
+        for (Entity entity : entities) {
+            Object infoSet = valuesFor(entity, previousEntities.get(entity));
+            update.put(entity.id, infoSet);
+            updatePreviousEntity(infoSet, entity);
+        }
+        for (Player p : players.values()) {
+            Object infoSet = playerValues(p, previousPlayers.get(p));
+            update.put(p.id, infoSet);
+            updatePreviousPlayer(infoSet, p);
+        }
+
+        wsInstance.broadcastWS(MessageType.ENTITIES_UPDATE.code, update);
+        wsInstance.deleteNotVerified();
+    }
+
+    private static Object valuesFor(Entity entity, Object previous) {
+        return switch (entity) {
+            case Centipede e -> centipedeValues(e, (CentipedeValues) previous);
+            case Enemy e -> enemyValues(e, (EnemyValues) previous);
+            case Boss e -> bossValues(e, (BossValues) previous);
+            case Bullet e -> bulletValues(e, (BulletValues) previous);
+            case Laser e -> laserValues(e, (LaserValues) previous);
+            case Powerup1 e -> powerUpValues(e, (PowerUpValues) previous);
+            case Potion e -> powerUpValues(e, (PowerUpValues) previous);
+            default -> entityValues(entity, (EntityValues) previous);
+        };
     }
 
     private static void updatePreviousEntity(Object infoSet, Entity e) {
@@ -350,7 +179,14 @@ public class Messages {
         HashMap<String, Object> response = new HashMap<String, Object>();
         response.put("diff", diff);
         response.put("tps", tickrate);
-        wsInstance.broadcastWS("210", response);
+        wsInstance.broadcastWS(MessageType.GAME_STARTED.code, response);
+    }
+
+    public static void newGameState(String state, String winner) {
+        HashMap<String, Object> response = new HashMap<String, Object>();
+        response.put("gs", state);
+        response.put("w", winner);
+        wsInstance.broadcastWS(MessageType.NEW_GAME_STATE.code, response);
     }
 
     // help
@@ -380,6 +216,23 @@ public class Messages {
         }
     }
 
+    private static Object entityValues(Entity entity, EntityValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new EntityValues(
+                    entity.type,
+                    x,
+                    y
+            );
+        }
+        return new EntityValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null
+        );
+    }
+
     public record CentipedeValues(
             String type,
             Float x,
@@ -399,6 +252,27 @@ public class Messages {
         }
     }
 
+    private static Object centipedeValues(Centipede entity, CentipedeValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new CentipedeValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.seg,
+                    entity.heading
+            );
+        }
+        return new CentipedeValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                entity.seg,
+                entity.heading != previous.heading ? entity.heading : null
+        );
+    }
+
     public record EnemyValues(
             String type,
             Float x,
@@ -414,6 +288,25 @@ public class Messages {
                     kind != null ? kind : previous.kind
             );
         }
+    }
+
+    private static Object enemyValues(Enemy entity, EnemyValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new EnemyValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.kind.toString()
+            );
+        }
+        return new EnemyValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                null
+        );
     }
 
     public record BossValues(
@@ -445,6 +338,37 @@ public class Messages {
         }
     }
 
+    private static Object bossValues(Boss entity, BossValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new BossValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.kind.toString(),
+                    entity.getTarget().bounds().x,
+                    entity.getTarget().bounds().y,
+                    entity.settled,
+                    entity.fireTimer,
+                    entity.phase,
+                    entity.atkTimer
+            );
+        }
+        return new BossValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                null,
+                entity.getTarget().bounds().x != previous.tx ? entity.getTarget().bounds().x : null,
+                entity.getTarget().bounds().y != previous.ty ? entity.getTarget().bounds().y : null,
+                entity.settled != previous.s ? entity.settled : null,
+                entity.fireTimer != previous.ft ? entity.fireTimer : null,
+                entity.phase != previous.ph ? entity.phase : null,
+                entity.atkTimer != previous.at ? entity.atkTimer : null
+        );
+    }
+
     public record BulletValues(
             String type,
             Float x,
@@ -464,6 +388,27 @@ public class Messages {
         }
     }
 
+    private static Object bulletValues(Bullet entity, BulletValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new BulletValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.kind.toString(),
+                    entity.ang
+            );
+        }
+        return new BulletValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                null,
+                entity.ang != previous.ang ? entity.ang : null
+        );
+    }
+
     public record LaserValues(
             String type,
             Float x,
@@ -479,6 +424,79 @@ public class Messages {
                     tele != null ? tele : previous.tele
             );
         }
+    }
+
+    private static Object laserValues(Laser entity, LaserValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new LaserValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.telegraph
+            );
+        }
+        return new LaserValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                entity.telegraph != previous.tele ? entity.telegraph : null
+        );
+    }
+
+    public record PowerUpValues(
+            String type,
+            Float x,
+            Float y,
+            Float life
+    ) implements Mergeable<PowerUpValues> {
+        @Override
+        public PowerUpValues merge(PowerUpValues previous) {
+            return new PowerUpValues(
+                    type != null ? type : previous.type,
+                    x != null ? x : previous.x,
+                    y != null ? y : previous.y,
+                    life != null ? life : previous.life
+            );
+        }
+    }
+
+    private static Object powerUpValues(Powerup1 entity, PowerUpValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new PowerUpValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.life
+            );
+        }
+        return new PowerUpValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                entity.life != previous.life ? entity.life : null
+        );
+    }
+    private static Object powerUpValues(Potion entity, PowerUpValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new PowerUpValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.life
+            );
+        }
+        return new PowerUpValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                entity.life != previous.life ? entity.life : null
+        );
     }
 
     public record PlayerValues(
@@ -512,7 +530,42 @@ public class Messages {
         }
     }
 
+    private static Object playerValues(Player entity, PlayerValues previous) {
+        float x = entity.bounds().x;
+        float y = entity.bounds().y;
+        if (previous == null) {
+            return new PlayerValues(
+                    entity.type,
+                    x,
+                    y,
+                    entity.username,
+                    entity.dead(),
+                    entity.health,
+                    entity.staminaFraction(),
+                    entity.getShielded(),
+                    entity.invulnerable,
+                    entity.strafeInvuln,
+                    entity.stun
+            );
+        }
+        return new PlayerValues(
+                null,
+                x != previous.x ? x : null,
+                y != previous.y ? y : null,
+                null,
+                entity.dead() != previous.isdead ? entity.dead() : null,
+                entity.health != previous.hp ? entity.health : null,
+                entity.staminaFraction() != previous.stam ? entity.staminaFraction() : null,
+                entity.getShielded() != previous.shield ? entity.getShielded() : null,
+                entity.invulnerable != previous.inv ? entity.invulnerable : null,
+                entity.strafeInvuln != previous.sinv ? entity.strafeInvuln : null,
+                entity.stun != previous.stun ? entity.stun : null
+        );
+    }
+
     public static void dispose() {
-        users.clear();
+        previousEntities.clear();
+        previousPlayers.clear();
+        wsInstance = null;
     }
 }

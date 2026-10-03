@@ -7,14 +7,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
 import org.java_websocket.WebSocket;
 
-import java.util.HashMap;
+import java.util.*;
 
 
 public class HostPlayScreen extends PlayScreen {
@@ -24,28 +23,32 @@ public class HostPlayScreen extends PlayScreen {
     static final float HUD_H = 72 * 3;
     static final float PLAY_TOP = WORLD_H - HUD_H;
     private final Progress progress = new Progress();
+
     private float tickrate = 30f;
+    private boolean pvpOn = false;
+    private boolean revivesOn = true;
+    private int reviveAttemptsReq = 10;
+
+    private HashMap<Player, Integer> reviveAttemptsDone;
+    //private ServerSettings settings;
+
     private float netTimer;
-    private float timeDelta;
     private static HostPlayScreen instance;
     private Websocket wsInstance = Websocket.getInstance();
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
-    private static HashMap<String, Player> players = new HashMap<String, Player>();
+    private final HashMap<String, Player> players = new HashMap<String, Player>();
     private Player host;
+    private String winner;
 
     protected State state;
-
-    protected enum State {
-        PLAYING, PAUSED, DEAD, GAME_OVER, WON
-    }
 
     public HostPlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
         super(game, difficulty, delta, post);
         instance = this;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
-        for (WebSocket conn : wsInstance.users.keySet()) {
-            String playerName = wsInstance.users.get(conn);
+        for (WebSocket conn : wsInstance.getConnectionsList()) {
+            String playerName = wsInstance.getUserName(conn);
             if (conn == null) {
                 host = player;
                 players.put(playerName, host);
@@ -68,6 +71,14 @@ public class HostPlayScreen extends PlayScreen {
         Messages.gameStarted(curDifficulty, tickrate);
         DogerDager.multiplayerGameStarted = true;
         state = State.PLAYING;
+
+        //settings
+        if (revivesOn) {
+            reviveAttemptsDone = new HashMap<>();
+            for (Player p : players.values()) {
+                reviveAttemptsDone.put(p, 0);
+            }
+        }
     }
 
     @Override public void render(float delta) {
@@ -75,9 +86,19 @@ public class HostPlayScreen extends PlayScreen {
         for (Player p : players.values()) {
             if (p.dead()) playersDead++;
         }
-        if (playersDead>=players.size()) {
+
+        if (playersDead>=players.size() && state != State.GAME_OVER) {
             state = State.GAME_OVER;
-            //broadcast new gamestate
+            Messages.newGameState(state.toString(), winner);
+            progress.recordRun(difficulty, hud.highScore(), false);
+        }
+        if (pvpOn && playersDead + 1 == players.size() && state != State.PLAYER_WON) {
+            state = State.PLAYER_WON;
+            for (Player p : players.values()) {
+                if (p.dead()) continue;
+                winner = p.username;
+            }
+            Messages.newGameState(state.toString(), winner);
         }
 
         if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
@@ -90,11 +111,11 @@ public class HostPlayScreen extends PlayScreen {
                 return;
             }
         }
-        if (state == State.PLAYING || state == State.DEAD) {
+        if (state == State.PLAYING || state == State.YOU_DIED) {
             update(Math.min(delta, MAX_STEP), post);
         } else if (state == State.PAUSED) {
+            update(Math.min(delta, MAX_STEP), post);
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
-                DogerDager.multiplayerGameStarted = false;
                 toMenu();
                 return;
             }
@@ -110,7 +131,6 @@ public class HostPlayScreen extends PlayScreen {
     }
 
     protected void update(float delta, PostProcessor post) {
-        timeDelta = delta;
         if (host==null) return;
         if (shake > 0)
             shake -= delta;
@@ -119,13 +139,7 @@ public class HostPlayScreen extends PlayScreen {
             player.update(delta);
         }
         spawner.update(delta);
-        if (shootCooldown > 0)
-            shootCooldown -= delta;
-        if (playerShootingEnabled && shootCooldown <= 0
-                && (keyBind.isJustPressed(KeyBind.Action.SHOOT) || Pad.justB())) {
-            shootPlayer();
-            shootCooldown = PLAYER_SHOOT_COOLDOWN;
-        }
+
 
         for (var e : entities) {
             e.update(delta);
@@ -138,9 +152,8 @@ public class HostPlayScreen extends PlayScreen {
                 if (enemy.kind != Enemy.Kind.SMART) continue;
             }
             if (!e.getTarget().dead()) continue;
-            for (Player p : players.values()) {
-                if (!p.dead()) e.setTarget(p);
-            }
+            e.setTarget(getTarget());
+
         }
         entities.addAll(pending);
         pending.clear();
@@ -157,15 +170,28 @@ public class HostPlayScreen extends PlayScreen {
                         break;
                     }
                 }
+                if (!pvpOn) continue;
+                for (var target : players.values()) {
+                    if (target.dead() || arrow.getOwner() == target) continue;
+
+                    if (arrow.hits(target.bounds())) {
+                        arrow.kill();
+                        hurt(target, 2);
+                        break;
+                    }
+                }
             }
         }
-        //loop for players
+        //loop for players (what they're touching)
         for (Player p : players.values()) {
+            boolean isHost = p == host;
+
             if (p.dead()) continue;
             for (var e : entities) {
                 if (e.dead() || !e.hits(p.bounds()))
                     continue;
                 if (e.heals()) {
+                    if (isHost) progress.unlock(Achievement.POTIONER);
                     p.heal(2);
                     e.kill();
                 } else if (e.contactDamage() > 0) {
@@ -175,38 +201,24 @@ public class HostPlayScreen extends PlayScreen {
                     hurt(p, e.contactDamage());
                     if (e.diesOnPlayerHit())
                         e.kill();
+                    if (e.glitches()) {
+                        if (isHost) post.setGlitch(true);
+                        e.kill();
+                    }
                 }
-            }
-        }
-
-        //loop for enemies then host
-        for (var e : entities) {
-            if (e.dead() || !e.hits(host.bounds()))
-                continue;
-            if (e.heals()) {
-                host.heal(2);
-                progress.unlock(Achievement.POTIONER);
-                e.kill();
-            } else if (e.contactDamage() > 0) {
-                if (e.knocksBack() && !host.strafing() && !host.invulnerable) {
-                    host.knockback(ARENA_W, PLAY_TOP);
-                }
-                hurt(e.contactDamage());
-                if (e.diesOnPlayerHit())
-                    e.kill();
-            } if (e.glitches()) {
-                post.setGlitch(true);
-                e.kill();
             }
         }
 
         entities.removeIf(Entity::dead);
 
-        if (host.dead()) {
-            progress.unlock(Achievement.FIRST_DEATH);
-            state = State.DEAD;
-            progress.recordRun(difficulty, hud.highScore(), false);
+        if (host.dead() && state != State.YOU_DIED) {
+            state = State.YOU_DIED;
+
+            if (!progress.achieved(Achievement.FIRST_DEATH))
+                progress.unlock(Achievement.FIRST_DEATH);
         }
+
+        if (!host.dead() && state != State.PAUSED) state = State.PLAYING;
     }
 
     protected void draw(float delta) {
@@ -257,88 +269,40 @@ public class HostPlayScreen extends PlayScreen {
         hud.drawText(batch, font);
         if (state == State.PAUSED) {
             drawCentered("PAUSED   -   Esc resume   Q menu");
-        } else if (state == State.DEAD){
-            drawCentered("You Died!"); //respawn
+        } else if (state == State.YOU_DIED){
+            drawCentered("You Died! Wait for a player to revive you.");
         } else if (state == State.WON) {
             drawMovieEnding(endingText.replace("YOU WON", "YOU WON"), delta);
         } else if (state == State.GAME_OVER) {
             drawMovieEnding(endingText.replace("YOU WON", "GAME OVER"), delta);
+        } else if (state == State.PLAYER_WON) {
+            drawMovieEnding(endingText.replace("YOU WON", winner + " WON"), delta);
         }
         batch.end();
     }
 
-    @Override
-    protected void hurt(int amount) {
-        if (host.strafing())
-            return;
-        int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (host.damage(dmg)) {
-            host.health -= dmg;
-            shake = 0.22f;
-        }
-    }
     protected void hurt(Player player, int amount) {
         if (player.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        player.damage(dmg);
+        if (player.damage(dmg) && player == host) shake = 0.22f;
     }
 
-    @Override
-    protected void shootPlayer() {
-        if (host.dead()) return;
-        Vector3 aim = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-        viewport.unproject(aim);
-        float px = host.bounds().x + Player.SIZE / 2f;
-        float py = host.bounds().y + Player.SIZE / 2f;
-        float dx = 0f;
-        float dy = 0f;
-        if (Gdx.input.isTouched() || Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-            dx = aim.x - px;
-            dy = aim.y - py;
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = host.aimX();
-            dy = host.aimY();
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = 1f;
-            dy = 0f;
-        }
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float vx = dx / len * PLAYER_SHOOT_SPEED;
-        float vy = dy / len * PLAYER_SHOOT_SPEED;
-        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, host));
-    }
+    public void tryRevive(Player caller) {
+        if (!revivesOn) return;
+        if (caller.dead()) return;
+        for (Player player : players.values()) {
+            if (!player.dead()) continue;
+            int playerAttempts = reviveAttemptsDone.getOrDefault(player, 0);
+            if (!caller.hits(player.bounds())) continue;
 
-    protected void shootPlayer(Player player, int worldX, int worldY, boolean pressed) {
-        if (player.dead()) return;
-        if (shootCooldown > 0)
-            shootCooldown -= timeDelta;
-        if (!playerShootingEnabled || shootCooldown > 0) return;
-
-        Vector3 aim = new Vector3(worldX, worldY, 0);
-        float px = player.bounds().x + Player.SIZE / 2f;
-        float py = player.bounds().y + Player.SIZE / 2f;
-        float dx = 0f;
-        float dy = 0f;
-        if (pressed) {
-            dx = aim.x - px;
-            dy = aim.y - py;
+            reviveAttemptsDone.put(player, playerAttempts + 1);
+            if (playerAttempts + 1 >= reviveAttemptsReq) {
+                player.revive();
+                player.healFull();
+                reviveAttemptsDone.remove(player);
+            }
         }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = player.aimX();
-            dy = player.aimY();
-        }
-        if (Math.abs(dx) < 0.1f && Math.abs(dy) < 0.1f) {
-            dx = 1f;
-            dy = 0f;
-        }
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float vx = dx / len * PLAYER_SHOOT_SPEED;
-        float vy = dy / len * PLAYER_SHOOT_SPEED;
-        add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, ARENA_W, PLAY_TOP, player));
-        shootCooldown = PLAYER_SHOOT_COOLDOWN;
     }
 
     // Floor transition: heal, wipe the arena, then either win or stage the next
@@ -351,7 +315,7 @@ public class HostPlayScreen extends PlayScreen {
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         for (Player p : players.values()) {
-            if (player.dead()) continue;
+            if (p.dead()) continue;
             p.healFull();
         }
         if (floor >= difficulty.winFloor) {
@@ -367,7 +331,21 @@ public class HostPlayScreen extends PlayScreen {
     }
 
     public static Player getPlayerByName(String name) {
-        return players.get(name);
+        return instance.players.get(name);
+    }
+
+    public static Player getRandomPlayer() {
+        int randomNumber = MathUtils.random(instance.players.size()-1);
+        List<Player> list = new ArrayList<Player>(instance.players.values());
+        if (list.stream().allMatch(Player :: dead)) return null;
+        Player culprit = list.get(randomNumber);
+        return culprit.dead() ? getRandomPlayer() : culprit;
+    }
+
+    @Override
+    protected Player getTarget() {
+        Player random = getRandomPlayer();
+        return random == null ? player : random;
     }
 
     public static HostPlayScreen getInstance() {
@@ -377,10 +355,18 @@ public class HostPlayScreen extends PlayScreen {
     @Override
     protected void reset() {
         super.reset();
+        if (players == null) return;
         for (Player p : players.values()) {
-            p.revive();
-            p.healFull();
+            p.reset();;
         }
+        if (reviveAttemptsDone != null) reviveAttemptsDone.clear();
+
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+        DogerDager.multiplayerGameStarted = false;
+        instance = null;
+    }
 }

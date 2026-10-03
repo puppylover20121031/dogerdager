@@ -29,7 +29,7 @@ public final class Bullet extends Entity {
         this.kind = kind;
         this.worldW = worldW;
         this.target = target;
-        this.name = "Bullet";
+        this.type = "Bullet";
         this.damage = switch (kind) {
             case FALLING -> 1;
             case HOMING -> 1;
@@ -57,7 +57,7 @@ public final class Bullet extends Entity {
         this.kind = Kind.SHARD;
         this.worldW = worldW;
         this.target = null;
-        this.name = "Bullet";
+        this.type = "Bullet";
         this.damage = 1;
         this.vx = vx;
         this.vy = vy;
