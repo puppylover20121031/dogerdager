@@ -136,7 +136,7 @@ public class HostPlayScreen extends PlayScreen {
         if (host==null) return;
         if (shake > 0)
             shake -= delta;
-        hud.update(delta);
+        hud.update(delta, host);
         for (Player player : players.values()) {
             player.update(delta);
         }
@@ -296,7 +296,7 @@ public class HostPlayScreen extends PlayScreen {
         batch.setProjectionMatrix(cam.combined);
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        hud.drawBars(shapes);
+        hud.drawBars(shapes, host);
         if (state == State.PAUSED) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapes.setColor(0f, 0f, 0f, 0.6f);

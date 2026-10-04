@@ -12,7 +12,7 @@ import com.unpuppyable.dogerdager.entity.Player;
 public final class Hud {
 
     private static final float BAND = 72;
-    public static final int MAX_CARDS = 5;
+    public static final int MAX_CARDS = 10;
 
     private static final Color HEART_ON = Color.SCARLET;
     private static final Color HEART_OFF = new Color(0.22f, 0.10f, 0.12f, 1f);
@@ -38,8 +38,9 @@ public final class Hud {
     }
     //moved all player logic right where it belongs: into the trash
     //jk it's in Player
-    public void update(float delta) {
+    public void update(float delta, Player player) {
         runTime += delta;
+        this.player = player;
     }
 
     public int advanceFloor() {
@@ -131,7 +132,7 @@ public final class Hud {
     }
 
     // Filled pass: top band, heart row, floor-progress bar.
-    public void drawBars(ShapeRenderer shapes) {
+    public void drawBars(ShapeRenderer shapes, Player player) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         shapes.setColor(0f, 0f, 0f, 0.45f);
         shapes.rect(0, worldH - BAND, worldW, BAND);

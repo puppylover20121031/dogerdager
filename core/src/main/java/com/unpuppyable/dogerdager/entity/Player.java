@@ -25,7 +25,7 @@ public final class Player extends Entity {
     private float shootCooldown = 0;
     private boolean playerShootingEnabled = true;
     private static final float PLAYER_SHOOT_SPEED = 380f;
-    private static final float PLAYER_SHOOT_COOLDOWN = 0.18f;
+    private float PLAYER_SHOOT_COOLDOWN = 0.18f;
 
     public static final float SIZE = 16;
     private static float SPEED = 300;

@@ -254,8 +254,8 @@ public class PlayScreen implements Screen {
     protected void update(float delta, PostProcessor post) {
         if (shake > 0)
             shake -= delta;
-        hud.update(delta);
         player.update(delta);
+        hud.update(delta, player);
         spawner.update(delta);
 
         for (var e : entities)
@@ -310,7 +310,22 @@ public class PlayScreen implements Screen {
             } if (e.card5()) {
                 hud.setCardActive(4, true);
                 e.kill();
-            }
+            } if (e.card6()) {
+                hud.setCardActive(5, true);
+                e.kill();
+            } if (e.card7()) {
+                hud.setCardActive(6, true);
+                e.kill();
+            } if (e.card8()) {
+                hud.setCardActive(7, true);
+                e.kill();
+            } if (e.card9()) {
+                hud.setCardActive(8, true);
+                e.kill();
+            } if (e.card10()) {
+                hud.setCardActive(9, true);
+                e.kill();
+            } 
         }
 
         entities.removeIf(Entity::dead);
@@ -413,7 +428,7 @@ public class PlayScreen implements Screen {
         batch.setProjectionMatrix(cam.combined);
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        hud.drawBars(shapes);
+        hud.drawBars(shapes, player);
         if (state == State.PAUSED) {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapes.setColor(0f, 0f, 0f, 0.6f);
