@@ -69,6 +69,26 @@ public abstract class Entity {
         return false;
     }
 
+    public boolean card6() {
+        return false;
+    }
+
+    public boolean card7() {
+        return false;
+    }
+
+    public boolean card8() {
+        return false;
+    }
+
+    public boolean card9() {
+        return false;
+    }
+
+    public boolean card10() {
+        return false;
+    }
+
     public boolean diesOnPlayerHit() {
         return false;
     }
