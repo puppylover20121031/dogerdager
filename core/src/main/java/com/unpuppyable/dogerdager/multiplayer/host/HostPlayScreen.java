@@ -11,6 +11,8 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.unpuppyable.dogerdager.*;
 import com.unpuppyable.dogerdager.entity.*;
+import com.unpuppyable.dogerdager.multiplayer.MessageType;
+import com.unpuppyable.dogerdager.multiplayer.client.ClientMessages;
 import org.java_websocket.WebSocket;
 
 import java.util.*;
@@ -203,6 +205,44 @@ public class HostPlayScreen extends PlayScreen {
                         e.kill();
                     if (e.glitches()) {
                         if (isHost) post.setGlitch(true);
+                        else {
+                            Messages.playerEffects(p.username, true, null);
+                        }
+                        e.kill();
+                    }
+                    if (e.card1()) {
+                        if (isHost) hud.setCardActive(0, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card2()) {
+                        if (isHost) hud.setCardActive(1, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card3()) {
+                        if (isHost) hud.setCardActive(2, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card4()) {
+                        if (isHost) hud.setCardActive(3, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
+                        e.kill();
+                    }
+                    if (e.card5()) {
+                        if (isHost) hud.setCardActive(4, true);
+                        else {
+                            p.setBonusMaxHealth(4);
+                        }
                         e.kill();
                     }
                 }
@@ -285,7 +325,10 @@ public class HostPlayScreen extends PlayScreen {
         if (player.strafing())
             return;
         int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (player.damage(dmg) && player == host) shake = 0.22f;
+
+        boolean hit = player.damage(dmg);
+        if (hit && player == host) shake = 0.22f;
+        else if (hit) Messages.playerEffects(player.username, null, 0.22f);
     }
 
     public void tryRevive(Player caller) {

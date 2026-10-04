@@ -11,20 +11,24 @@ import com.unpuppyable.dogerdager.Difficulty;
 
 public final class ReceiverHud {
     private static final float BAND = 72;
+    public static final int MAX_CARDS = 5;
 
     private static final Color HEART_ON = Color.SCARLET;
     private static final Color HEART_OFF = new Color(0.22f, 0.10f, 0.12f, 1f);
 
+    private static final Color CARD_ON = new Color(0.25f, 0.75f, 1f, 1f);
+    private static final Color CARD_OFF = new Color(0.18f, 0.22f, 0.25f, 1f);
+
     private final float worldH;
     private final float worldW;
-    private final int maxHealth;
+    private int maxHealth;
     private final GlyphLayout layout = new GlyphLayout();
 
     private int floor = 1;
     private float runTime;
     private float floorProgress;
     private int bestFloor;
-
+    private final boolean[] cards = new boolean[MAX_CARDS];
     private ClientPlayScreen.EntityState player;
 
     public ReceiverHud(Difficulty difficulty, int bestFloor, float worldW, float worldH) {
@@ -32,11 +36,11 @@ public final class ReceiverHud {
         this.worldH = worldH;
         this.maxHealth = difficulty.maxHealth;
         this.bestFloor = bestFloor;
-
     }
+
     public void update(float delta) {
-                runTime += delta;
-            }
+        runTime += delta;
+    }
 
     public int advanceFloor() {
         floor++;
@@ -53,21 +57,27 @@ public final class ReceiverHud {
             }
 
     public int highScore() {
-                return bestFloor;
-            }
+        return bestFloor;
+    }
 
     // Filled pass: top band, heart row, floor-progress bar.
     public void drawBars(ShapeRenderer shapes) {
         this.player = ClientPlayScreen.getInstance().getPlayer();
-        if (player.hp == null) return;
+        if (player == null) return;
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         shapes.setColor(0f, 0f, 0f, 0.45f);
         shapes.rect(0, worldH - BAND, worldW, BAND);
 
         float hx = 28, hy = worldH - 26, r = 6, gap = 22;
-        for (int i = 0; i < maxHealth; i++) {
+        for (int i = 0; i < player.maxHp; i++) {
             heart(shapes, hx + i * gap, hy, r, i < player.hp ? HEART_ON : HEART_OFF);
+        }
+
+        float cardX = 255, cardY = worldH - 40, cardW = 14, cardH = 18, cardGap = 5;
+        for (int i = 0; i < MAX_CARDS; i++) {
+            card(shapes, cardX + i * (cardW + cardGap), cardY, cardW, cardH,
+                    cards[i] ? CARD_ON : CARD_OFF);
         }
 
         float pbX = 22, pbY = worldH - 46, pbW = 150, pbH = 5;
@@ -92,6 +102,16 @@ public final class ReceiverHud {
         shapes.circle(cx - r * 0.45f, cy + r * 0.35f, r * 0.6f);
         shapes.circle(cx + r * 0.45f, cy + r * 0.35f, r * 0.6f);
         shapes.triangle(cx - r, cy + r * 0.45f, cx + r, cy + r * 0.45f, cx, cy - r * 0.9f);
+    }
+
+    private void card(ShapeRenderer shapes, float x, float y, float width, float height, Color color) {
+        shapes.setColor(color);
+        shapes.rect(x, y, width, height);
+        shapes.setColor(0.08f, 0.12f, 0.16f, 1f);
+        float cx = x + width / 2f;
+        float cy = y + height / 2f;
+        shapes.triangle(cx, cy + 3, cx + 2, cy, cx, cy - 3);
+        shapes.triangle(cx, cy + 3, cx - 2, cy, cx, cy - 3);
     }
 
     private String time() {

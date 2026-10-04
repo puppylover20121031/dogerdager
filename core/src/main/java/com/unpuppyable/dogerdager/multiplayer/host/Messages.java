@@ -189,6 +189,14 @@ public class Messages {
         wsInstance.broadcastWS(MessageType.NEW_GAME_STATE.code, response);
     }
 
+    public static void playerEffects(String username, Boolean glitch, Float shake) {
+        WebSocket conn = wsInstance.getConnByName(username);
+        HashMap<String, Object> response = new HashMap<String, Object>();
+        response.put("gl", glitch);
+        response.put("sh", shake);
+        wsInstance.sendWS(conn, MessageType.PLAYER_EFFECTS.code, response);
+    }
+
     // help
     private static Boolean isNameLegal(String name) {
         if (name.chars().anyMatch(Character::isWhitespace)) return false;
@@ -506,6 +514,7 @@ public class Messages {
             String username,
             Boolean isdead,
             Float hp,
+            Integer mhp,
             Float stam,
             Boolean shield,
             Boolean inv,
@@ -521,6 +530,7 @@ public class Messages {
                     username != null ? username : previous.username,
                     isdead != null ? isdead : previous.isdead,
                     hp != null ? hp : previous.hp,
+                    mhp != null ? mhp : previous.mhp,
                     stam != null ? stam : previous.stam,
                     shield != null ? shield : previous.shield,
                     inv != null ? inv : previous.inv,
@@ -541,6 +551,7 @@ public class Messages {
                     entity.username,
                     entity.dead(),
                     entity.health,
+                    entity.maxHealth,
                     entity.staminaFraction(),
                     entity.getShielded(),
                     entity.invulnerable,
@@ -555,6 +566,7 @@ public class Messages {
                 null,
                 entity.dead() != previous.isdead ? entity.dead() : null,
                 entity.health != previous.hp ? entity.health : null,
+                entity.maxHealth != previous.mhp ? entity.maxHealth : null,
                 entity.staminaFraction() != previous.stam ? entity.staminaFraction() : null,
                 entity.getShielded() != previous.shield ? entity.getShielded() : null,
                 entity.invulnerable != previous.inv ? entity.invulnerable : null,
