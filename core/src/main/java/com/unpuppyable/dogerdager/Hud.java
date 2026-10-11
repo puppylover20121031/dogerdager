@@ -12,7 +12,7 @@ import com.unpuppyable.dogerdager.entity.Player;
 public final class Hud {
 
     private static final float BAND = 72;
-    public static final int MAX_CARDS = 10;
+    public static final int MAX_CARDS = 5;
 
     private static final Color HEART_ON = Color.SCARLET;
     private static final Color HEART_OFF = new Color(0.22f, 0.10f, 0.12f, 1f);

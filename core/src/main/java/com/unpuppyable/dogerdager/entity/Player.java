@@ -16,7 +16,7 @@ import java.util.HashSet;
 
 public final class Player extends Entity {
 
-    private static final float MAX_STAMINA = 1200;
+    private float MAX_STAMINA = 1200;
     private static final float DRAIN = 300;
     private static final float REGEN = 60;
     private static final float HIT_GRACE = 0.7f;
@@ -66,6 +66,7 @@ public final class Player extends Entity {
     private final Progress progress;
     private final Preferences prefs = Gdx.app.getPreferences("doger-dager");
 
+
     public Player(float worldW, float playTop, PostProcessor post, Progress progress, String username, Difficulty difficulty, boolean isHost, Hud hud) {
         super((worldW - SIZE) / 2f, (playTop - SIZE) / 2f, SIZE);
         maxX = worldW - SIZE;
@@ -84,6 +85,10 @@ public final class Player extends Entity {
 
     @Override
     public void update(float delta) {
+
+        if (hud.cardActive(2)) {
+            MAX_STAMINA = 2400;
+        }
 
         if (hud.cardActive(1)) {
             PLAYER_SHOOT_COOLDOWN = 0;

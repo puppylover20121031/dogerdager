@@ -33,7 +33,7 @@ public final class Powerup2 extends Entity {
     @Override
     public void draw(ShapeRenderer shapes) {
         if (life < 2f && (int) (anim * 8) % 2 == 0) return;
-        shapes.setColor(Color.YELLOW);
+        shapes.setColor(Color.PURPLE);
         shapes.rect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 }

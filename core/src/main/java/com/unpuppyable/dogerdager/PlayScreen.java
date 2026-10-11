@@ -55,7 +55,7 @@ public class PlayScreen implements Screen {
     protected final BitmapFont font = new BitmapFont();
     protected final GlyphLayout layout = new GlyphLayout();
     protected final Progress progress = new Progress();
-    protected final String endingText = "THE END\n\nYOU WON\n\nRIP Honey Bun\n\nIn loving memory\n\nCredits\nHoney Bun\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
+    protected final String endingText = "THE END\n\nYOU WON\n\n\nCredits\nUnpuppyable\nOwner / Developer\nThe Doger Dager team\n\nR retry   Esc menu";
     protected float endingScroll;
 
     protected final List<Entity> entities = new ArrayList<>();
@@ -377,6 +377,18 @@ public class PlayScreen implements Screen {
             hud.setCardActive(4, true);
         }
 
+
+
+        Boolean mute = true;
+
+        if (Gdx.input.isKeyPressed(Keys.M)) {
+            mute = !mute;
+            if (mute) {
+                bgm.pause();
+            } else {
+                bgm.play();
+            }
+        }
 
 
 
