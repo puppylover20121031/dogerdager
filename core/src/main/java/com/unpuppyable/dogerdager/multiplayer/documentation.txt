@@ -1,0 +1,366 @@
+DOGERDAGER MULTIPLAYER — TECHNICAL DOCUMENTATION
+
+1. OVERVIEW
+
+DogerDager multiplayer uses a host-authoritative networking model. One player hosts the game and runs the main simulation, while other players connect as clients.
+The host processes player input, updates gameplay entities, handles collisions and game progression, and broadcasts state updates to connected clients.
+
+Clients do not independently run the complete game simulation. Instead, they send their input to the host, receive entity-state updates,
+interpolate positions between network updates, and render the resulting game state.
+
+The multiplayer implementation is distributed across several classes:
+
+- MultiplayerScreen: hosting/joining interface, lobby state, and connection lifecycle.
+- Websocket: server startup, connection management, authorization routing, and message sending.
+- Messages: server-side message handling and entity-state serialization.
+- HostPlayScreen: authoritative multiplayer simulation and state broadcasting.
+- WebsocketClient: client connection and incoming-message routing.
+- ClientMessages: client-side message handling and outbound messages.
+- ClientPlayScreen: client rendering, state interpolation, and input collection.
+- MessageType: network message identifiers.
+- Schedulers: ping, timeout, and unverified-connection checks.
+- ErrorLogs: multiplayer log-file output.
+- Player: local and remote player movement, combat, shielding, and reviving.
+
+2. WEBSOCKETS AND MULTIPLAYER BASICS
+
+A WebSocket is a persistent, two-way network connection between a client and a server. Unlike a typical HTTP request, which generally ends after the response,
+a WebSocket remains open so either side can send messages without repeatedly establishing new connections.
+
+In a multiplayer game, this allows the client to send player input and receive game updates continuously.
+
+DogerDager uses JSON messages. Each message includes a "t" field identifying its message type.
+
+For example, a client can send a key-down message containing a list of pressed keys. The host interprets the message and updates the corresponding player's input state.
+The host then sends entity updates so clients can render the resulting movement.
+
+The architecture is host-authoritative:
+
+- Clients report input.
+- The host processes gameplay and maintains the authoritative simulation.
+- The host sends game state to clients.
+- Clients interpolate received state to make movement appear smoother.
+
+The host server uses port 9090 by default. The client constructs a WebSocket URI using "ws://", so the supplied implementation does not show encrypted WSS connections.
+
+3. HOSTING AND CONNECTING
+
+3.1 Hosting a game
+
+1. The player opens MultiplayerScreen from the main menu.
+2. The player enters a name and selects HOST.
+3. MultiplayerScreen starts a Websocket server on port 9090.
+4. The host's name is added to the server's user list. The host is represented locally rather than by a remote WebSocket connection.
+5. The lobby displays the port and current player list.
+6. When the host starts the game, MenuScreen opens HostPlayScreen.
+7. HostPlayScreen creates the host and remote player objects, initializes gameplay systems, and broadcasts GAME_STARTED.
+8. The host runs the simulation and sends network updates at the configured tick rate.
+
+The current implementation uses a 30-tick-per-second network update rate in HostPlayScreen.
+
+3.2 Joining a game
+
+1. The client opens MultiplayerScreen and selects JOIN.
+2. The client enters a server address and player name.
+3. MultiplayerScreen calls WebsocketClient.startClient().
+4. Once the connection opens, the client sends an AUTHORIZE message containing the requested name.
+5. The server checks whether the name is valid and already in use.
+6. On success, the server records the connection, broadcasts USER_JOINED, and sends AUTHORIZE_RESPONSE with the current player list.
+7. The client updates the lobby after authorization succeeds.
+8. When the host starts the game, the client receives GAME_STARTED and opens ClientPlayScreen.
+9. The client sends gameplay input to the host and receives entity-state updates.
+
+Names must contain between 3 and 20 characters and cannot contain whitespace. The server rejects duplicate names and connections that attempt to authorize after the game has started.
+
+3.3 Disconnecting
+
+The lobby's disconnect action resets the global multiplayer flag, disposes the server and client networking components, returns to MenuScreen, and disposes the lobby screen.
+
+When a remote connection closes before the game starts, the server removes the user and broadcasts USER_LEFT. After the game starts,
+the server removes the connection from its connection tracking, but the complete gameplay behavior for a disconnected player depends on the host's remaining player and game-state logic.
+
+4. NETWORK MESSAGE PROTOCOL
+
+MessageType defines the message identifiers used by the client and host.
+
+Client-to-host messages:
+
+AUTHORIZE (0)
+Requests to join the server using a player name.
+
+KEYS_DOWN (1)
+Reports controls that have been pressed.
+
+KEYS_UP (2)
+Reports controls that have been released.
+
+SHOOT (3)
+Sends aim coordinates and whether the shooting input is pressed.
+
+PING (5)
+Reports client activity and maintains the connection.
+
+Host-to-client messages:
+
+AUTHORIZE_RESPONSE (200)
+Returns the authorization result, message, and current user list.
+
+USER_JOINED (201)
+Notifies clients that a player joined the lobby.
+
+USER_LEFT (202)
+Notifies clients that a player left the lobby.
+
+PONG (205)
+Acknowledges a ping.
+
+GAME_STARTED (210)
+Provides the game difficulty and network tick rate.
+
+NEW_GAME_STATE (211)
+Communicates game-state transitions and the optional winner.
+
+PLAYER_EFFECTS (220)
+Applies client-specific visual effects, such as glitch and screen shake.
+
+ENTITIES_INIT (250)
+Provides a full entity-state snapshot.
+
+ENTITIES_UPDATE (251)
+Provides incremental entity-state changes.
+
+ERROR (400)
+A defined error message type; no corresponding handler was visible in the supplied message-routing code.
+
+All outgoing messages include the "t" field. The remaining fields depend on the message type.
+
+5. SERVER IMPLEMENTATION
+
+5.1 Websocket
+
+Websocket extends WebSocketServer and manages incoming connections.
+
+It maintains three main collections:
+
+- users: maps WebSocket connections to authenticated player names. The host's local entry uses a null connection.
+- notVerified: records connections that have opened but have not completed authorization.
+- lastPing: records the last activity time for authenticated connections.
+
+When a message arrives, the server parses the JSON and identifies its type. Authorization is handled before the normal authenticated-user check.
+Other messages are ignored if the connection has not been authenticated. Gameplay messages are also ignored until the game has started.
+
+The server handles PING separately from gameplay input, allowing clients to maintain their connections while waiting in the lobby.
+
+sendWS() sends a message to one connection. broadcastWS() sends a message to connected authenticated users. Both check whether a connection is open and catch WebsocketNotConnectedException.
+
+These checks reduce failures but do not eliminate a race where the connection closes between the open-state check and the send operation.
+
+5.2 Messages
+
+Messages contains the server-side protocol handlers and entity-state serializers.
+
+Its main responsibilities are:
+
+- Validating authorization requests.
+- Applying key-down and key-up input to remote players.
+- Forwarding shooting input to the game thread.
+- Responding to pings.
+- Broadcasting game-start and game-state messages.
+- Sending player effects.
+- Serializing entities and players for network replication.
+
+The server stores previous entity and player values so it can send only fields that have changed.
+
+5.3 HostPlayScreen
+
+HostPlayScreen extends PlayScreen and runs the authoritative multiplayer game.
+
+It creates player objects, updates gameplay entities, handles spawning and collisions, manages pickups, advances floors, processes damage,
+and evaluates multiplayer game-over conditions.
+
+At each network tick, it calls Messages.renderTick() to broadcast the current state.
+
+The supplied code sets PvP to disabled by default and reviving to enabled by default. These are code-level settings rather than options exposed in the current multiplayer lobby.
+
+The host can broadcast GAME_OVER when all players are dead. When PvP is enabled, it can broadcast PLAYER_WON when only one player remains alive.
+
+6. CLIENT IMPLEMENTATION
+
+6.1 WebsocketClient
+
+WebsocketClient manages the client's WebSocket connection and incoming messages.
+
+When the connection opens, it sends authorization. It then routes server messages to the appropriate ClientMessages handlers.
+
+Before authorization, only the relevant authorization response and error handling are processed. After authorization, lobby messages are handled.
+Once the game has started, entity updates, game-state changes, and player effects are forwarded to the client screen.
+
+The client also schedules periodic ping messages and clears connection state when the connection closes.
+
+6.2 ClientMessages
+
+ClientMessages translates incoming server messages into client-side actions.
+
+It handles:
+
+- Authorization results and player lists.
+- Players joining or leaving.
+- Game-start messages and difficulty selection.
+- Entity initialization and incremental updates.
+- Game-state changes.
+- Player-specific effects.
+
+Game and rendering changes are posted to the LibGDX application thread where appropriate.
+
+ClientMessages also provides methods for sending authorization, key transitions, shooting input, and pings to the server.
+
+6.3 ClientPlayScreen
+
+ClientPlayScreen displays the multiplayer game from the client's perspective.
+
+It maintains previous and current entity states, merges incremental updates, interpolates positions, and renders entities and the HUD.
+
+It does not independently perform the host's complete gameplay simulation. Instead, it displays the state received from the host and sends player input over the network.
+
+Interpolation reduces visible jumps between network updates by estimating entity positions between received states.
+
+7. ENTITY-STATE SYNCHRONIZATION
+
+The host sends a full snapshot when entities need to be initialized or the entity set changes. Otherwise, it sends incremental updates containing only changed fields.
+
+The server stores previous values for each entity and player. Fields that have not changed are represented by null values in the update records.
+The client merges those updates with its previously stored state.
+
+The replicated data varies by entity type:
+
+- Common entities: type and position.
+- Centipedes: position, segments, and heading.
+- Enemies: position and kind.
+- Bosses: position, kind, target coordinates, settled state, fire timer, phase, and attack timer.
+- Bullets: position, kind, and angle.
+- Lasers: position and telegraph state.
+- Powerups and potions: position and lifetime.
+- Players: position, username, death state, health, maximum health, stamina, shield state, invulnerability, strafe invulnerability, and stun.
+
+ClientPlayScreen interpolates the previous and current state before drawing. This helps separate the display frame rate from the network tick rate.
+
+The protocol relies on JSON/Gson parsing and expected field types. Several handlers use casts and assume particular values exist,
+so malformed or inconsistent payloads may be ignored, logged, or cause runtime errors depending on the handler.
+
+8. PLAYER INPUT AND GAMEPLAY
+
+Player distinguishes between the locally controlled player and remote players.
+The local player reads keyboard and gamepad input directly. Remote players instead use a set of network-provided key states updated by keyDown() and keyUp().
+Player handles movement, stamina, shielding, strafing, temporary invulnerability, shooting, damage, knockback, stun, and revive attempts.
+Shooting input is sent to the host as aim coordinates and a pressed-state flag. The host resolves the connection to a player and schedules the shooting operation on the LibGDX application thread.
+Reviving is implemented in HostPlayScreen.tryRevive(). It counts revive attempts against a dead player and revives them when the required threshold is reached, provided reviving is enabled.
+
+9. TIMEOUTS AND LOGGING
+
+Schedulers manages periodic networking tasks.
+
+The server ping scheduler checks the last recorded activity and closes connections that exceed the configured timeout.
+The unverified-connection scheduler closes connections that remain unauthenticated for too long. The client ping scheduler periodically sends PING while the client is verified.
+
+The current configuration passes 30,000 milliseconds to the server ping scheduler and checks connections every 15 seconds.
+Unverified connections use a 60,000-millisecond timeout and are checked every 5 seconds. The client ping scheduler sends a ping every 5 seconds.
+
+ErrorLogs appends timestamped messages to multiplayer.logs and flushes after each write. If the log file cannot be opened,
+it displays a notification and disables subsequent file logging.
+
+10. LOBBY AND MENU FLOW
+
+MultiplayerScreen has four lobby states:
+
+- IDLE: player-name field and Host/Join buttons.
+- HOST_LOBBY: server port, player list, and Start button.
+- JOIN_FORM: player-name field, server-address field, and Connect button.
+- CLIENT_LOBBY: connected player list.
+
+The lobby state is rebuilt through setState(), which clears and recreates the relevant content. The player name is stored in LibGDX preferences.
+
+When the host starts a game, MenuScreen creates HostPlayScreen if multiplayer is active. Otherwise, it starts the relevant single-player screen.
+
+The current lobby does not provide a LAN-address selector, configurable server port, configurable tick rate, PvP toggle, revive toggle,
+or multiplayer-specific resolution setting.
+
+11. FEATURE REQUESTS
+
+F1 — Display available LAN addresses
+
+Show the host's local network addresses in the hosting lobby so players on the same network can connect. If multiple network interfaces are available,
+allow the host to select an address instead of automatically choosing one.
+
+F2 — Expose multiplayer settings
+
+Allow the host to configure settings such as the port, network tick rate, PvP, and reviving before starting a match.
+
+F3 — Complete revive feedback
+
+Provide clear revive progress and status feedback, with consistent presentation on both the host and clients.
+
+F4 — Add a resolution setting
+
+Provide a display-resolution setting and verify scaling across different screen sizes.
+
+F5 — Support achievements for clients
+
+Review which achievements can be awarded in multiplayer and implement appropriate client-side updates while keeping gameplay validation authoritative on the host.
+
+F6 — Improve menu and lobby layout
+
+Improve spacing, navigation feedback, and layout consistency in the main menu and multiplayer lobby.
+
+12. BUG REPORTS
+
+B1 — WebSocket sends can race with disconnections
+
+The server checks whether a connection is open before sending, but the connection can close between that check and the send operation.
+Make send and connection-cleanup handling more robust and ensure failures are consistently handled.
+
+B2 — Keep multiplayer state consistent after client disconnects
+
+Verify that multiplayer flags and navigation state are reset consistently when a client connection closes, so users can return to the expected menu or lobby state.
+
+B3 — Improve font scaling on Linux and other resolutions
+
+The fixed virtual viewport and bitmap-font scaling can make text appear blurry at some display resolutions. Review font rendering and scaling across platforms.
+
+B4 — HostPlayScreen hides the inherited game-state field
+
+HostPlayScreen declares its own state field despite extending PlayScreen, which already has state handling.
+Inherited methods and host-specific logic may therefore read or update different state values. Use a shared field or a clearly separated state design.
+
+B5 — Validate incoming messages and payloads
+
+Several handlers assume that messages contain the expected fields and types. Validate the message type and payload before dereferencing or casting values,
+and reject malformed messages safely.
+
+B6 — Make one-shot inputs reliable over the network
+
+Actions such as revive and strafe depend on key-down/key-up transitions. Network delay and frame timing may cause an action to be missed or processed for multiple host frames.
+Represent discrete actions explicitly or otherwise guarantee reliable edge-triggered handling.
+
+B7 — Avoid sending unchanged key states every frame
+
+The client compares key sets by reference in places where content equality is required. This can cause redundant key-state messages.
+Compare set contents and send only actual transitions.
+
+B8 — Fix client gamepad movement
+
+The client uses a one-frame gamepad edge check for rightward movement, and movement controls rely on edge-triggered input rather than held state.
+Use consistent held-state input for continuous movement.
+
+B9 — Render the connection warning after clearing the screen
+
+The connection warning is drawn during input handling, but the normal draw path subsequently clears the screen. Move the warning into the normal render/draw path.
+
+B10 — Stop client processing after screen transitions and dispose resources
+
+Some client-screen paths can continue processing after a screen transition. Return immediately after changing screens and dispose of owned rendering resources such as
+SpriteBatch, ShapeRenderer, and BitmapFont.
+
+B11 — Keep card/effect state consistent for remote players
+
+Card state is stored in the HUD, and HostPlayScreen replaces its HUD after some player objects have already been constructed with the earlier HUD reference.
+This can leave players consulting stale HUD state. Store gameplay effects in authoritative player/game state and replicate them to clients, or ensure all players use the current HUD reference.
