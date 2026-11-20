@@ -108,9 +108,16 @@ public final class PostProcessor implements Disposable {
 
             void main() {
                 vec2 uv = v_texCoords;
+                float burstClock = floor(u_time * 2.0);
+                float burstChance = rand(vec2(burstClock, 9.0));
+                float burstTime = fract(u_time * 2.0);
+                float burst = step(0.82, burstChance) * (1.0 - smoothstep(0.10, 0.30, burstTime));
                 if (u_glitch > 0.5) {
-                    float line = rand(vec2(floor(uv.y * 90.0), floor(u_time * 11.0)));
-                    if (line > 0.93) uv.x += (line - 0.93) * 0.35;
+                    float line = rand(vec2(floor(uv.y * 75.0), floor(u_time * 8.0)));
+                    if (line > 0.985) uv.x += (line - 0.985) * 0.12 * burst;
+
+                    float tear = rand(vec2(floor(u_time * 3.0), 17.0));
+                    if (tear > 0.965 && uv.y > 0.72 && uv.y < 0.78) uv.x += 0.018 * burst;
                 }
                 vec2 px = 1.0 / u_resolution;
                 vec3 base = texture2D(u_texture, uv).rgb;
@@ -124,10 +131,21 @@ public final class PostProcessor implements Disposable {
                 bloom *= 0.12;
                 vec3 col = base + bloom * 1.5;
                 if (u_glitch > 0.5) {
-                    float ca = 0.0014 + 0.004 * step(0.97, rand(vec2(floor(u_time * 9.0), 3.0)));
+                    float ca = (0.0008 + 0.0018 * burst) * (0.5 + 0.5 * step(0.74, rand(vec2(floor(u_time * 6.0), 3.0))));
                     col.r += texture2D(u_texture, vec2(uv.x + ca, uv.y)).r - base.r;
                     col.b += texture2D(u_texture, vec2(uv.x - ca, uv.y)).b - base.b;
-                    col *= 0.92 + 0.08 * sin(uv.y * u_resolution.y * 3.14159);
+
+                    float scan = 0.94 + 0.06 * sin(uv.y * u_resolution.y * 3.14159);
+                    col *= mix(1.0, scan, 0.35);
+
+                    vec2 centered = uv * 2.0 - 1.0;
+                    float vignette = 1.0 - smoothstep(0.35, 1.15, dot(centered, centered));
+                    float dread = 0.18 + 0.10 * sin(u_time * 0.85);
+                    col *= mix(0.62 - dread * burst, 1.0, vignette);
+                    col.r += burst * 0.18 * (1.0 - vignette);
+
+                    float grain = rand(vec2(gl_FragCoord.xy + floor(u_time * 24.0)));
+                    col *= 0.96 + grain * 0.08 * burst;
                 }
                 gl_FragColor = vec4(col, 1.0) * v_color;
             }

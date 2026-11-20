@@ -60,7 +60,6 @@ public final class SettingsScreen extends ScreenAdapter {
                 case 1 -> settings.setFullscreen(!settings.fullscreen());
                 case 2 -> settings.setMusic(!settings.music());
                 case 3 -> settings.setFps(nextFps(settings.fps()));
-                case 4 -> settings.setGlitch(!settings.glitch());
                 case 5 -> settings.setBingo(!Settings.bingo());
                 case 6 -> {
                     switching = true;
@@ -69,6 +68,8 @@ public final class SettingsScreen extends ScreenAdapter {
                     return;
                 }
             }
+
+
             settings.apply(game);
         }
     }

@@ -203,13 +203,6 @@ public class HostPlayScreen extends PlayScreen {
                     hurt(p, e.contactDamage());
                     if (e.diesOnPlayerHit())
                         e.kill();
-                    if (e.glitches()) {
-                        if (isHost) post.setGlitch(true);
-                        else {
-                            Messages.playerEffects(p.username, true, null);
-                        }
-                        e.kill();
-                    }
                     if (e.card1()) {
                         if (isHost) hud.setCardActive(0, true);
                         else {
@@ -273,7 +266,7 @@ public class HostPlayScreen extends PlayScreen {
         float drawX = camX;
         float drawY = WORLD_H / 2f;
         if (shake > 0) {
-            float mag = shake * 45;
+            float mag = shake > 1f ? 5f : shake * 45f;
             drawX += MathUtils.random(-mag, mag);
             drawY += MathUtils.random(-mag, mag);
         }
@@ -328,7 +321,7 @@ public class HostPlayScreen extends PlayScreen {
 
         boolean hit = player.damage(dmg);
         if (hit && player == host) shake = 0.22f;
-        else if (hit) Messages.playerEffects(player.username, null, 0.22f);
+        else if (hit) Messages.playerEffects(player, null, 0.22f);
     }
 
     public void tryRevive(Player caller) {
@@ -357,6 +350,10 @@ public class HostPlayScreen extends PlayScreen {
         if (floor >= 10)
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
+        if (floor % 2 == 0) {
+            shake = 30f;
+            game.unfullscreenWithShrink();
+        }
         for (Player p : players.values()) {
             if (p.dead()) continue;
             p.healFull();

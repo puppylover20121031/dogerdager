@@ -28,6 +28,7 @@ import com.unpuppyable.dogerdager.entity.PlayerArrow;
 import com.unpuppyable.dogerdager.entity.Potion;
 import com.unpuppyable.dogerdager.entity.Powerup0;
 import com.unpuppyable.dogerdager.entity.Powerup1;
+import com.unpuppyable.dogerdager.multiplayer.host.Messages;
 
 public class PlayScreen implements Screen {
 
@@ -188,6 +189,10 @@ public class PlayScreen implements Screen {
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         player.healFull();
+        if (floor % 2 == 0) {
+            shake = 30f;
+            game.unfullscreenWithShrink();
+        }
         if (floor >= difficulty.winFloor) {
             win();
             return;
@@ -259,6 +264,7 @@ public class PlayScreen implements Screen {
         hud.update(delta, player);
         spawner.update(delta);
 
+
         for (var e : entities)
             e.update(delta);
         entities.addAll(pending);
@@ -290,13 +296,11 @@ public class PlayScreen implements Screen {
                 if (e.knocksBack() && !player.strafing() && !player.invulnerable) {
                     player.knockback(ARENA_W, PLAY_TOP);
                 }
-                hurt(e.contactDamage());
+                hurt(this, e.contactDamage());
                 if (e.diesOnPlayerHit())
                     e.kill();
-            } if (e.glitches()) {
-                post.setGlitch(true);
-                e.kill();
-            } if (e.card1()) {
+            }
+            if (e.card1()) {
                 hud.setCardActive(0, true);
                 e.kill();
             } if (e.card2()) {
@@ -361,7 +365,9 @@ public class PlayScreen implements Screen {
         // mute = true;
         // }
         // } 
+        final Settings settings = new Settings();
 
+        settings.setGlitch(true);
 
 
         if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
@@ -371,6 +377,7 @@ public class PlayScreen implements Screen {
         }
 
 
+        
 
 
 
@@ -417,15 +424,21 @@ public class PlayScreen implements Screen {
         if(player.strafing() && this.post.getGlitch()) {
             progress.unlock(Achievement.USE_GLITCH);
         }
+        
+        
+        if (DogerDager.getMultiplayer()) {
+            Messages.playerEffects(player, true, null);
+        }
 
     }
 
-    protected void hurt(int amount) {
-        if (player.strafing())
+    protected static void hurt(PlayScreen playScreen, int amount) {
+        if (playScreen.player.strafing()) {
             return;
-        int dmg = difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + difficulty.hitBonus);
-        if (player.damage(dmg)) {
-            shake = 0.22f;
+        }
+        int dmg = playScreen.difficulty.instantKill() ? INSTANT_KILL : Math.max(1, amount + playScreen.difficulty.hitBonus);
+        if (playScreen.player.damage(dmg)) {
+            playScreen.shake = 0.22f;
         }
     }
 
@@ -441,7 +454,7 @@ public class PlayScreen implements Screen {
         float drawX = camX;
         float drawY = WORLD_H / 2f;
         if (shake > 0) {
-            float mag = shake * 45;
+            float mag = shake > 1f ? 5f : shake * 45f;
             drawX += MathUtils.random(-mag, mag);
             drawY += MathUtils.random(-mag, mag);
         }

@@ -189,8 +189,10 @@ public class Messages {
         wsInstance.broadcastWS(MessageType.NEW_GAME_STATE.code, response);
     }
 
-    public static void playerEffects(String username, Boolean glitch, Float shake) {
-        WebSocket conn = wsInstance.getConnByName(username);
+    public static void playerEffects(Player player, Boolean glitch, Float shake) {
+        if (!DogerDager.getMultiplayer() || wsInstance == null || player == null) return;
+        WebSocket conn = wsInstance.getConnByName(player.username);
+        if (conn == null) return;
         HashMap<String, Object> response = new HashMap<String, Object>();
         response.put("gl", glitch);
         response.put("sh", shake);

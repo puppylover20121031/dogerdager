@@ -206,8 +206,9 @@ public class Websocket extends WebSocketServer {
     }
 
     public WebSocket getConnByName(String name) {
-        for (WebSocket conn : users.keySet()) {
-            if (users.get(conn).equals(name)) return conn;
+        if (name == null) return null;
+        for (Map.Entry<WebSocket, String> entry : users.entrySet()) {
+            if (name.equals(entry.getValue())) return entry.getKey();
         }
         return null;
     }
@@ -231,6 +232,7 @@ public class Websocket extends WebSocketServer {
     public static void dispose() {
         stopServer();
         Schedulers.stopSchedulers();
+        Messages.dispose();
         instance = null;
     }
 }
