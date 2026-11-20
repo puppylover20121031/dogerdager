@@ -1,7 +1,11 @@
 package com.unpuppyable.dogerdager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
@@ -20,14 +24,10 @@ import com.unpuppyable.dogerdager.entity.Enemy;
 import com.unpuppyable.dogerdager.entity.Entity;
 import com.unpuppyable.dogerdager.entity.Laser;
 import com.unpuppyable.dogerdager.entity.Player;
-import com.unpuppyable.dogerdager.entity.Potion;
 import com.unpuppyable.dogerdager.entity.PlayerArrow;
+import com.unpuppyable.dogerdager.entity.Potion;
 import com.unpuppyable.dogerdager.entity.Powerup0;
 import com.unpuppyable.dogerdager.entity.Powerup1;
-
-import java.util.ArrayList;
-import java.util.List;
-import com.badlogic.gdx.Preferences;
 
 public class PlayScreen implements Screen {
 
@@ -107,6 +107,7 @@ public class PlayScreen implements Screen {
         entities.clear();
         pending.clear();
         player.reset();
+        hud.resetCheatDetector();
         state = State.PLAYING;
         shake = 0;
         //camX = ARENA_W / 2f;
@@ -336,6 +337,21 @@ public class PlayScreen implements Screen {
             progress.recordRun(difficulty, hud.highScore(), false);
         }
 
+
+        if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.NUM_1) && Gdx.input.isKeyPressed(Keys.S)) {
+            hud.markCheatUsed();
+            spawnPotion();
+            Thread thread = new Thread(() -> {
+                try {
+                    Thread.sleep(1000); // 1 second delay
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                spawnPotion();
+            });
+            thread.start();
+        }
+
         // if (Pad.justL() || Gdx.input.isKeyJustPressed(Keys.M)) {
         // if (mute) {
         // bgm.pause();
@@ -350,6 +366,7 @@ public class PlayScreen implements Screen {
 
         if (Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT)
                 && Gdx.input.isKeyPressed(Keys.W)) {
+            hud.markCheatUsed();
             win();
         }
 
@@ -358,22 +375,27 @@ public class PlayScreen implements Screen {
 
 
         if (Gdx.input.isKeyPressed(Keys.NUM_1) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
+            hud.markCheatUsed();
             hud.setCardActive(0, true);
         }
 
         if (Gdx.input.isKeyPressed(Keys.NUM_2) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
+            hud.markCheatUsed();
             hud.setCardActive(1, true);
         }
 
         if (Gdx.input.isKeyPressed(Keys.NUM_3) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
+            hud.markCheatUsed();
             hud.setCardActive(2, true);
         }
 
         if (Gdx.input.isKeyPressed(Keys.NUM_4) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
+            hud.markCheatUsed();
             hud.setCardActive(3, true);
         }
 
         if (Gdx.input.isKeyPressed(Keys.NUM_5) && Gdx.input.isKeyPressed(Keys.ALT_RIGHT) && Gdx.input.isKeyPressed(Keys.C)) {
+            hud.markCheatUsed();
             hud.setCardActive(4, true);
         }
 

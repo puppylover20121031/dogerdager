@@ -27,6 +27,7 @@ public final class Hud {
     private float runTime;
     private float floorProgress;
     private int bestFloor;
+    private boolean cheatDetected;
     private final boolean[] cards = new boolean[MAX_CARDS];
     private Player player;
 
@@ -131,6 +132,14 @@ public final class Hud {
         return bestFloor;
     }
 
+    public void markCheatUsed() {
+        cheatDetected = true;
+    }
+
+    public void resetCheatDetector() {
+        cheatDetected = false;
+    }
+
     // Filled pass: top band, heart row, floor-progress bar.
     public void drawBars(ShapeRenderer shapes, Player player) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -180,6 +189,11 @@ public final class Hud {
         font.draw(batch, "FLOOR " + floor, 28, worldH - 52);
         drawRight(batch, font, "TIME " + time(), worldH - 18);
         drawRight(batch, font, "BEST F" + bestFloor, worldH - 40);
+        if (cheatDetected) {
+            font.setColor(Color.RED);
+            drawRight(batch, font, "CHEATS DETECTED!!", worldH - 62);
+            font.setColor(Color.WHITE);
+        }
     }
 
 
