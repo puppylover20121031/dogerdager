@@ -90,9 +90,9 @@ public class PlayScreen implements Screen {
         bingo = Settings.bingo();
         if (prefs.getBoolean("set.music", true)) {
             if (bingo) {
-                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
+                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("combine.mp3"));
             } else {
-                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("bingo.mp3"));
+                this.bgm = Gdx.audio.newMusic(Gdx.files.internal("combine.mp3"));
             }
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
