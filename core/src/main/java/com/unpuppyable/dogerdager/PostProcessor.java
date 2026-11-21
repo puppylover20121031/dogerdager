@@ -142,7 +142,15 @@ public final class PostProcessor implements Disposable {
                     float vignette = 1.0 - smoothstep(0.35, 1.15, dot(centered, centered));
                     float dread = 0.18 + 0.10 * sin(u_time * 0.85);
                     col *= mix(0.62 - dread * burst, 1.0, vignette);
-                    col.r += burst * 0.18 * (1.0 - vignette);
+
+                    float redStrength = burst * (1.0 - vignette);
+                    vec2 ghostOffset = vec2(px.x * 7.0 * sin(u_time * 18.0),
+                                             px.y * 3.0 * cos(u_time * 11.0));
+                    vec3 ghostImage = texture2D(u_texture, clamp(uv + ghostOffset, px, 1.0 - px)).rgb;
+
+                    vec3 redVeil = vec3(0.72, 0.055, 0.045);
+                    vec3 faintRedScene = mix(ghostImage, redVeil, 0.58);
+                    col = mix(col, faintRedScene, redStrength * 0.34);
 
                     float grain = rand(vec2(gl_FragCoord.xy + floor(u_time * 24.0)));
                     col *= 0.96 + grain * 0.08 * burst;

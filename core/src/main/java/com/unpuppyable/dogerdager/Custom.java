@@ -17,7 +17,7 @@ public final class Custom {
     }
 
     public int customWinFloor() {
-        return prefs.getInteger("set.customWinFloor", 12);
+        return prefs.getInteger("set.customWinFloor", 5);
     }
 
     public int customHitBonus() {

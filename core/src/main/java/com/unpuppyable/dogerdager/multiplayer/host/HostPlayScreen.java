@@ -266,7 +266,7 @@ public class HostPlayScreen extends PlayScreen {
         float drawX = camX;
         float drawY = WORLD_H / 2f;
         if (shake > 0) {
-            float mag = shake > 1f ? 5f : shake * 45f;
+            float mag = shake > 1f ? 5f : shake * 10f;
             drawX += MathUtils.random(-mag, mag);
             drawY += MathUtils.random(-mag, mag);
         }

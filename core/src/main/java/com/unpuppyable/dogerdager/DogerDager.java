@@ -3,6 +3,7 @@ package com.unpuppyable.dogerdager;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.math.MathUtils;
 import com.kotcrab.vis.ui.VisUI;
@@ -39,7 +40,15 @@ public class DogerDager extends Game {
         menuMove = Gdx.audio.newSound(Gdx.files.internal("menu-move.mp3"));
         menuConfirm = Gdx.audio.newSound(Gdx.files.internal("menu-confirm.mp3"));
         new Settings().apply(this);
-        setScreen(new MenuScreen(this, post));
+        Preferences preferences = Gdx.app.getPreferences("doger-dager");
+        if (preferences.getBoolean("hauntedDemoPending", false)) {
+            preferences.putBoolean("hauntedDemoPending", false);
+            preferences.flush();
+            Gdx.graphics.setWindowedMode(960, 540);
+            setScreen(new PlayScreen(this, Difficulty.EASY, 0f, post, true));
+        } else {
+            setScreen(new MenuScreen(this, post));
+        }
     }
 
     public void setGlitch(boolean on) {

@@ -49,6 +49,7 @@ public final class Player extends Entity {
     private float kbY;
 
     private boolean shielded;
+    private boolean automated;
     public boolean invulnerable;
     private boolean staminaLocked;
     private float invulnerableFor = 0;
@@ -124,7 +125,7 @@ public final class Player extends Entity {
         if (shootCooldown > 0)
             shootCooldown -= delta;
 
-        if (isYou) {
+        if (isYou && !automated) {
             float vx = 0, vy = 0;
             if (keyBind.isPressed(KeyBind.Action.MOVE_LEFT)) vx -= SPEED;
             if (keyBind.isPressed(KeyBind.Action.MOVE_RIGHT)) vx += SPEED;
@@ -338,6 +339,17 @@ public final class Player extends Entity {
             screen.add(new PlayerArrow(px - PlayerArrow.SIZE / 2f, py - PlayerArrow.SIZE / 2f, vx, vy, maxX + SIZE, maxY + SIZE, this));
         }
         shootCooldown = PLAYER_SHOOT_COOLDOWN;
+    }
+
+    public void setAutomated(boolean automated) {
+        this.automated = automated;
+    }
+
+    public void autoPlay(float delta, float horizontal, float vertical, float targetX, float targetY) {
+        if (dead()) return;
+        bounds.x = MathUtils.clamp(bounds.x + horizontal * SPEED * delta, 0, maxX);
+        bounds.y = MathUtils.clamp(bounds.y + vertical * SPEED * delta, 0, maxY);
+        shoot((int) targetX, (int) targetY, true);
     }
 
 

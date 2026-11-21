@@ -1,11 +1,11 @@
 package com.unpuppyable.dogerdager;
 
 public enum Difficulty {
-    EASY(220f, 6, 12, -1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
-    NORMAL(300f, 5, 15, 0, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
-    HARD(470f, 3, 20, 2, 4, 2, 3.4f, 0.25f, 1.0f, 0.28f, 0.50f, 0.75f, 0.08f),
-    HARDCORE(560f, 2, 22, 2, 3, 2, 3.0f, 0.30f, 0.9f, 0.35f, 0.55f, 0.80f, 0.06f),
-    CUSTOM(220f, 6, 12, -1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f);
+    EASY(220f, 6, 5, -1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
+    NORMAL(300f, 5, 5, 0, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f),
+    HARD(470f, 3, 5, 2, 4, 2, 3.4f, 0.25f, 1.0f, 0.28f, 0.50f, 0.75f, 0.08f),
+    HARDCORE(560f, 2, 5, 2, 3, 2, 3.0f, 0.30f, 0.9f, 0.35f, 0.55f, 0.80f, 0.06f),
+    CUSTOM(220f, 6, 5, -1, 5, 3, 4f, 0.2f, 1.3f, 0.22f, 0.45f, 0.65f, 0.10f);
 
     public float enemySpeed;
     public int maxHealth;   // hearts

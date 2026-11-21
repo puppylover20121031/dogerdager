@@ -10,6 +10,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -40,6 +41,8 @@ public class PlayScreen implements Screen {
 
     protected static final int INSTANT_KILL = 100_000;
     protected static final float MAX_STEP = 0.05f;
+    private static final float HAUNTED_DEMO_SPEED = 4f;
+    private static final float HAUNTED_DEMO_FLOOR_TIME = 30f;
 
     protected enum State {
         PLAYING, PAUSED, GAME_OVER, WON, PLAYER_WON, YOU_DIED
@@ -75,17 +78,35 @@ public class PlayScreen implements Screen {
     protected float camX = ARENA_W;
     protected Music bgm;
     protected boolean playedMusic = false;
+    private boolean hauntedDemo;
+    private float hauntedDemoElapsed;
+    private float hauntedFloorTimer;
+    private float hauntedSpawnTimer;
+    private Texture hauntedBackground;
+    private boolean spookyTerminalPending;
+
+    int fc = 0;
 
     protected PostProcessor post;
 
     public PlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post) {
+        this(game, difficulty, delta, post, false);
+    }
+
+    public PlayScreen(DogerDager game, Difficulty difficulty, float delta, PostProcessor post, boolean hauntedDemo) {
         this.game = game;
         this.difficulty = difficulty;
         this.post = post;
+        this.hauntedDemo = hauntedDemo;
         curDifficulty = difficulty;
         this.viewport = new FitViewport(WORLD_W, WORLD_H);
         hud = new Hud(difficulty, progress.bestScore(difficulty), WORLD_W, WORLD_H, player);
         player = new Player(ARENA_W, PLAY_TOP, post, progress, prefs.getString("user.name"), curDifficulty, true, hud);
+        player.setAutomated(hauntedDemo);
+        if (hauntedDemo) {
+            player.setInvulnerable(true);
+            hauntedBackground = new Texture(Gdx.files.internal("glitch-background.jpg"));
+        }
         spawner = new Spawner(difficulty, hud, this);
         update(delta, post);
         bingo = Settings.bingo();
@@ -101,6 +122,7 @@ public class PlayScreen implements Screen {
             prefs.putBoolean("set.music", false);
         }
         reset();
+        if (hauntedDemo) shake = 30f;
     }
 
     protected void reset() {
@@ -189,9 +211,11 @@ public class PlayScreen implements Screen {
             progress.unlock(Achievement.FLOOR_10);
         clearHazards();
         player.healFull();
-        if (floor % 2 == 0) {
+        if (floor % 2 == 0) fc++;
+        if (fc >= 3) {
             shake = 30f;
             game.unfullscreenWithShrink();
+            fc = 0;
         }
         if (floor >= difficulty.winFloor) {
             win();
@@ -223,12 +247,15 @@ public class PlayScreen implements Screen {
                     && progress.achieved(Achievement.CLEAR_HARD) && prefs.getBoolean("Easy_unlock", false)) {
                 progress.unlock(Achievement.CLEAR_ALL);
             }
+            if (!DogerDager.getMultiplayer() && !prefs.getBoolean("hauntedWinSeen", false)) {
+                spookyTerminalPending = true;
+            }
         }
     }
 
     @Override
     public void render(float delta) {
-        if (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart()) {
+        if (!hauntedDemo && (keyBind.isJustPressed(KeyBind.Action.PAUSE) || Pad.justStart())) {
             if (state == State.PLAYING) {
                 state = State.PAUSED;
             } else if (state == State.PAUSED) {
@@ -239,7 +266,16 @@ public class PlayScreen implements Screen {
             }
         }
         if (state == State.PLAYING) {
-            update(Math.min(delta, MAX_STEP), post);
+            if (hauntedDemo) {
+                float remaining = Math.min(delta, 0.1f) * HAUNTED_DEMO_SPEED;
+                while (remaining > 0 && state == State.PLAYING && !spookyTerminalPending) {
+                    float step = Math.min(remaining, MAX_STEP);
+                    update(step, post);
+                    remaining -= step;
+                }
+            } else {
+                update(Math.min(delta, MAX_STEP), post);
+            }
         } else if (state == State.PAUSED) {
             if (Gdx.input.isKeyJustPressed(Keys.Q) || Pad.justStart()) {
                 toMenu();
@@ -247,6 +283,16 @@ public class PlayScreen implements Screen {
             }
         } else if (Gdx.input.isKeyJustPressed(Keys.R)) {
             reset();
+        }
+        if (spookyTerminalPending) {
+            game.setScreen(new SpookyTerminalScreen(prefs));
+            dispose();
+            return;
+        }
+        if (hauntedDemo && state == State.WON) {
+            game.setScreen(new HauntedWinScreen(game));
+            dispose();
+            return;
         }
         draw(delta);
     }
@@ -261,8 +307,13 @@ public class PlayScreen implements Screen {
         if (shake > 0)
             shake -= delta;
         player.update(delta);
+        if (hauntedDemo) updateHauntedBot(delta);
         hud.update(delta, player);
-        spawner.update(delta);
+        if (hauntedDemo) {
+            updateHauntedDemo(delta);
+        } else {
+            spawner.update(delta);
+        }
 
 
         for (var e : entities)
@@ -293,6 +344,7 @@ public class PlayScreen implements Screen {
                 progress.unlock(Achievement.POTIONER);
                 e.kill();
             } else if (e.contactDamage() > 0) {
+                if (hauntedDemo) continue;
                 if (e.knocksBack() && !player.strafing() && !player.invulnerable) {
                     player.knockback(ARENA_W, PLAY_TOP);
                 }
@@ -432,6 +484,52 @@ public class PlayScreen implements Screen {
 
     }
 
+    private void updateHauntedDemo(float delta) {
+        hauntedDemoElapsed += delta;
+        hauntedFloorTimer += delta;
+        hauntedSpawnTimer -= delta;
+        hud.setFloorProgress(hauntedFloorTimer / HAUNTED_DEMO_FLOOR_TIME);
+
+        if (hauntedSpawnTimer <= 0 && !bossActive()) {
+            spawn(Enemy.Kind.NORMAL);
+            hauntedSpawnTimer = 1.4f;
+        }
+
+        if (hauntedFloorTimer >= HAUNTED_DEMO_FLOOR_TIME) {
+            hauntedFloorTimer -= HAUNTED_DEMO_FLOOR_TIME;
+            nextFloor();
+            if (state == State.WON) {
+                hauntedDemo = false;
+                player.setAutomated(false);
+                player.setInvulnerable(false);
+                if (hauntedBackground != null) {
+                    hauntedBackground.dispose();
+                    hauntedBackground = null;
+                }
+            }
+        }
+    }
+
+    private void updateHauntedBot(float delta) {
+        float targetX = player.bounds().x + Player.SIZE + 100f;
+        float targetY = player.bounds().y + Player.SIZE / 2f;
+        float nearestDistance = Float.MAX_VALUE;
+        for (Entity entity : entities) {
+            if (entity.dead() || entity.contactDamage() <= 0) continue;
+            float dx = entity.bounds().x + entity.bounds().width / 2f - (player.bounds().x + Player.SIZE / 2f);
+            float dy = entity.bounds().y + entity.bounds().height / 2f - (player.bounds().y + Player.SIZE / 2f);
+            float distance = dx * dx + dy * dy;
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                targetX = entity.bounds().x + entity.bounds().width / 2f;
+                targetY = entity.bounds().y + entity.bounds().height / 2f;
+            }
+        }
+
+        float angle = hauntedDemoElapsed * 1.7f;
+        player.autoPlay(delta, MathUtils.cos(angle), MathUtils.sin(angle * 0.73f), targetX, targetY);
+    }
+
     protected static void hurt(PlayScreen playScreen, int amount) {
         if (playScreen.player.strafing()) {
             return;
@@ -454,15 +552,21 @@ public class PlayScreen implements Screen {
         float drawX = camX;
         float drawY = WORLD_H / 2f;
         if (shake > 0) {
-            float mag = shake > 1f ? 5f : shake * 45f;
+            float mag = shake > 1f ? 5f : shake * 10f;
             drawX += MathUtils.random(-mag, mag);
             drawY += MathUtils.random(-mag, mag);
         }
         cam.position.set(drawX, drawY, 0);
         cam.update();
         shapes.setProjectionMatrix(cam.combined);
+        if (hauntedBackground != null) {
+            batch.setProjectionMatrix(cam.combined);
+            batch.begin();
+            batch.draw(hauntedBackground, 0, 0, ARENA_W, WORLD_H);
+            batch.end();
+        }
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawBackground(shapes);
+        if (hauntedBackground == null) drawBackground(shapes);
         player.draw(shapes);
         for (var e : entities)
             e.draw(shapes);
@@ -561,6 +665,10 @@ public class PlayScreen implements Screen {
         shapes.dispose();
         batch.dispose();
         font.dispose();
+        if (hauntedBackground != null) {
+            hauntedBackground.dispose();
+            hauntedBackground = null;
+        }
     }
 
     @Override

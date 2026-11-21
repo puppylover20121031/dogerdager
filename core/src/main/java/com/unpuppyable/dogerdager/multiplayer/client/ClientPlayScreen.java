@@ -337,7 +337,7 @@ public class ClientPlayScreen implements Screen {
         float drawX = camX;
         float drawY = WORLD_H / 2f;
         if (shake > 0) {
-            float mag = shake * 45;
+            float mag = shake * 10;
             drawX += MathUtils.random(-mag, mag);
             drawY += MathUtils.random(-mag, mag);
         }

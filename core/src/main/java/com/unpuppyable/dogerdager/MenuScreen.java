@@ -5,6 +5,8 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -14,9 +16,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
-import com.unpuppyable.dogerdager.multiplayer.client.WebsocketClient;
 import com.unpuppyable.dogerdager.multiplayer.host.HostPlayScreen;
-import com.unpuppyable.dogerdager.multiplayer.host.Websocket;
 
 public final class MenuScreen extends ScreenAdapter {
 
@@ -27,6 +27,8 @@ public final class MenuScreen extends ScreenAdapter {
     private final Stage stage = new Stage(new FitViewport(PlayScreen.WORLD_W, PlayScreen.WORLD_H));
     private final Progress progress = new Progress();
     private final VisTextButton[] buttons = new VisTextButton[CHOICES.length];
+    private final SpriteBatch backgroundBatch = new SpriteBatch();
+    private final Texture background = new Texture(Gdx.files.internal("glitch-background.jpg"));
     private VisTextButton creditsButton;
     private VisTextButton multiplayerButton;
     private int index = Difficulty.NORMAL.ordinal();
@@ -40,12 +42,10 @@ public final class MenuScreen extends ScreenAdapter {
     }
 
     private void build(PostProcessor post) {
-        if (Settings.prefs.getBoolean("set.music", true)) {
-            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu.mp3"));
+            this.bgm = Gdx.audio.newMusic(Gdx.files.internal("menu-scary.mp3"));
             this.bgm.setLooping(true);
             this.bgm.setVolume(1f);
             this.bgm.play(); //menu music
-        }
 
         var root = new VisTable();
         root.setFillParent(true);
@@ -192,6 +192,11 @@ public final class MenuScreen extends ScreenAdapter {
         handleKeys(post);
         if (switching) return;
         ScreenUtils.clear(Color.BLACK);
+        stage.getViewport().apply();
+        backgroundBatch.setProjectionMatrix(stage.getCamera().combined);
+        backgroundBatch.begin();
+        backgroundBatch.draw(background, 0, 0, PlayScreen.WORLD_W, PlayScreen.WORLD_H);
+        backgroundBatch.end();
         stage.act(delta);
         if (switching) return;
         stage.draw();
@@ -258,6 +263,8 @@ public final class MenuScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         if (bgm != null) bgm.stop();
+        backgroundBatch.dispose();
+        background.dispose();
         stage.dispose();
     }
 }
